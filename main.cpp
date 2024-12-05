@@ -5,6 +5,31 @@
 #include "my_graph_library.hpp"
 #include "vector_io.h"
 
+void recurse_seperators(std::vector<int> &xadj, std::vector<int> &adjncy) {
+    auto n = (int)xadj.size() - 1;
+    auto nparts = 2;
+    auto imbalance = 1.0 / 3.0;
+    auto num_separator_vertices = 0;
+    auto separator_raw = new int[n];
+
+    node_separator(&n, nullptr, xadj.data(), nullptr, adjncy.data(), &nparts,
+                   &imbalance, false, 0, FAST, &num_separator_vertices,
+                   &separator_raw);
+
+    std::cout << n << " " << num_separator_vertices << std::endl;
+
+    auto separator = std::unordered_set<int>(
+        separator_raw, separator_raw + num_separator_vertices);
+
+    auto subgraphs = get_connected_components(xadj, adjncy, separator);
+
+    for (auto &[s_xadj, s_adjncy] : subgraphs) {
+        if (s_xadj.size() > 200) {
+            recurse_seperators(s_xadj, s_adjncy);
+        }
+    }
+}
+
 int main(int argn, char **argv) {
 
     auto xadj = load_vector<int>(
@@ -19,59 +44,5 @@ int main(int argn, char **argv) {
 
     make_bidirectional(xadj, adjncy);
 
-    auto n = (int)xadj.size() - 1;
-    auto nparts = 2;
-    auto imbalance = 1.0 / 3.0;
-    auto num_separator_vertices = 0;
-    auto separator_raw = new int[n];
-
-    node_separator(&n, nullptr, xadj.data(), nullptr, adjncy.data(), &nparts,
-                   &imbalance, false, 0, STRONG, &num_separator_vertices,
-                   &separator_raw);
-
-    auto separator = std::unordered_set<int>(
-        separator_raw, separator_raw + num_separator_vertices);
-
-    auto subgraphs = get_subgraphs(xadj, adjncy, separator);
-
-    for (auto &[s_xadj, s_adjncy] : subgraphs) {
-        // print s_xadj and s_adjncy
-        // std::cout << "xadj: ";
-        // for (auto x : s_xadj) {
-        //     std::cout << x << " ";
-        // }
-        // std::cout << std::endl;
-        //
-        // std::cout << "adjncy: ";
-        // for (auto x : s_adjncy) {
-        //     std::cout << x << " ";
-        // }
-        // std::cout << std::endl;
-        //
-        std::cout << "xadj " << s_xadj.size() << " adjncy " << s_adjncy.size()
-                  << std::endl;
-    }
-}
-
-void recurse_seperators(std::vector<int> &xadj, std::vector<int> &adjncy) {
-    auto n = (int)xadj.size() - 1;
-    auto nparts = 2;
-    auto imbalance = 1.0 / 3.0;
-    auto num_separator_vertices = 0;
-    auto separator_raw = new int[n];
-
-    node_separator(&n, nullptr, xadj.data(), nullptr, adjncy.data(), &nparts,
-                   &imbalance, false, 0, STRONG, &num_separator_vertices,
-                   &separator_raw);
-
-    auto separator = std::unordered_set<int>(
-        separator_raw, separator_raw + num_separator_vertices);
-
-    auto subgraphs = get_subgraphs(xadj, adjncy, separator);
-
-    for (auto &[s_xadj, s_adjncy] : subgraphs) {
-        if (s_xadj.size() > 5) {
-            recurse_seperators(s_xadj, s_adjncy);
-        }
-    }
+    recurse_seperators(xadj, adjncy);
 }

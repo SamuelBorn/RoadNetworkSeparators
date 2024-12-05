@@ -29,7 +29,7 @@ void make_bidirectional(std::vector<int> &xadj, std::vector<int> &adjncy) {
     xadj.push_back(adjncy.size());
 }
 
-void expand_component(int node, int current_part, std::vector<int> &xadj,
+void expand_component_recurse(int node, int current_part, std::vector<int> &xadj,
                       std::vector<int> &adjncy, std::unordered_set<int> &sep,
                       std::vector<int> &part) {
     part[node] = current_part;
@@ -38,7 +38,7 @@ void expand_component(int node, int current_part, std::vector<int> &xadj,
         auto other_node = adjncy[i];
 
         if (part[other_node] == -1 && sep.find(other_node) == sep.end()) {
-            expand_component(other_node, current_part, xadj, adjncy, sep, part);
+            expand_component_recurse(other_node, current_part, xadj, adjncy, sep, part);
         }
     }
 }
@@ -50,7 +50,7 @@ std::vector<int> partition_from_separator(std::vector<int> &xadj,
 
     for (std::size_t i = 0; i < xadj.size() - 1; i++) {
         if (part[i] == -1 && sep.find(i) == sep.end()) {
-            expand_component(i, i, xadj, adjncy, sep, part);
+            expand_component_recurse(i, i, xadj, adjncy, sep, part);
         }
     }
 
@@ -79,7 +79,7 @@ std::pair<std::vector<int>, std::vector<int>> get_adjacency_array(Graph g) {
 }
 
 std::vector<std::pair<std::vector<int>, std::vector<int>>>
-get_subgraphs(std::vector<int> &xadj, std::vector<int> &adjncy,
+get_connected_components(std::vector<int> &xadj, std::vector<int> &adjncy,
               std::unordered_set<int> &sep) {
     std::vector<int> part = partition_from_separator(xadj, adjncy, sep);
 
