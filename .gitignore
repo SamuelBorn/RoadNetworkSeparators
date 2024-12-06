@@ -2,3 +2,5 @@
 build
 *.png
 *.txt
+*.svg
+*.pdf
