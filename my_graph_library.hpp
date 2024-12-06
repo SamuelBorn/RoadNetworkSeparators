@@ -6,20 +6,21 @@
 #include <unordered_set>
 #include <vector>
 
-typedef std::map<int, std::vector<int>> Graph;
-
 void make_bidirectional(std::vector<int> &xadj, std::vector<int> &adjncy);
 
-void expand_component_recurse(int node, int current_part, std::vector<int> &xadj,
-                      std::vector<int> &adjncy, std::unordered_set<int> &sep,
-                      std::vector<int> &part);
+void expand_component_recursive(int node, int current_part,
+                                std::vector<int> &xadj,
+                                std::vector<int> &adjncy,
+                                std::unordered_set<int> &sep,
+                                std::vector<int> &part);
 
-std::vector<int> partition_from_separator(std::vector<int> &xadj, std::vector<int> &adjncy,
-                               std::unordered_set<int> &sep);
+std::vector<int> partition_from_separator(std::vector<int> &xadj,
+                                          std::vector<int> &adjncy,
+                                          std::unordered_set<int> &sep);
 
-std::pair<std::vector<int>, std::vector<int>> get_adjacency_array(Graph g);
+std::pair<std::vector<int>, std::vector<int>>
+get_adjacency_array(std::map<int, std::vector<int>> g);
 
 std::vector<std::pair<std::vector<int>, std::vector<int>>>
-get_connected_components(std::vector<int> &xadj, std::vector<int> &adjncy,
+get_subgraphs(std::vector<int> &xadj, std::vector<int> &adjncy,
               std::unordered_set<int> &sep);
-

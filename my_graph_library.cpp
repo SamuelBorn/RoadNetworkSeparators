@@ -4,8 +4,6 @@
 #include <unordered_set>
 #include <vector>
 
-typedef std::map<int, std::vector<int>> Graph;
-
 void make_bidirectional(std::vector<int> &xadj, std::vector<int> &adjncy) {
     std::vector<std::set<int>> adjncy_new(xadj.size() - 1);
 
@@ -29,16 +27,19 @@ void make_bidirectional(std::vector<int> &xadj, std::vector<int> &adjncy) {
     xadj.push_back(adjncy.size());
 }
 
-void expand_component_recurse(int node, int current_part, std::vector<int> &xadj,
-                      std::vector<int> &adjncy, std::unordered_set<int> &sep,
-                      std::vector<int> &part) {
+void expand_component_recursive(int node, int current_part,
+                                std::vector<int> &xadj,
+                                std::vector<int> &adjncy,
+                                std::unordered_set<int> &sep,
+                                std::vector<int> &part) {
     part[node] = current_part;
 
     for (int i = xadj[node]; i < xadj[node + 1]; i++) {
         auto other_node = adjncy[i];
 
         if (part[other_node] == -1 && sep.find(other_node) == sep.end()) {
-            expand_component_recurse(other_node, current_part, xadj, adjncy, sep, part);
+            expand_component_recursive(other_node, current_part, xadj, adjncy,
+                                       sep, part);
         }
     }
 }
@@ -50,14 +51,15 @@ std::vector<int> partition_from_separator(std::vector<int> &xadj,
 
     for (std::size_t i = 0; i < xadj.size() - 1; i++) {
         if (part[i] == -1 && sep.find(i) == sep.end()) {
-            expand_component_recurse(i, i, xadj, adjncy, sep, part);
+            expand_component_recursive(i, i, xadj, adjncy, sep, part);
         }
     }
 
     return part;
 }
 
-std::pair<std::vector<int>, std::vector<int>> get_adjacency_array(Graph g) {
+std::pair<std::vector<int>, std::vector<int>>
+get_adjacency_array(std::map<int, std::vector<int>> &g) {
     std::map<int, int> mapping;
     for (auto &[from_node, _] : g) {
         mapping.insert({from_node, mapping.size()});
@@ -79,11 +81,11 @@ std::pair<std::vector<int>, std::vector<int>> get_adjacency_array(Graph g) {
 }
 
 std::vector<std::pair<std::vector<int>, std::vector<int>>>
-get_connected_components(std::vector<int> &xadj, std::vector<int> &adjncy,
+get_subgraphs(std::vector<int> &xadj, std::vector<int> &adjncy,
               std::unordered_set<int> &sep) {
     std::vector<int> part = partition_from_separator(xadj, adjncy, sep);
 
-    std::map<int, Graph> subgraphs;
+    std::map<int, std::map<int, std::vector<int>>> subgraphs;
 
     for (std::size_t i = 0; i < xadj.size() - 1; i++) {
         if (part[i] == -1)

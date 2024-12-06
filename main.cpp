@@ -22,7 +22,7 @@ void recurse_seperators(std::vector<int> &xadj, std::vector<int> &adjncy) {
     auto separator = std::unordered_set<int>(
         separator_raw, separator_raw + num_separator_vertices);
 
-    auto subgraphs = get_connected_components(xadj, adjncy, separator);
+    auto subgraphs = get_subgraphs(xadj, adjncy, separator);
 
     for (auto &[s_xadj, s_adjncy] : subgraphs) {
         if (s_xadj.size() > 200) {
