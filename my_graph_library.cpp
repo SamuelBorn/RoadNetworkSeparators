@@ -27,19 +27,23 @@ void make_bidirectional(std::vector<int> &xadj, std::vector<int> &adjncy) {
     xadj.push_back(adjncy.size());
 }
 
-void expand_component_recursive(int node, int current_part,
-                                std::vector<int> &xadj,
-                                std::vector<int> &adjncy,
-                                std::unordered_set<int> &sep,
-                                std::vector<int> &part) {
-    part[node] = current_part;
+void expand_component(int init_node, std::vector<int> &xadj,
+                      std::vector<int> &adjncy, std::unordered_set<int> &sep,
+                      std::vector<int> &part) {
+    std::vector<int> stack;
+    stack.push_back(init_node);
 
-    for (int i = xadj[node]; i < xadj[node + 1]; i++) {
-        auto other_node = adjncy[i];
+    while (!stack.empty()) {
+        auto current_node = stack.back();
+        stack.pop_back();
 
-        if (part[other_node] == -1 && sep.find(other_node) == sep.end()) {
-            expand_component_recursive(other_node, current_part, xadj, adjncy,
-                                       sep, part);
+        part[current_node] = init_node;
+
+        for (int i = xadj[current_node]; i < xadj[current_node + 1]; i++) {
+            auto other_node = adjncy[i];
+            if (part[other_node] == -1 && sep.find(other_node) == sep.end()) {
+                stack.push_back(other_node);
+            }
         }
     }
 }
@@ -51,7 +55,7 @@ std::vector<int> partition_from_separator(std::vector<int> &xadj,
 
     for (std::size_t i = 0; i < xadj.size() - 1; i++) {
         if (part[i] == -1 && sep.find(i) == sep.end()) {
-            expand_component_recursive(i, i, xadj, adjncy, sep, part);
+            expand_component(i, xadj, adjncy, sep, part);
         }
     }
 
@@ -84,6 +88,7 @@ std::vector<std::pair<std::vector<int>, std::vector<int>>>
 get_subgraphs(std::vector<int> &xadj, std::vector<int> &adjncy,
               std::unordered_set<int> &sep) {
     std::vector<int> part = partition_from_separator(xadj, adjncy, sep);
+    std::cout << "after partition" << std::endl;
 
     std::map<int, std::map<int, std::vector<int>>> subgraphs;
 
@@ -98,10 +103,14 @@ get_subgraphs(std::vector<int> &xadj, std::vector<int> &adjncy,
             }
         }
     }
+    std::cout << "after map" << std::endl;
 
     std::vector<std::pair<std::vector<int>, std::vector<int>>> result;
     for (auto &subgraph : subgraphs) {
         result.push_back(get_adjacency_array(subgraph.second));
     }
+
+    std::cout << "end subgraph" << std::endl;
+
     return result;
 }

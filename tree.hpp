@@ -26,14 +26,14 @@ std::vector<std::vector<int>> generate_random_tree(int n) {
         n1 = n2;
     }
 
-    // print graph
-    for (size_t i = 0; i < n; i++) {
-        std::cout << i << ": ";
-        for (auto x : g[i]) {
-            std::cout << x << " ";
-        }
-        std::cout << std::endl;
-    }
+    // // print graph
+    // for (size_t i = 0; i < n; i++) {
+    //     std::cout << i << ": ";
+    //     for (auto x : g[i]) {
+    //         std::cout << x << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 
     return g;
 }
