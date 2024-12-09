@@ -19,25 +19,21 @@ int last_non_fulfilled_degree(std::vector<std::vector<int>> &actual_degrees,
 }
 
 // returns: (element, (index vector, index in vector))
+// small bias towards nodes that are have a degree that does not occur often
 std::pair<int, std::pair<int, int>>
-random_node(std::vector<std::vector<int>> &actual_degrees, int last_idx) {
-    auto total = 0;
-    for (size_t i = 0; i < last_idx; i++) {
-        total += actual_degrees[i].size();
-    }
-
-    std::uniform_int_distribution<int> int_dist(0, total - 1);
-    auto random = int_dist(rng);
-
-    auto idx = 0;
-    for (auto e : actual_degrees) {
-        if (random < e.size()) {
-            return {e[random], {idx, random}};
+random_node(std::vector<std::vector<int>> &actual_degrees,
+            std::vector<int> &expected_degrees) {
+    auto tmp = std::vector<std::pair<int, int>>();
+    for (size_t i = 0; i < actual_degrees.size() - 1; i++) {
+        if (actual_degrees[i + 1].size() < expected_degrees[i + 1]) {
+            std::uniform_int_distribution<int> dist(
+                0, actual_degrees[i].size() - 1);
+            tmp.push_back({i, dist(rng)});
         }
-        random -= e.size();
-        idx++;
     }
-    return {-1, {-1, -1}};
+    std::uniform_int_distribution<int> dist(0, tmp.size() - 1);
+    auto idx = dist(rng);
+    return {actual_degrees[tmp[idx].first][tmp[idx].second], tmp[idx]};
 }
 
 std::pair<std::vector<int>, std::vector<int>>
@@ -79,9 +75,9 @@ random_same_degree_graph(int n, std::vector<double> degree_percentages) {
         for (auto e : actual_degrees) {
             std::cout << e.size() << " ";
         }
-        std::cout  << std::endl;
-        auto [n1, idx1] = random_node(actual_degrees, last_idx);
-        auto [n2, idx2] = random_node(actual_degrees, last_idx);
+        std::cout << std::endl;
+        auto [n1, idx1] = random_node(actual_degrees, expected_degrees);
+        auto [n2, idx2] = random_node(actual_degrees, expected_degrees);
         if (n1 != n2 && !has_edge(g, n1, n2)) {
             g[n1].push_back(n2);
             g[n2].push_back(n1);
