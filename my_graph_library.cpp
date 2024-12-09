@@ -84,11 +84,26 @@ get_adjacency_array(std::map<int, std::vector<int>> &g) {
     return {xadj, adjncy};
 }
 
+std::pair<std::vector<int>, std::vector<int>>
+get_adjacency_array(std::vector<std::vector<int>> &g) {
+    auto xadj = std::vector<int>(g.size() + 1);
+    auto adjncy = std::vector<int>();
+
+    for (std::size_t i = 0; i < g.size(); i++) {
+        xadj[i] = adjncy.size();
+        for (auto n : g[i]) {
+            adjncy.push_back(n);
+        }
+    }
+    xadj[g.size()] = adjncy.size();
+
+    return {xadj, adjncy};
+}
+
 std::vector<std::pair<std::vector<int>, std::vector<int>>>
 get_subgraphs(std::vector<int> &xadj, std::vector<int> &adjncy,
               std::unordered_set<int> &sep) {
     std::vector<int> part = partition_from_separator(xadj, adjncy, sep);
-    std::cout << "after partition" << std::endl;
 
     std::map<int, std::map<int, std::vector<int>>> subgraphs;
 
@@ -103,14 +118,11 @@ get_subgraphs(std::vector<int> &xadj, std::vector<int> &adjncy,
             }
         }
     }
-    std::cout << "after map" << std::endl;
 
     std::vector<std::pair<std::vector<int>, std::vector<int>>> result;
     for (auto &subgraph : subgraphs) {
         result.push_back(get_adjacency_array(subgraph.second));
     }
-
-    std::cout << "end subgraph" << std::endl;
 
     return result;
 }
