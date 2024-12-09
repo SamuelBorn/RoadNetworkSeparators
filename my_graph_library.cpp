@@ -1,3 +1,4 @@
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <set>
@@ -125,4 +126,26 @@ get_subgraphs(std::vector<int> &xadj, std::vector<int> &adjncy,
     }
 
     return result;
+}
+
+void print_degree_distribution(std::vector<int> &xadj,
+                               std::vector<int> &adjncy) {
+    auto degrees = std::vector<int>(20, 0);
+    for (size_t i = 0; i < xadj.size() - 1; i++) {
+        auto degree = xadj[i + 1] - xadj[i];
+        if (degree < 20)
+            degrees[degree]++;
+    }
+
+    for (auto e : degrees) {
+        std::cout << std::fixed << std::setprecision(2)
+                  << double(e) / (xadj.size() - 1) << std::endl;
+    }
+
+    // results
+    // 0.00
+    // 0.22
+    // 0.15
+    // 0.55
+    // 0.08
 }

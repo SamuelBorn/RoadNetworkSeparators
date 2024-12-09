@@ -2,10 +2,14 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <random>
 #include <unordered_set>
 #include <vector>
 
-std::vector<std::vector<int>> generate_random_tree(int n) {
+std::vector<std::vector<int>> generate_random_tree(int n, int seed) {
+    std::mt19937 rng(seed);
+    std::uniform_int_distribution<int> dist(0, n - 1);
+
     std::vector<std::vector<int>> g(n);
 
     auto not_visited = std::unordered_set<int>(n);
@@ -16,7 +20,7 @@ std::vector<std::vector<int>> generate_random_tree(int n) {
     visited.insert(n1);
 
     while (!not_visited.empty()) {
-        int n2 = rand() % n;
+        int n2 = dist(rng);
         if (not_visited.find(n2) != not_visited.end()) {
             not_visited.erase(n2);
             visited.insert(n2);
