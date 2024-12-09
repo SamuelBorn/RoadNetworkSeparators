@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <map>
@@ -148,4 +149,8 @@ void print_degree_distribution(std::vector<int> &xadj,
     // 0.15
     // 0.55
     // 0.08
+}
+
+bool has_edge(std::vector<std::vector<int>> &g, int from, int to) {
+    return std::find(g[from].begin(), g[from].end(), to) != g[from].end();
 }

@@ -4,10 +4,9 @@
 #include <random>
 #include <vector>
 
+#include "global.hpp"
 #include "my_graph_library.hpp"
 #include "tree.hpp"
-
-std::mt19937 rng;                   
 
 int dist_linear(int u, int v, int n) {
     auto direct = std::abs(u - v);
@@ -23,8 +22,8 @@ int dist_exp(int u, int v, int n) { return std::pow(2, dist_linear(u, v, n)); }
 
 std::pair<int, int> get_random_edge(int n,
                                     std::vector<double> &cumulative_weights) {
-    std::uniform_int_distribution<int> int_dist(0, n - 1);         
-    std::uniform_real_distribution<double> double_dist(0, 1);         
+    std::uniform_int_distribution<int> int_dist(0, n - 1);
+    std::uniform_real_distribution<double> double_dist(0, 1);
     auto u = int_dist(rng);
     auto random = double_dist(rng);
     auto it = std::lower_bound(cumulative_weights.begin(),
@@ -48,10 +47,8 @@ std::vector<double> get_cumulative_weights(int n,
 }
 
 std::pair<std::vector<int>, std::vector<int>>
-random_local_graph(int n, int m, int (*dist)(int, int, int), int seed) {
-    rng.seed(seed);
-
-    auto g = generate_random_tree(n, seed);
+random_local_graph(int n, int m, int (*dist)(int, int, int)) {
+    auto g = generate_random_tree(n);
     auto weights = get_cumulative_weights(n, dist);
 
     auto remaining = m - n + 1;

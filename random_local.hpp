@@ -21,4 +21,4 @@ std::vector<double> get_cumulative_weights(int n,
                                            int (*distance)(int, int, int));
 
 std::pair<std::vector<int>, std::vector<int>>
-random_local_graph(int n, int m, int (*dist)(int, int, int), int seed);
+random_local_graph(int n, int m, int (*dist)(int, int, int));

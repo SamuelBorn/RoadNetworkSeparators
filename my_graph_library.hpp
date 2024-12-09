@@ -27,4 +27,7 @@ std::vector<std::pair<std::vector<int>, std::vector<int>>>
 get_subgraphs(std::vector<int> &xadj, std::vector<int> &adjncy,
               std::unordered_set<int> &sep);
 
-void print_degree_distribution(std::vector<int> &xadj, std::vector<int> &adjncy);
+void print_degree_distribution(std::vector<int> &xadj,
+                               std::vector<int> &adjncy);
+
+bool has_edge(std::vector<std::vector<int>> &g, int from, int to);

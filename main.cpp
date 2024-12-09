@@ -3,11 +3,15 @@
 #include <random>
 #include <vector>
 
+#include "global.hpp"
 #include "kaHIP_interface.h"
 #include "my_graph_library.hpp"
 #include "random_local.hpp"
+#include "same_degree.hpp"
 #include "tree.hpp"
 #include "vector_io.h"
+
+std::mt19937 rng; 
 
 void recurse_seperators(std::vector<int> &xadj, std::vector<int> &adjncy) {
     auto n = (int)xadj.size() - 1;
@@ -36,21 +40,21 @@ void recurse_seperators(std::vector<int> &xadj, std::vector<int> &adjncy) {
 }
 
 int main(int argn, char **argv) {
+    rng.seed(42);
 
     // germany: n=5763064 m=13984846
     // karlsruhe: n=120413 m=302605 mbi=309736
-    auto xadj = load_vector<int>(
-        "/home/born/Nextcloud/ws2425/Master/Graphs/germany/first_out");
-    auto adjncy = load_vector<int>(
-        "/home/born/Nextcloud/ws2425/Master/Graphs/germany/head");
-    make_bidirectional(xadj, adjncy);
+    // auto xadj = load_vector<int>(
+    //     "/home/born/Nextcloud/ws2425/Master/Graphs/germany/first_out");
+    // auto adjncy = load_vector<int>(
+    //     "/home/born/Nextcloud/ws2425/Master/Graphs/germany/head");
+    // make_bidirectional(xadj, adjncy);
 
-    print_degree_distribution(xadj, adjncy);
-
-    // auto [xadj, adjncy] =
-    //     random_local_graph(120413, 309736 / 2, dist_exp);
-    // std::cout << xadj.size() << std::endl;
-    // std::cout << adjncy.size() << std::endl;
+    auto [xadj, adjncy] =
+        random_same_degree_graph(100, {0, 0.22, 0.15, 0.55, 0.08});
+    std::cout << xadj.size() << std::endl;
+    std::cout << adjncy.size() << std::endl;
 
     // recurse_seperators(xadj, adjncy);
+
 }
