@@ -1,4 +1,3 @@
-#include <fstream>
 #include <iostream>
 #include <random>
 #include <vector>
@@ -11,33 +10,7 @@
 #include "tree.hpp"
 #include "vector_io.h"
 
-std::mt19937 rng; 
-
-void recurse_seperators(std::vector<int> &xadj, std::vector<int> &adjncy) {
-    auto n = (int)xadj.size() - 1;
-    auto nparts = 2;
-    auto imbalance = 1.0 / 3.0;
-    auto num_separator_vertices = 0;
-    auto separator_raw = new int[n];
-
-    node_separator(&n, nullptr, xadj.data(), nullptr, adjncy.data(), &nparts,
-                   &imbalance, false, 0, FAST, &num_separator_vertices,
-                   &separator_raw);
-
-    std::cout << n << " " << num_separator_vertices << std::endl;
-    // std::ofstream("output/random_exp.txt", std::ios::app)
-    //     << n << " " << num_separator_vertices << std::endl;
-
-    auto separator = std::unordered_set<int>(
-        separator_raw, separator_raw + num_separator_vertices);
-    auto subgraphs = get_subgraphs(xadj, adjncy, separator);
-
-    for (auto &[s_xadj, s_adjncy] : subgraphs) {
-        if (s_xadj.size() > 200) {
-            recurse_seperators(s_xadj, s_adjncy);
-        }
-    }
-}
+std::mt19937 rng;
 
 int main(int argn, char **argv) {
     rng.seed(42);
@@ -51,10 +24,7 @@ int main(int argn, char **argv) {
     // make_bidirectional(xadj, adjncy);
 
     auto [xadj, adjncy] =
-        random_same_degree_graph(100, {0, 0.22, 0.15, 0.55, 0.08});
-    std::cout << xadj.size() << std::endl;
-    std::cout << adjncy.size() << std::endl;
+        same_degree_graph(120000, {0, 0.22, 0.15, 0.55, 0.08});
 
     // recurse_seperators(xadj, adjncy);
-
 }

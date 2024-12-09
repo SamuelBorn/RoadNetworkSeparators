@@ -31,3 +31,5 @@ void print_degree_distribution(std::vector<int> &xadj,
                                std::vector<int> &adjncy);
 
 bool has_edge(std::vector<std::vector<int>> &g, int from, int to);
+
+void recurse_seperators(std::vector<int> &xadj, std::vector<int> &adjncy);

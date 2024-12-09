@@ -8,14 +8,14 @@
 #include "my_graph_library.hpp"
 #include "tree.hpp"
 
-int last_non_fulfilled_degree(std::vector<std::vector<int>> &actual_degrees,
-                              std::vector<int> &expected_degrees) {
-    for (int i = expected_degrees.size() - 1; i >= 0; i--) {
+bool is_as_expected(std::vector<std::vector<int>> &actual_degrees,
+                    std::vector<int> &expected_degrees) {
+    for (size_t i = 0; i < actual_degrees.size(); i++) {
         if (actual_degrees[i].size() < expected_degrees[i]) {
-            return i;
+            return false;
         }
     }
-    return -1;
+    return true;
 }
 
 // returns: (element, (index vector, index in vector))
@@ -37,72 +37,33 @@ random_node(std::vector<std::vector<int>> &actual_degrees,
 }
 
 std::pair<std::vector<int>, std::vector<int>>
-random_same_degree_graph(int n, std::vector<double> degree_percentages) {
+same_degree_graph(int n, std::vector<double> degree_percentages) {
     auto g = generate_random_tree(n);
 
-    auto expected_degrees = std::vector<int>();
-    for (auto e : degree_percentages) {
-        expected_degrees.push_back(std::floor(0.9 * e * n));
-    }
+    auto expected = std::vector<int>();
+    for (auto e : degree_percentages)
+        expected.push_back(std::floor(0.95 * e * n));
 
-    auto actual_degrees =
-        std::vector<std::vector<int>>(expected_degrees.size());
+    auto actual = std::vector<std::vector<int>>(expected.size());
     for (int i = 0; i < n; i++) {
         auto degree = g[i].size();
-        if (degree < expected_degrees.size())
-            actual_degrees[degree].push_back(i);
-    }
-
-    std::cout << "acutal" << std::endl;
-    for (auto e : actual_degrees) {
-        std::cout << e.size() << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "expected" << std::endl;
-    for (auto e : expected_degrees) {
-        std::cout << e << " ";
-    }
-    std::cout << std::endl;
-
-    auto last_idx = last_non_fulfilled_degree(actual_degrees, expected_degrees);
-
-    std::cout << last_idx << std::endl;
-
-    while (last_idx != -1) {
-        std::cout << "before random" << std::endl;
-        std::cout << last_idx << std::endl;
-        std::cout << "acutal ";
-        for (auto e : actual_degrees) {
-            std::cout << e.size() << " ";
+        if (degree < expected.size()) {
+            actual[degree].push_back(i);
         }
-        std::cout << std::endl;
-        auto [n1, idx1] = random_node(actual_degrees, expected_degrees);
-        auto [n2, idx2] = random_node(actual_degrees, expected_degrees);
+    }
+
+    while (!is_as_expected(actual, expected)) {
+        auto [n1, idx1] = random_node(actual, expected);
+        auto [n2, idx2] = random_node(actual, expected);
         if (n1 != n2 && !has_edge(g, n1, n2)) {
             g[n1].push_back(n2);
             g[n2].push_back(n1);
-            actual_degrees[idx1.first].erase(
-                actual_degrees[idx1.first].begin() + idx1.second);
-            actual_degrees[idx2.first].erase(
-                actual_degrees[idx2.first].begin() + idx2.second);
-            actual_degrees[idx1.first + 1].push_back(n1);
-            actual_degrees[idx2.first + 1].push_back(n2);
-            last_idx =
-                last_non_fulfilled_degree(actual_degrees, expected_degrees);
+            actual[idx1.first].erase(actual[idx1.first].begin() + idx1.second);
+            actual[idx2.first].erase(actual[idx2.first].begin() + idx2.second);
+            actual[idx1.first + 1].push_back(n1);
+            actual[idx2.first + 1].push_back(n2);
         }
-        // break;
     }
-
-    std::cout << "acutal" << std::endl;
-    for (auto e : actual_degrees) {
-        std::cout << e.size() << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "expected" << std::endl;
-    for (auto e : expected_degrees) {
-        std::cout << e << " ";
-    }
-    std::cout << std::endl;
 
     return get_adjacency_array(g);
 }

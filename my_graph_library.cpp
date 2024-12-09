@@ -1,10 +1,13 @@
 #include <algorithm>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <map>
 #include <set>
 #include <unordered_set>
 #include <vector>
+
+#include "kaHIP_interface.h"
 
 void make_bidirectional(std::vector<int> &xadj, std::vector<int> &adjncy) {
     std::vector<std::set<int>> adjncy_new(xadj.size() - 1);
@@ -127,6 +130,32 @@ get_subgraphs(std::vector<int> &xadj, std::vector<int> &adjncy,
     }
 
     return result;
+}
+
+void recurse_seperators(std::vector<int> &xadj, std::vector<int> &adjncy) {
+    auto n = (int)xadj.size() - 1;
+    auto nparts = 2;
+    auto imbalance = 1.0 / 3.0;
+    auto num_separator_vertices = 0;
+    auto separator_raw = new int[n];
+
+    node_separator(&n, nullptr, xadj.data(), nullptr, adjncy.data(), &nparts,
+                   &imbalance, false, 0, FAST, &num_separator_vertices,
+                   &separator_raw);
+
+    std::cout << n << "\t" << num_separator_vertices << std::endl;
+    // std::ofstream("output/same_degree.txt", std::ios::app)
+    //     << n << " " << num_separator_vertices << std::endl;
+
+    auto separator = std::unordered_set<int>(
+        separator_raw, separator_raw + num_separator_vertices);
+    auto subgraphs = get_subgraphs(xadj, adjncy, separator);
+
+    for (auto &[s_xadj, s_adjncy] : subgraphs) {
+        if (s_xadj.size() > 200) {
+            recurse_seperators(s_xadj, s_adjncy);
+        }
+    }
 }
 
 void print_degree_distribution(std::vector<int> &xadj,
