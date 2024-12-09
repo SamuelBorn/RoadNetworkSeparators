@@ -1,8 +1,10 @@
+#include <fstream>
 #include <iostream>
 #include <vector>
 
 #include "kaHIP_interface.h"
 #include "my_graph_library.hpp"
+#include "random_local.hpp"
 #include "tree.hpp"
 #include "vector_io.h"
 
@@ -18,13 +20,12 @@ void recurse_seperators(std::vector<int> &xadj, std::vector<int> &adjncy) {
                    &separator_raw);
 
     std::cout << n << " " << num_separator_vertices << std::endl;
-    // std::ofstream("output.txt", std::ios::app) << n << " " <<
-    // num_separator_vertices << std::endl;
-    
+    std::ofstream("output/random_exp.txt", std::ios::app)
+        << n << " " << num_separator_vertices << std::endl;
+
     auto separator = std::unordered_set<int>(
         separator_raw, separator_raw + num_separator_vertices);
     auto subgraphs = get_subgraphs(xadj, adjncy, separator);
-
 
     for (auto &[s_xadj, s_adjncy] : subgraphs) {
         if (s_xadj.size() > 200) {
@@ -35,13 +36,18 @@ void recurse_seperators(std::vector<int> &xadj, std::vector<int> &adjncy) {
 
 int main(int argn, char **argv) {
 
-    // nodes = 5763064, edges = 13984846 
-    auto xadj = load_vector<int>(
-        "/home/born/Nextcloud/ws2425/Master/Graphs/germany/first_out");
-    auto adjncy = load_vector<int>(
-        "/home/born/Nextcloud/ws2425/Master/Graphs/germany/head");
-    make_bidirectional(xadj, adjncy);
+    // // germany: n=5763064 m=13984846
+    // // karlsruhe: n=120413 m=302605
+    // auto xadj = load_vector<int>(
+    //     "/home/born/Nextcloud/ws2425/Master/Graphs/karlsruhe/first_out");
+    // auto adjncy = load_vector<int>(
+    //     "/home/born/Nextcloud/ws2425/Master/Graphs/karlsruhe/head");
+    // make_bidirectional(xadj, adjncy);
 
+    auto [xadj, adjncy] =
+        random_local_graph(120413, 309736 / 2, dist_exp);
+    std::cout << xadj.size() << std::endl;
+    std::cout << adjncy.size() << std::endl;
 
     // auto xadj = std::vector<int>({0, 2, 5, 7, 9, 12});
     // auto adjncy = std::vector<int>({1, 4, 0, 2, 4, 1, 3, 2, 4, 0, 1, 3})  ;
@@ -49,6 +55,4 @@ int main(int argn, char **argv) {
     // auto adjncy = std::vector<int>({1, 2, 0, 2, 0});
 
     recurse_seperators(xadj, adjncy);
-
-    auto g = generate_random_tree(1000000);
 }

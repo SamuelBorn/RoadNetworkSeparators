@@ -1,8 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Plot data points
-file_path = "/home/born/Nextcloud/ws2425/Master/reproduce/output.txt"
+file_path = "./output/random_exp.txt"
 x_values = []
 y_values = []
 with open(file_path, 'r') as file:
