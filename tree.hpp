@@ -22,6 +22,7 @@ std::vector<std::vector<int>> generate_random_tree(int n) {
             visited.insert(n2);
 
             g[n1].push_back(n2);
+            g[n2].push_back(n1);
         }
         n1 = n2;
     }
