@@ -23,8 +23,10 @@ int main(int argn, char **argv) {
     //     "/home/born/Nextcloud/ws2425/Master/Graphs/germany/head");
     // make_bidirectional(xadj, adjncy);
 
-    auto [xadj, adjncy] =
-        same_degree_graph(120000, {0, 0.22, 0.15, 0.55, 0.08});
+    // auto [xadj, adjncy] =
+    //     same_degree_graph(120000, {0, 0.22, 0.15, 0.55, 0.08});
+
+    // diameter_overview();
 
     // recurse_seperators(xadj, adjncy);
 }

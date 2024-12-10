@@ -144,8 +144,8 @@ void recurse_seperators(std::vector<int> &xadj, std::vector<int> &adjncy) {
                    &separator_raw);
 
     std::cout << n << "\t" << num_separator_vertices << std::endl;
-    // std::ofstream("output/same_degree.txt", std::ios::app)
-    //     << n << " " << num_separator_vertices << std::endl;
+    std::ofstream("fragments/same_degree.txt", std::ios::app)
+        << n << " " << num_separator_vertices << std::endl;
 
     auto separator = std::unordered_set<int>(
         separator_raw, separator_raw + num_separator_vertices);

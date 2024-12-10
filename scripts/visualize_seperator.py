@@ -16,8 +16,12 @@ plt.scatter(x_values, y_values, color='blue')
 # Plot cubic root function
 x_fit = np.linspace(0, max(x_values), 500)
 y_fit = np.cbrt(x_fit)
-plt.plot(x_fit, y_fit, color='red')
+plt.plot(x_fit, y_fit, color='red', label='cbrt(x)')
+# y_fit = 3 * np.sqrt(x_fit)
+# plt.plot(x_fit, y_fit, color='red', label='3 * sqrt(x)')
 
+plt.title(experiment)
+plt.legend()
 plt.grid(True, linestyle='--', alpha=0.6)
 plt.savefig(f"fragments/{experiment}.svg", format='svg')
 plt.show()
