@@ -4,7 +4,7 @@
 
 #include "global.hpp"
 #include "kaHIP_interface.h"
-#include "my_graph_library.hpp"
+#include "graph_library.hpp"
 #include "random_local.hpp"
 #include "same_degree.hpp"
 #include "tree.hpp"

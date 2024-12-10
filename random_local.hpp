@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-#include "my_graph_library.hpp"
+#include "graph_library.hpp"
 #include "tree.hpp"
 
 int dist_linear(int u, int v, int n);

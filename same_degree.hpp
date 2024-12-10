@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "global.hpp"
-#include "my_graph_library.hpp"
+#include "graph_library.hpp"
 #include "tree.hpp"
 
 bool is_as_expected(std::vector<std::vector<int>> &actual_degrees,
