@@ -140,11 +140,11 @@ void recurse_seperators(std::vector<int> &xadj, std::vector<int> &adjncy) {
     auto separator_raw = new int[n];
 
     node_separator(&n, nullptr, xadj.data(), nullptr, adjncy.data(), &nparts,
-                   &imbalance, false, 0, FAST, &num_separator_vertices,
+                   &imbalance, false, 0, ECO, &num_separator_vertices,
                    &separator_raw);
 
     std::cout << n << "\t" << num_separator_vertices << std::endl;
-    std::ofstream("fragments/same_degree.txt", std::ios::app)
+    std::ofstream("fragments/karlsruhe.txt", std::ios::app)
         << n << " " << num_separator_vertices << std::endl;
 
     auto separator = std::unordered_set<int>(
@@ -154,6 +154,7 @@ void recurse_seperators(std::vector<int> &xadj, std::vector<int> &adjncy) {
     for (auto &[s_xadj, s_adjncy] : subgraphs) {
         if (s_xadj.size() > 200) {
             recurse_seperators(s_xadj, s_adjncy);
+            break;
         }
     }
 }

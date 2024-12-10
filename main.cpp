@@ -17,16 +17,13 @@ int main(int argn, char **argv) {
 
     // germany: n=5763064 m=13984846
     // karlsruhe: n=120413 m=302605 mbi=309736
-    // auto xadj = load_vector<int>(
-    //     "/home/born/Nextcloud/ws2425/Master/Graphs/germany/first_out");
-    // auto adjncy = load_vector<int>(
-    //     "/home/born/Nextcloud/ws2425/Master/Graphs/germany/head");
-    // make_bidirectional(xadj, adjncy);
+    auto xadj = load_vector<int>(
+        "/home/born/Nextcloud/ws2425/Master/Graphs/karlsruhe/first_out");
+    auto adjncy = load_vector<int>(
+        "/home/born/Nextcloud/ws2425/Master/Graphs/karlsruhe/head");
+    make_bidirectional(xadj, adjncy);
 
-    // auto [xadj, adjncy] =
-    //     same_degree_graph(120000, {0, 0.22, 0.15, 0.55, 0.08});
+    // auto [xadj, adjncy] = same_degree_graph(120000, {0, 0.22, 0.15, 0.55, 0.08});
 
-    // diameter_overview();
-
-    // recurse_seperators(xadj, adjncy);
+    recurse_seperators(xadj, adjncy);
 }

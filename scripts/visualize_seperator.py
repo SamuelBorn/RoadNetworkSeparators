@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-experiment = "same_degree"
+experiment = "karlsruhe"
 
 # Scatter plot data
 x_values = []
