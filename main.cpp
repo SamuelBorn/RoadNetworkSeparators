@@ -13,7 +13,9 @@
 std::mt19937 rng;
 
 int main(int argn, char **argv) {
-    rng.seed(42);
+    // rng.seed(42);
+    std::random_device rd;
+    rng.seed(rd());
 
     // germany: n=5763064 m=13984846
     // karlsruhe: n=120413 m=302605 mbi=309736
@@ -24,6 +26,10 @@ int main(int argn, char **argv) {
     make_bidirectional(xadj, adjncy);
 
     // auto [xadj, adjncy] = same_degree_graph(120000, {0, 0.22, 0.15, 0.55, 0.08});
+    
+    auto g = generate_local_tree(100000);
+    // graph_to_file(g, "fragments/graph.txt");
 
-    recurse_seperators(xadj, adjncy);
+
+    // recurse_seperators(xadj, adjncy);
 }

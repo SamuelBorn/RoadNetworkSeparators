@@ -6,7 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(${PROJECT_NAME} main.cpp graph_library.cpp random_local.cpp tree.cpp same_degree.cpp)
+add_executable(${PROJECT_NAME} main.cpp graph_library.cpp random_local.cpp
+                               tree.cpp same_degree.cpp)
 
 target_include_directories(
   ${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/KaHIP/deploy

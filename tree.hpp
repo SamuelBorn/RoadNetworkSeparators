@@ -21,3 +21,5 @@ int get_diameter(std::vector<std::vector<int>> &tree);
 // Function to analyze and display the diameter of trees for different sizes
 void diameter_overview(int max_size = 100000, int step_size = 1000, int runs = 5);
 
+
+std::vector<std::vector<int>> generate_local_tree(int n);

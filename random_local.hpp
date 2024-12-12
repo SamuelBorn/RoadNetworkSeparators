@@ -4,21 +4,17 @@
 #include <cmath>
 #include <cstdlib>
 #include <random>
-#include <utility>
 #include <vector>
 
+#include "global.hpp"
 #include "graph_library.hpp"
 #include "tree.hpp"
 
-int dist_linear(int u, int v, int n);
-int dist_quadratic(int u, int v, int n);
-int dist_exp(int u, int v, int n);
+double distance_linear(int u, int v, int n);
+double distance_poly(int u, int v, int n);
+double distance_exp(int u, int v, int n);
+int sample_distribution(std::vector<double> &cumulative_weights);
+int sample_local_neighbor(int u, std::vector<double> &cumulative_weights);
+std::vector<double> cumulative_distance_weights(int n, double (*distance)(int, int, int));
+std::pair<std::vector<int>, std::vector<int>> random_local_graph(int n, int m, double (*distance)(int, int, int));
 
-std::pair<int, int> get_random_edge(int n,
-                                    std::vector<double> &cumulative_weights);
-
-std::vector<double> get_cumulative_weights(int n,
-                                           int (*distance)(int, int, int));
-
-std::pair<std::vector<int>, std::vector<int>>
-random_local_graph(int n, int m, int (*dist)(int, int, int));

@@ -7,23 +7,44 @@
 #include <vector>
 
 #include "global.hpp"
+#include "random_local.hpp"
+
+std::vector<std::vector<int>> generate_local_tree(int n) {
+    auto cumulative_weights = cumulative_distance_weights(n, distance_poly);
+
+    std::vector<std::vector<int>> g(n);
+    auto visited = std::unordered_set<int>(n);
+
+    auto n1 = 0;
+    visited.insert(n1);
+
+    while (visited.size() < n) {
+        int n2 = sample_local_neighbor(n1, cumulative_weights);
+        if (visited.find(n2) == visited.end()) { // n2 not visited
+            visited.insert(n2);
+            g[n1].push_back(n2);
+            g[n2].push_back(n1);
+            std::cout << visited.size() << std::endl;
+        }
+        n1 = n2;
+    }
+
+    return g;
+}
 
 std::vector<std::vector<int>> generate_random_tree(int n) {
     std::uniform_int_distribution<int> dist(0, n - 1);
 
     std::vector<std::vector<int>> g(n);
 
-    auto not_visited = std::unordered_set<int>(n);
     auto visited = std::unordered_set<int>(n);
-    for (size_t i = 1; i < n; i++)
-        not_visited.insert(i);
+
     auto n1 = 0;
     visited.insert(n1);
 
-    while (!not_visited.empty()) {
+    while (visited.size() < n) {
         int n2 = dist(rng);
-        if (not_visited.find(n2) != not_visited.end()) {
-            not_visited.erase(n2);
+        if (visited.find(n2) == visited.end()) { // n2 not visited
             visited.insert(n2);
 
             g[n1].push_back(n2);

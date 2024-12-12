@@ -184,3 +184,13 @@ void print_degree_distribution(std::vector<int> &xadj,
 bool has_edge(std::vector<std::vector<int>> &g, int from, int to) {
     return std::find(g[from].begin(), g[from].end(), to) != g[from].end();
 }
+
+void graph_to_file(std::vector<std::vector<int>> &g, std::string filename) {
+    std::ofstream(filename) << "";
+    for (size_t i = 0; i < g.size(); i++) {
+        for (size_t j = 0; j < g[i].size(); j++) {
+            std::ofstream(filename, std::ios::app)
+                << i << " " << g[i][j] << std::endl;
+        }
+    }
+}
