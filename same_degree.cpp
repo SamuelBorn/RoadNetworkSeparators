@@ -6,7 +6,7 @@
 #include "graph_library.hpp"
 #include "tree.hpp"
 
-bool is_as_expected(std::vector<std::vector<int>> &actual_degrees,
+bool is_as_expected(Graph &actual_degrees,
                     std::vector<int> &expected_degrees) {
     for (size_t i = 0; i < actual_degrees.size(); i++) {
         if (actual_degrees[i].size() < expected_degrees[i]) {
@@ -19,7 +19,7 @@ bool is_as_expected(std::vector<std::vector<int>> &actual_degrees,
 // returns: (element, (index vector, index in vector))
 // small bias towards nodes that are have a degree that does not occur often
 std::pair<int, std::pair<int, int>>
-random_node(std::vector<std::vector<int>> &actual_degrees,
+random_node(Graph &actual_degrees,
             std::vector<int> &expected_degrees) {
     auto tmp = std::vector<std::pair<int, int>>();
     for (size_t i = 0; i < actual_degrees.size() - 1; i++) {
@@ -42,7 +42,7 @@ same_degree_graph(int n, std::vector<double> degree_percentages) {
     for (auto e : degree_percentages)
         expected.push_back(std::floor(0.95 * e * n));
 
-    auto actual = std::vector<std::vector<int>>(expected.size());
+    auto actual = Graph(expected.size());
     for (int i = 0; i < n; i++) {
         auto degree = g[i].size();
         if (degree < expected.size()) {

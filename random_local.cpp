@@ -49,8 +49,7 @@ cumulative_distance_weights(int n, double (*distance)(int, int, int)) {
     return weights;
 }
 
-std::pair<std::vector<int>, std::vector<int>>
-random_local_graph(int n, int m, double (*distance)(int, int, int)) {
+Graph random_local_graph(int n, int m, double (*distance)(int, int, int)) {
     auto g = generate_random_tree(n);
     auto weights = cumulative_distance_weights(n, distance);
     auto uniform = std::uniform_int_distribution<int>(0, n - 1);
@@ -67,5 +66,5 @@ random_local_graph(int n, int m, double (*distance)(int, int, int)) {
         }
     }
 
-    return get_adjacency_array(g);
+    return g;
 }

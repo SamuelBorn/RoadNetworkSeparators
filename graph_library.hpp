@@ -1,37 +1,28 @@
 #pragma once
 
+#include <algorithm>
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <map>
-#include <set>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 
-void make_bidirectional(std::vector<int> &xadj, std::vector<int> &adjncy);
+#include "global.hpp"
+#include "kaHIP_interface.h"
 
-void expand_component(int init_node, std::vector<int> &xadj,
-                      std::vector<int> &adjncy, std::unordered_set<int> &sep,
+typedef std::vector<std::vector<int>> Graph;
+
+Graph get_graph(std::vector<int> &xadj, std::vector<int> &adjncy);
+void make_bidirectional(Graph &g);
+void expand_component(int init_node, Graph &g, std::unordered_set<int> &sep,
                       std::vector<int> &part);
-
-std::vector<int> partition_from_separator(std::vector<int> &xadj,
-                                          std::vector<int> &adjncy,
+std::vector<int> partition_from_separator(Graph &g,
                                           std::unordered_set<int> &sep);
-
-std::pair<std::vector<int>, std::vector<int>>
-get_adjacency_array(std::map<int, std::vector<int>> &g);
-
-std::pair<std::vector<int>, std::vector<int>>
-get_adjacency_array(std::vector<std::vector<int>> &g);
-
-std::vector<std::pair<std::vector<int>, std::vector<int>>>
-get_subgraphs(std::vector<int> &xadj, std::vector<int> &adjncy,
-              std::unordered_set<int> &sep);
-
-void print_degree_distribution(std::vector<int> &xadj,
-                               std::vector<int> &adjncy);
-
-bool has_edge(std::vector<std::vector<int>> &g, int from, int to);
-
-void recurse_seperators(std::vector<int> &xadj, std::vector<int> &adjncy);
-
-void graph_to_file(std::vector<std::vector<int>> &g, std::string filename);
+Graph get_graph(std::map<int, std::vector<int>> &g_map);
+std::pair<std::vector<int>, std::vector<int>> get_adjacency_array(Graph &g);
+std::vector<Graph> get_subgraphs(Graph &g, std::unordered_set<int> &sep);
+void recurse_seperators(Graph &g);
+void print_degree_distribution(Graph &g);
+bool has_edge(Graph &g, int from, int to);
+void graph_to_file(Graph &g, std::string filename);
