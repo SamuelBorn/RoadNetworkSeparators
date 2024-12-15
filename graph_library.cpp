@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <queue>
 #include <unordered_set>
 #include <vector>
 
@@ -171,4 +172,48 @@ void graph_to_file(Graph &g, std::string filename) {
                 << i << " " << g[i][j] << std::endl;
         }
     }
+}
+
+std::vector<double> bfs(Graph &g, int start) {
+    auto n = g.size();
+    auto distance = std::vector<double>(n, -1);
+    auto queue = std::queue<int>();
+
+    distance[start] = 0;
+    queue.push(start);
+
+    while (!queue.empty()) {
+        auto current = queue.front();
+        queue.pop();
+
+        for (auto neighbor : g[current]) {
+            if (distance[neighbor] == -1) {
+                distance[neighbor] = distance[current] + 1;
+                queue.push(neighbor);
+            }
+        }
+    }
+
+    return distance;
+}
+
+std::pair<int, int> farthest_node(int start, Graph &tree) {
+    auto distance = bfs(tree, start);
+    auto max_dist = -1;
+    auto max_dist_node = -1;
+
+    for (size_t i = 0; i < tree.size(); i++) {
+        if (distance[i] > max_dist) {
+            max_dist = distance[i];
+            max_dist_node = i;
+        }
+    }
+
+    return {max_dist_node, max_dist};
+}
+
+int diameter(Graph &tree) {
+    auto [farthest, _] = farthest_node(0, tree);
+    auto [__, diameter] = farthest_node(farthest, tree);
+    return diameter;
 }

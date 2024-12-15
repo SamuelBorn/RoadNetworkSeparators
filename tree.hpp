@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <queue>
 #include <random>
@@ -8,10 +9,10 @@
 #include <vector>
 
 #include "global.hpp"
+#include "graph_library.hpp"
+#include "random_local.hpp"
 
 Graph generate_local_tree(int n);
 Graph generate_random_tree(int n);
-std::pair<int, int> find_farthest_node(int start, Graph &tree);
-int get_diameter(Graph &tree);
-void print_diameter_overview(int max_size = 100000, int step_size = 1000,
+void print_diameter_overview(int max_size = 1000, int step_size = 100,
                              int runs = 5);

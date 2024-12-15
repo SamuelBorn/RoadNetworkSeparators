@@ -68,3 +68,9 @@ Graph random_local_graph(int n, int m, double (*distance)(int, int, int)) {
 
     return g;
 }
+
+
+Graph random_local_graph_tree_distance(int n, int m, double (*distance)(int, int, int)) {
+    auto g = generate_random_tree(n);
+
+}

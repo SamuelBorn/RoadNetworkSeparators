@@ -25,5 +25,7 @@ int main(int argn, char **argv) {
     // make_bidirectional(g);
     // recurse_seperators(g);
 
-    print_diameter_overview();
+    print_diameter_overview(1000, 100, 100);
+    // auto tree = generate_local_tree(1000);
+    // std::cout << "diameter: " << get_diameter(tree) << std::endl;
 }
