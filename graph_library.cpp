@@ -4,7 +4,9 @@
 #include <iostream>
 #include <map>
 #include <queue>
+#include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "global.hpp"
@@ -127,8 +129,8 @@ void recurse_seperators(Graph &g) {
                    &separator_raw);
 
     std::cout << n << "\t" << num_separator_vertices << std::endl;
-    // std::ofstream("fragments/karlsruhe.txt", std::ios::app)
-    //     << n << " " << num_separator_vertices << std::endl;
+    std::ofstream("fragments/tree_local_max.txt", std::ios::app)
+        << n << " " << num_separator_vertices << std::endl;
 
     auto separator = std::unordered_set<int>(
         separator_raw, separator_raw + num_separator_vertices);
@@ -136,7 +138,7 @@ void recurse_seperators(Graph &g) {
     for (auto &g : get_subgraphs(g, separator)) {
         if (g.size() > 200) {
             recurse_seperators(g);
-            break;
+            // break;
         }
     }
 }
@@ -176,10 +178,10 @@ void graph_to_file(Graph &g, std::string filename) {
 
 std::vector<double> bfs(Graph &g, int start) {
     auto n = g.size();
-    auto distance = std::vector<double>(n, -1);
+    auto distances = std::vector<double>(n, -1);
     auto queue = std::queue<int>();
 
-    distance[start] = 0;
+    distances[start] = 0;
     queue.push(start);
 
     while (!queue.empty()) {
@@ -187,14 +189,64 @@ std::vector<double> bfs(Graph &g, int start) {
         queue.pop();
 
         for (auto neighbor : g[current]) {
-            if (distance[neighbor] == -1) {
-                distance[neighbor] = distance[current] + 1;
+            if (distances[neighbor] == -1) {
+                distances[neighbor] = distances[current] + 1;
                 queue.push(neighbor);
             }
         }
     }
 
-    return distance;
+    return distances;
+}
+
+// return node ids and distances
+std::unordered_map<int, double> bfs_partial(Graph &g, int start, int max) {
+    auto n = g.size();
+    auto distances = std::unordered_map<int, double>();
+    auto queue = std::queue<int>();
+
+    distances[start] = 0;
+    queue.push(start);
+
+    while (!queue.empty() && distances.size() < max) {
+        auto current = queue.front();
+        queue.pop();
+
+        for (auto neighbor : g[current]) {
+            if (distances.find(neighbor) == distances.end()) {
+                distances[neighbor] = distances[current] + 1;
+                queue.push(neighbor);
+            }
+        }
+    }
+
+    return distances;
+}
+
+std::vector<std::vector<int>> floyd_warshall(Graph &g) {
+    auto n = g.size();
+    auto distances = std::vector<std::vector<int>>(n, std::vector<int>(n, -1));
+
+    for (size_t i = 0; i < n; i++) {
+        distances[i][i] = 0;
+        for (auto neighbor : g[i]) {
+            distances[i][neighbor] = 1;
+        }
+    }
+
+    for (size_t k = 0; k < n; k++) {
+        for (size_t i = 0; i < n; i++) {
+            for (size_t j = 0; j < n; j++) {
+                if (distances[i][k] != -1 && distances[k][j] != -1 &&
+                    (distances[i][j] == -1 ||
+                     distances[i][j] > distances[i][k] + distances[k][j])) {
+                    distances[i][j] = distances[i][k] + distances[k][j];
+                }
+            }
+        }
+    }
+
+    return distances;
 }
 
 std::pair<int, int> farthest_node(int start, Graph &tree) {
@@ -216,4 +268,21 @@ int diameter(Graph &tree) {
     auto [farthest, _] = farthest_node(0, tree);
     auto [__, diameter] = farthest_node(farthest, tree);
     return diameter;
+}
+
+std::vector<int> distance(Graph &g, int u, int v) {}
+
+int lca(Graph &g, int u, int v, std::vector<int> &depth,
+        std::vector<int> &parent) {
+    while (depth[u] > depth[v]) {
+        u = parent[u];
+    }
+    while (depth[v] > depth[u]) {
+        v = parent[v];
+    }
+    while (u != v) {
+        u = parent[u];
+        v = parent[v];
+    }
+    return u;
 }

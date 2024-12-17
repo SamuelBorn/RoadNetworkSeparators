@@ -69,8 +69,69 @@ Graph random_local_graph(int n, int m, double (*distance)(int, int, int)) {
     return g;
 }
 
-
-Graph random_local_graph_tree_distance(int n, int m, double (*distance)(int, int, int)) {
+Graph random_local_graph_tree_distance_hard_limit(int n, int m) {
     auto g = generate_random_tree(n);
 
+    auto remaining = m - n + 1;
+    while (remaining > 0) {
+        std::cout << remaining << std::endl;
+        auto u = std::uniform_int_distribution<int>(0, n - 1)(rng);
+
+        auto map = bfs_partial(g, u, 500);
+        auto ids = std::vector<int>();
+        auto weights = std::vector<double>();
+        ids.reserve(map.size());
+        weights.reserve(map.size());
+
+        for (auto [node, d] : map) {
+            ids.push_back(node);
+            if (d == 0) {
+                weights.push_back(0);
+            } else {
+                weights.push_back(1.0 / std::pow(d, 3));
+            }
+        }
+
+        auto dist =
+            std::discrete_distribution<int>(weights.begin(), weights.end());
+        auto idx = dist(rng);
+        auto v = ids[idx];
+
+        if (!has_edge(g, u, v)) {
+            g[u].push_back(v);
+            g[v].push_back(u);
+            remaining--;
+        }
+    }
+
+    return g;
+}
+
+Graph random_local_graph_tree_distance(int n, int m) {
+    auto g = generate_random_tree(n);
+
+    auto remaining = m - n + 1;
+    while (remaining > 0) {
+        std::cout << remaining << std::endl;
+        auto u = std::uniform_int_distribution<int>(0, n - 1)(rng);
+
+        auto distances = bfs(g, u);
+        distances[u] = 1;
+        for (size_t i = 0; i < distances.size(); i++) {
+            distances[i] = 1 / std::pow(distances[i], 3.6);
+        }
+        distances[u] = 0;
+
+        auto dist =
+            std::discrete_distribution<int>(distances.begin(), distances.end());
+        auto v = dist(rng);
+
+        if (!has_edge(g, u, v)) {
+            g[u].push_back(v);
+            g[v].push_back(u);
+            remaining--;
+        }
+    }
+
+    return g;
 }

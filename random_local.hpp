@@ -18,5 +18,5 @@ int sample_local_neighbor(int u, std::vector<double> &cumulative_weights);
 std::vector<double>
 cumulative_distance_weights(int n, double (*distance)(int, int, int));
 Graph random_local_graph(int n, int m, double (*distance)(int, int, int));
-Graph random_local_graph_tree_distance(int n, int m,
-                                       double (*distance)(int, int, int));
+Graph random_local_graph_tree_distance(int n, int m);
+Graph random_local_graph_tree_distance_hard_limit(int n, int m);

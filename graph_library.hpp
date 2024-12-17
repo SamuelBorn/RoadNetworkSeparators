@@ -6,6 +6,7 @@
 #include <iostream>
 #include <map>
 #include <queue>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -37,6 +38,10 @@ bool has_edge(Graph &g, int from, int to);
 void graph_to_file(Graph &g, std::string filename);
 
 std::vector<double> bfs(Graph &g, int start);
+
+std::unordered_map<int, double> bfs_partial(Graph &g, int start, int max);
+
+std::vector<std::vector<int>> floyd_warshall(Graph &g);
 
 std::pair<int, int> farthest_node(int start, Graph &tree);
 

@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 
-experiment = "karlsruhe"
+experiment = sys.argv[1]
 
 # Scatter plot data
 x_values = []
