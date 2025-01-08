@@ -1,6 +1,2 @@
-.cache
-build
-*.png
-*.txt
-*.svg
-*.pdf
+target
+output
