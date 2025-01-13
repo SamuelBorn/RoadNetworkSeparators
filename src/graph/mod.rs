@@ -1,6 +1,8 @@
-use std::{collections::HashMap, io};
+use rand::seq::SliceRandom;
+use rand::Rng;
+use std::{collections::{HashMap, HashSet}, io};
 
-use crate::library;
+use crate::{library, separator};
 pub mod grid;
 pub mod positioned_graph;
 pub mod tree;
@@ -12,6 +14,12 @@ pub struct Graph {
 impl Graph {
     pub fn new(data: Vec<Vec<usize>>) -> Self {
         Graph { data }
+    }
+
+    pub fn with_node_count(n: usize) -> Self {
+        Graph {
+            data: vec![Vec::new(); n],
+        }
     }
 
     pub fn from_file(first_out_file: &str, head_file: &str) -> io::Result<Self> {
@@ -53,12 +61,35 @@ impl Graph {
         }
     }
 
+    pub fn remove_edge(&mut self, i: usize, j: usize) {
+        if let Some(pos) = self.data[i].iter().position(|&x| x == j) {
+            self.data[i].remove(pos);
+        }
+
+        if let Some(pos) = self.data[j].iter().position(|&x| x == i) {
+            self.data[j].remove(pos);
+        }
+    }
+
+    pub fn remove_random_edge(&mut self) {
+        let mut rng = rand::thread_rng();
+        let u = rng.gen_range(0..self.get_num_nodes());
+        let v = self.get_neighbors(u).choose(&mut rng);
+        if let Some(&v) = v {
+            self.remove_edge(u, v);
+        }
+    }
+
     pub fn get_num_nodes(&self) -> usize {
         self.data.len()
     }
 
     pub fn get_num_edges(&self) -> usize {
-        self.data.iter().map(|v| v.len()).sum::<usize>()
+        self.data.iter().map(|v| v.len()).sum::<usize>() / 2
+    }
+
+    pub fn get_average_degree(&self) -> f64 {
+        self.data.iter().map(|v| v.len()).sum::<usize>() as f64 / self.get_num_nodes() as f64
     }
 
     pub fn get_neighbors(&self, u: usize) -> &[usize] {
@@ -104,6 +135,11 @@ impl Graph {
         distances
     }
 
+    pub fn is_connected(&self) -> bool {
+        let distances = self.bfs(0);
+        distances.iter().all(|&d| d != usize::MAX)
+    }
+
     pub fn bfs(&self, start: usize) -> Vec<usize> {
         let mut distances = vec![usize::MAX; self.get_num_nodes()];
         distances[start] = 0;
@@ -121,6 +157,16 @@ impl Graph {
         }
 
         distances
+    }
+
+    pub fn get_largest_subgraph(&self) -> Graph {
+        let separator = HashSet::new();
+        let subgraphs = self.get_subgraphs(&separator);
+
+        subgraphs
+            .into_iter()
+            .max_by_key(|g| g.get_num_nodes())
+            .unwrap()
     }
 
     fn get_furthest_node(&self, start: usize) -> (usize, usize) {
@@ -166,5 +212,12 @@ mod tests {
     fn test_bfs() {
         let g = Graph::new(vec![vec![1, 3], vec![0, 2], vec![1, 3], vec![0, 2]]);
         assert_eq!(g.bfs(0), vec![0, 1, 2, 1]);
+    }
+
+    #[test]
+    fn test_average_degree() {
+        let g = Graph::new(vec![vec![1, 2], vec![0, 2], vec![0, 1, 3], vec![2]]);
+
+        assert!((g.get_average_degree() - 2.0).abs() < 0.001);
     }
 }

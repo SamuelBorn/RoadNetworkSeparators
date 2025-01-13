@@ -3,8 +3,8 @@ use std::hash::Hash;
 use std::io::Write;
 use std::{fs, ptr};
 
-use crate::graph;
 use crate::graph::Graph;
+use crate::{graph, separator};
 
 #[link(name = "kahip")]
 extern "C" {
@@ -70,6 +70,14 @@ impl Graph {
         }
     }
 
+    pub fn get_separator_wrapper(&self, mode: Mode) -> HashSet<usize> {
+        self.get_separator(2, 0.33, rand::random(), mode)
+    }
+
+    pub fn get_separator_size(&self, mode: Mode) -> usize {
+        self.get_separator_wrapper(mode).len()
+    }
+
     pub fn get_subgraphs(&self, separator: &HashSet<usize>) -> Vec<Graph> {
         let mut used = vec![false; self.get_num_nodes()];
         let mut subgraphs = Vec::new();
@@ -110,24 +118,27 @@ impl Graph {
         subgraphs.iter().map(|x| get_graph(&x)).collect()
     }
 
-    pub fn recurse_separator(&self, seed: i32, mode: Mode) {
-        let mut separator = self.get_separator(2, 0.33, seed, mode);
+    pub fn recurse_separator(&self, mode: Mode, file: Option<&str>) {
+        let mut separator = self.get_separator_wrapper(mode);
         let mut subgraphs = self.get_subgraphs(&separator);
 
-        println!("{} {}", self.get_num_nodes(), self.get_diameter());
+        println!("{} {}", self.get_num_nodes(), separator.len());
 
-        //let mut separator_file = fs::OpenOptions::new()
-        //    .append(true)
-        //    .create(true)
-        //    .open("output/diameter_karlsruhe.txt")
-        //    .unwrap();
-        //separator_file
-        //    .write_all(format!("{} {}\n", self.get_num_nodes(), self.get_diameter()).as_bytes())
-        //    .unwrap();
+        if let Some(file) = file {
+            let mut separator_file = fs::OpenOptions::new()
+                .append(true)
+                .create(true)
+                .open(file)
+                .unwrap();
+            separator_file
+                .write_all(format!("{} {}\n", self.get_num_nodes(), separator.len()).as_bytes())
+                .unwrap();
+        }
 
         for i in 0..subgraphs.len() {
             if subgraphs[i].get_num_nodes() > 200 {
-                subgraphs[i].recurse_separator(seed, mode);
+                subgraphs[i].recurse_separator(mode, file);
+                break;
             }
         }
     }
@@ -169,7 +180,7 @@ mod tests {
         g.insert(2, vec![99, 0]);
         let g = get_graph(&g);
         assert_eq!(g.get_num_nodes(), 3);
-        assert_eq!(g.get_num_edges(), 6);
+        assert_eq!(g.get_num_edges(), 3);
 
         let set1: HashSet<usize> = [1, 2].iter().cloned().collect();
         let set2: HashSet<usize> = [0, 1].iter().cloned().collect();
@@ -187,9 +198,9 @@ mod tests {
         let subgraphs = g.get_subgraphs(&s);
         assert_eq!(subgraphs.len(), 2);
         assert_eq!(subgraphs[0].get_num_nodes(), 2);
-        assert_eq!(subgraphs[1].get_num_edges(), 2);
+        assert_eq!(subgraphs[1].get_num_edges(), 1);
         assert_eq!(subgraphs[0].get_num_nodes(), 2);
-        assert_eq!(subgraphs[1].get_num_edges(), 2);
+        assert_eq!(subgraphs[1].get_num_edges(), 1);
     }
 
     #[test]

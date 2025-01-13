@@ -45,6 +45,6 @@ mod tests {
         assert_eq!(g.get_num_edges(), m * 2);
 
         // expect 22 at highest level
-        g.recurse_separator(0, crate::separator::Mode::Fast);
+        g.recurse_separator(crate::separator::Mode::Fast, None);
     }
 }

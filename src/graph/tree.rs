@@ -34,7 +34,7 @@ mod tests {
     fn test_generate_random_tree() {
         let graph = generate_random_tree(100);
         assert_eq!(graph.get_num_nodes(), 100);
-        assert_eq!(graph.get_num_edges(), 99 * 2);
+        assert_eq!(graph.get_num_edges(), 99);
 
         for i in 0..graph.get_num_nodes() {
             assert!(graph.get_neighbors(i).len() >= 1);
