@@ -1,0 +1,3 @@
+[submodule "dependencies/KaHIP"]
+	path = dependencies/KaHIP
+	url = https://github.com/KaHIP/KaHIP
