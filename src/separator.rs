@@ -161,6 +161,7 @@ fn get_graph(g_map: &HashMap<usize, Vec<usize>>) -> Graph {
     Graph::new(data)
 }
 
+
 #[cfg(test)]
 mod tests {
     use super::*;
