@@ -34,12 +34,12 @@ def visualize(args):
     plt.figure(figsize=(8, 6))
 
     plot_function(np.cbrt, find_max_x(args.files), "$\sqrt[3]{x}$")
-    plot_function(np.sqrt, find_max_x(args.files), "$\sqrt{x}$")
+    # plot_function(np.sqrt, find_max_x(args.files), "$\sqrt{x}$")
 
     markers = ["^", "x", "v", "+", "*", "o", "s"]
     colors = [
-        "#E69F00",
         "#56B4E9",
+        "#E69F00",
         "#009E73",
         "#F0E442",
         "#0072B2",
