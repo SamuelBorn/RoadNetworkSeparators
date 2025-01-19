@@ -45,7 +45,8 @@ impl Graph {
         let n = self.get_num_nodes() as i32;
         let (xadj, adjncy) = self.get_adjacency_array();
         let mut num_separator_vertices = 0;
-        let mut separator_raw = vec![0; self.get_num_nodes() as usize].as_mut_ptr();
+        let mut sep = vec![0; self.get_num_nodes() as usize];
+        let mut separator_raw = sep.as_mut_ptr();
 
         unsafe {
             node_separator(
