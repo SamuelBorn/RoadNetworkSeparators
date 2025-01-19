@@ -1,6 +1,9 @@
 use std::collections::HashSet;
 use std::fs;
 use std::io::Write;
+use std::sync::mpsc::channel;
+use std::sync::{Arc, Mutex};
+use threadpool::ThreadPool;
 
 use crate::graph::Graph;
 use bimap::BiMap;
@@ -91,6 +94,54 @@ pub fn save_separator_distribution(
                 .write_all(format!("{} {}\n", g.get_num_nodes(), s).as_bytes());
         }
     }
+}
+
+pub fn save_separator_distribution_multithreaded(
+    step_size: usize,
+    max_size: usize,
+    num_samples: usize,
+    output_file: &str,
+) {
+    let num_cores = num_cpus::get();
+    let pool = ThreadPool::new(num_cores);
+    let (tx, rx) = channel();
+
+    // Use Arc<Mutex<>> to safely share the output file across threads
+    let output_file = Arc::new(Mutex::new(output_file.to_string()));
+
+    for n in (step_size..=max_size).step_by(step_size) {
+        for _ in 0..num_samples {
+            let tx = tx.clone();
+            let output_file = Arc::clone(&output_file);
+
+            pool.execute(move || {
+                let g = generate_grid_with_avg_degree((n as f64).sqrt() as usize, 2.5);
+                let s = g.get_separator_size(crate::separator::Mode::Strong);
+
+                tx.send((g.get_num_nodes(), s))
+                    .expect("Failed to send data");
+
+                let mut file = output_file.lock().expect("Failed to lock file");
+                let mut file_handle = fs::OpenOptions::new()
+                    .append(true)
+                    .create(true)
+                    .open(&*file)
+                    .expect("Failed to open file");
+
+                file_handle
+                    .write_all(format!("{} {}\n", g.get_num_nodes(), s).as_bytes())
+                    .expect("Failed to write to file");
+            });
+        }
+    }
+
+    drop(tx);
+
+    for (num_nodes, separator_size) in rx.iter() {
+        println!("{} {}", num_nodes, separator_size);
+    }
+
+    pool.join();
 }
 
 #[cfg(test)]
