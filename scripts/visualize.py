@@ -25,7 +25,9 @@ def find_max_x(files):
 
 
 def plot_function(fn, max_x, label, color="black", alpha=0.2):
-    x = np.linspace(0, max_x, 500)
+    x_lin = np.linspace(0, max_x, 500)
+    x_log = np.logspace(0, np.log10(max_x), 500)
+    x = np.sort(np.concatenate((x_lin, x_log)))
     y = fn(x)
     plt.plot(x, y, label=label, color=color, alpha=alpha)
 
@@ -33,8 +35,14 @@ def plot_function(fn, max_x, label, color="black", alpha=0.2):
 def visualize(args):
     plt.figure(figsize=(8, 6))
 
-    plot_function(np.cbrt, find_max_x(args.files), "$\sqrt[3]{x}$")
-    # plot_function(np.sqrt, find_max_x(args.files), "$\sqrt{x}$")
+    if args.loglog:
+        plt.xscale("log")
+        plt.yscale("log")
+
+    if args.cbrt:
+        plot_function(np.cbrt, find_max_x(args.files), "$\sqrt[3]{x}$")
+    if args.sqrt:
+        plot_function(np.sqrt, find_max_x(args.files), "$\sqrt{x}$")
 
     markers = ["^", "x", "v", "+", "*", "o", "s"]
     colors = [
@@ -66,6 +74,9 @@ def parse_args():
     parser.add_argument("--output")
     parser.add_argument("--x-label", default="Number of nodes")
     parser.add_argument("--y-label", default="Size of separator")
+    parser.add_argument("--loglog", action="store_true")
+    parser.add_argument("--cbrt", action="store_true")
+    parser.add_argument("--sqrt", action="store_true")
     parser.add_argument("files", nargs="*")
 
     args = parser.parse_args()
