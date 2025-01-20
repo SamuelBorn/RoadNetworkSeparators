@@ -1,0 +1,6 @@
+In the current state of implementation, the "main" procedure launchs a Boltzmann sampler 
+for "triply derivated" connected planar graphs, with three different values of the parameter x.
+The three values correspond to an expected size of 1000, 10000, and 100000, respectively.
+
+To run the sampler, go to the directory BoltzmannPlanarGraphs/build/classes and type "java boltzmannplanargraphs.Main",
+then type the expected size you want (1000 or 10000 or 100000) 
