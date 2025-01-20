@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{self, Read};
 
 pub fn read_binary_vec<T: Sized>(file_path: &str) -> io::Result<Vec<T>> {
@@ -27,4 +27,15 @@ pub fn read_binary_vec<T: Sized>(file_path: &str) -> io::Result<Vec<T>> {
     }
 
     Ok(vec)
+}
+
+pub fn read_edge_list(file_path: &str) -> io::Result<Vec<(usize, usize)>> {
+    Ok(std::fs::read_to_string(file_path)?
+        .lines()
+        .skip(1)
+        .filter_map(|line| {
+            let mut nums = line.split_whitespace();
+            Some((nums.next()?.parse().ok()?, nums.next()?.parse().ok()?))
+        })
+        .collect())
 }

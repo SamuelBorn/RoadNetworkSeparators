@@ -10,6 +10,7 @@ pub mod grid;
 pub mod positioned_graph;
 pub mod tree;
 pub mod unit_disk;
+pub mod planar;
 
 #[derive(Debug, Clone)]
 pub struct Graph {
@@ -33,6 +34,11 @@ impl Graph {
             g.add_edge(u, v);
         }
         g
+    }
+
+    pub fn from_edge_list_file(file: &str) -> io::Result<Self> {
+        let edges = library::read_edge_list(file)?;
+        Ok(Graph::from_edge_list(edges))
     }
 
     pub fn from_file(first_out_file: &str, head_file: &str) -> io::Result<Self> {

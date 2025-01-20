@@ -13,6 +13,6 @@ fn main() {
     //grid::save_separator_distribution(10000, 1000000, 2, "output/loglog.txt");
     //grid::save_separator_distribution_multithreaded(10000, 1000000, 4, "output/loglog.txt");
 
-    let g = grid::generate_grid_with_avg_degree(10, 2.5);
-    g.to_json_file("output/grid.json");
+    //let g = Graph::from_edge_list_file("dependencies/BoltzmannPlanarGraphs/ListEdges.txt").unwrap();
+    //g.recurse_separator(Fast, Some("output/planar.txt"));
 }
