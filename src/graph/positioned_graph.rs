@@ -1,9 +1,7 @@
 use crate::Graph;
 
-use bimap::BiMap;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Position(pub i32, pub i32);
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Position(f32, f32);
 
 impl std::ops::Add for Position {
     type Output = Position;
@@ -15,11 +13,11 @@ impl std::ops::Add for Position {
 
 pub struct PositionedGraph {
     pub graph: Graph,
-    pub positions: BiMap<usize, Position>,
+    pub positions: Vec<Position>,
 }
 
 impl PositionedGraph {
-    pub fn new(graph: Graph, positions: BiMap<usize, Position>) -> PositionedGraph {
+    pub fn new(graph: Graph, positions: Vec<Position>) -> PositionedGraph {
         assert_eq!(graph.get_num_nodes(), positions.len());
         PositionedGraph { graph, positions }
     }

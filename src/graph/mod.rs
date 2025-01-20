@@ -1,6 +1,9 @@
 use rand::seq::SliceRandom;
 use rand::Rng;
-use std::{collections::{HashMap, HashSet}, io};
+use std::{
+    collections::{HashMap, HashSet},
+    io,
+};
 
 use crate::{library, separator};
 pub mod grid;
@@ -192,6 +195,18 @@ impl Graph {
         for (i, neighbors) in self.data.iter().enumerate() {
             println!("{}: {:?}", i, neighbors);
         }
+    }
+
+    pub fn to_json(&self) -> String {
+        let mut json_representation = HashMap::new();
+        for (index, neighbors) in self.data.iter().enumerate() {
+            json_representation.insert(index, neighbors);
+        }
+        serde_json::to_string(&json_representation).unwrap()
+    }
+
+    pub fn to_json_file(&self, filename: &str) {
+        std::fs::write(filename, self.to_json());
     }
 }
 
