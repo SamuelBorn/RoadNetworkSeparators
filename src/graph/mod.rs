@@ -9,7 +9,9 @@ use crate::{library, separator};
 pub mod grid;
 pub mod positioned_graph;
 pub mod tree;
+pub mod unit_disk;
 
+#[derive(Debug, Clone)]
 pub struct Graph {
     data: Vec<Vec<usize>>,
 }
@@ -23,6 +25,14 @@ impl Graph {
         Graph {
             data: vec![Vec::new(); n],
         }
+    }
+
+    pub fn from_edge_list(edges: Vec<(usize, usize)>) -> Self {
+        let mut g = Graph::with_node_count(0);
+        for (u, v) in edges {
+            g.add_edge(u, v);
+        }
+        g
     }
 
     pub fn from_file(first_out_file: &str, head_file: &str) -> io::Result<Self> {
@@ -74,13 +84,47 @@ impl Graph {
         }
     }
 
-    pub fn remove_random_edge(&mut self) {
+    pub fn remove_random_edge(&mut self) -> (usize, usize) {
+        let (u, v) = self.get_random_edge();
+        self.remove_edge(u, v);
+        (u, v)
+    }
+
+    pub fn remove_random_edge_stay_connected_approx(&mut self, mut num_checks: u32) -> (usize, usize) {
+        loop {
+            let (u, v) = self.remove_random_edge();
+
+            let mut queue = std::collections::VecDeque::from(vec![u]);
+            let mut visited = HashSet::new();
+            visited.insert(u);
+
+            while !queue.is_empty() && num_checks > 0 {
+                num_checks -= 1;
+                let u = queue.pop_front().unwrap();
+                for &neigh in self.get_neighbors(u) {
+                    if visited.contains(&neigh) {
+                        continue;
+                    }
+                    if neigh == v {
+                        return (u, v);
+                    }
+                    visited.insert(neigh);
+                    queue.push_back(neigh);
+                }
+            }
+
+            self.add_edge(u, v);
+        }
+    }
+
+    pub fn get_random_edge(&mut self) -> (usize, usize) {
         let mut rng = rand::thread_rng();
         let u = rng.gen_range(0..self.get_num_nodes());
-        let v = self.get_neighbors(u).choose(&mut rng);
-        if let Some(&v) = v {
-            self.remove_edge(u, v);
+        while self.get_neighbors(u).is_empty() {
+            let u = rng.gen_range(0..self.get_num_nodes());
         }
+        let v = self.get_neighbors(u).choose(&mut rng).unwrap();
+        (u, *v)
     }
 
     pub fn get_num_nodes(&self) -> usize {
@@ -234,5 +278,17 @@ mod tests {
         let g = Graph::new(vec![vec![1, 2], vec![0, 2], vec![0, 1, 3], vec![2]]);
 
         assert!((g.get_average_degree() - 2.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_remove_random_edge_stay_connected_approx() {
+        let g = Graph::from_edge_list(vec![(0, 1), (1, 2), (1, 3), (2, 4), (3, 4), (4, 5)]);
+
+        for _ in 0..100 {
+            let mut g_ = g.clone();
+            g_.remove_random_edge_stay_connected_approx();
+            //g_.remove_random_edge();
+            assert!(g_.is_connected());
+        }
     }
 }

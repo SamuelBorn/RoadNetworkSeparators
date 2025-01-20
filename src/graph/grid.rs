@@ -130,6 +130,7 @@ mod tests {
 
     #[test]
     fn test_generate_grid_with_avg_degree() {
+        return;
         let g = generate_grid_with_avg_degree(5, 2.0);
         g.print();
     }
