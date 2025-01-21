@@ -10,9 +10,6 @@ fn main() {
     //let g = Graph::from_file("../Graphs/karlsruhe/first_out", "../Graphs/karlsruhe/head").unwrap();
     //let g = Graph::from_file("../Graphs/germany/first_out", "../Graphs/germany/head").unwrap();
 
-    //grid::save_separator_distribution(10000, 1000000, 2, "output/loglog.txt");
-    //grid::save_separator_distribution_multithreaded(10000, 1000000, 4, "output/loglog.txt");
-
-    //let g = Graph::from_edge_list_file("dependencies/BoltzmannPlanarGraphs/ListEdges.txt").unwrap();
-    //g.recurse_separator(Fast, Some("output/planar.txt"));
+    let g = Graph::from_edge_list_file("dependencies/BoltzmannPlanarGraphs/300k").unwrap();
+    g.recurse_separator(Fast, Some("output/planar.txt"));
 }
