@@ -15,7 +15,7 @@ fn main() {
         }
     }
 
-    println!("cargo::rustc-env=LD_LIBRARY_PATH=./dependencies/KaHIP/deploy");
+    println!("cargo::rustc-env=LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./dependencies/KaHIP/deploy");
     println!("cargo:rustc-link-search=native=./dependencies/KaHIP/deploy");
     println!("cargo:rustc-link-lib=kahip");
 }
