@@ -10,7 +10,7 @@ use bimap::BiMap;
 use rand::seq::SliceRandom;
 use rand::Rng;
 
-use crate::graph::positioned_graph::Position;
+use crate::graph::geometric_graph::Position;
 
 pub fn generate_grid(side_length: usize) -> Graph {
     let mut g = Graph::with_node_count(side_length * side_length);

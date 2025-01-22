@@ -7,7 +7,7 @@ use std::{
 
 use crate::{library, separator};
 pub mod grid;
-pub mod positioned_graph;
+pub mod geometric_graph;
 pub mod tree;
 pub mod unit_disk;
 pub mod planar;

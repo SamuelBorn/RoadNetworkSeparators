@@ -14,15 +14,15 @@ impl std::ops::Add for Position {
     }
 }
 
-pub struct PositionedGraph {
+pub struct GeometricGraph {
     pub graph: Graph,
     pub positions: Vec<Position>,
 }
 
-impl PositionedGraph {
-    pub fn new(graph: Graph, positions: Vec<Position>) -> PositionedGraph {
+impl GeometricGraph {
+    pub fn new(graph: Graph, positions: Vec<Position>) -> GeometricGraph {
         assert_eq!(graph.get_num_nodes(), positions.len());
-        PositionedGraph { graph, positions }
+        GeometricGraph { graph, positions }
     }
 
     pub fn from_file(
@@ -44,6 +44,6 @@ impl PositionedGraph {
             .map(|(lat, lon)| Position(lat, lon))
             .collect();
 
-        Ok(PositionedGraph::new(g, positions))
+        Ok(GeometricGraph::new(g, positions))
     }
 }

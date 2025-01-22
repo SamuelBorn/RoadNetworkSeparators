@@ -4,13 +4,13 @@ pub mod local;
 pub mod separator;
 
 use graph::{grid, Graph};
-use graph::positioned_graph::PositionedGraph;
+use graph::geometric_graph::GeometricGraph;
 use separator::Mode::*;
 
 fn main() {
     //let g = Graph::from_file("../Graphs/karlsruhe/first_out", "../Graphs/karlsruhe/head").unwrap();
     //let g = Graph::from_file("../Graphs/germany/first_out", "../Graphs/germany/head").unwrap();
-    let g = PositionedGraph::from_file(
+    let g = GeometricGraph::from_file(
         "../Graphs/germany/first_out",
         "../Graphs/germany/head",
         "../Graphs/germany/latitude",
