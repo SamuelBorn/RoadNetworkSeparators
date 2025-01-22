@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def scatter(filename, color, marker):
+def scatter(filename, color, marker, alpha=0.05):
     x_values, y_values = zip(*[map(int, line.split()) for line in open(filename)])
     plt.scatter(
         x_values,
@@ -13,6 +13,7 @@ def scatter(filename, color, marker):
         color=color,
         marker=marker,
         label=os.path.splitext(os.path.basename(filename))[0],
+        alpha=alpha,
     )
 
 
@@ -24,12 +25,10 @@ def find_max_x(files):
     return max_x
 
 
-def plot_function(fn, max_x, label, color="black", alpha=0.2):
-    x_lin = np.linspace(0, max_x, 500)
-    x_log = np.logspace(0, np.log10(max_x), 500)
-    x = np.sort(np.concatenate((x_lin, x_log)))
+def plot_function(fn, max_x, label, color="black", alpha=0.2, linestyle="-"):
+    x = np.logspace(0, np.log10(max_x), 500)
     y = fn(x)
-    plt.plot(x, y, label=label, color=color, alpha=alpha)
+    plt.plot(x, y, label=label, color=color, alpha=alpha, linestyle=linestyle)
 
 
 def visualize(args):
@@ -39,10 +38,10 @@ def visualize(args):
         plt.xscale("log")
         plt.yscale("log")
 
-    if args.cbrt:
-        plot_function(np.cbrt, find_max_x(args.files), "$\sqrt[3]{x}$")
     if args.sqrt:
         plot_function(np.sqrt, find_max_x(args.files), "$\sqrt{x}$")
+    if args.cbrt:
+        plot_function(np.cbrt, find_max_x(args.files), "$\sqrt[3]{x}$", linestyle="-.")
 
     markers = ["^", "x", "v", "+", "*", "o", "s"]
     colors = [
