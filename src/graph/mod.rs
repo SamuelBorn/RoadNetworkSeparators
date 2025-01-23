@@ -1,16 +1,15 @@
 use rand::seq::SliceRandom;
 use rand::Rng;
 use std::{
-    collections::{HashMap, HashSet},
-    io,
+    collections::{HashMap, HashSet}, fs, io, path::Path
 };
 
 use crate::{library, separator};
-pub mod grid;
 pub mod geometric_graph;
+pub mod grid;
+pub mod planar;
 pub mod tree;
 pub mod unit_disk;
-pub mod planar;
 
 #[derive(Debug, Clone)]
 pub struct Graph {
@@ -41,12 +40,12 @@ impl Graph {
         Ok(Graph::from_edge_list(edges))
     }
 
-    pub fn from_file(first_out_file: &str, head_file: &str) -> io::Result<Self> {
-        let xadj = library::read_binary_vec::<u32>(first_out_file)?
+    pub fn from_file(dir: &Path) -> io::Result<Self> {
+        let xadj = library::read_binary_vec::<u32>(&dir.join("first_out"))?
             .into_iter()
             .map(|x| x as usize)
             .collect::<Vec<usize>>();
-        let adjncy = library::read_binary_vec::<u32>(head_file)?
+        let adjncy = library::read_binary_vec::<u32>(&dir.join("head"))?
             .into_iter()
             .map(|x| x as usize)
             .collect::<Vec<usize>>();
@@ -63,6 +62,13 @@ impl Graph {
         }
 
         Ok(Graph { data })
+    }
+
+    pub fn to_file(&self, dir: &Path) -> io::Result<()> {
+        fs::create_dir_all(dir)?;
+        let (xadj, adjncy) = self.get_adjacency_array();
+        library::write_binary_vec(&xadj, &dir.join("first_out"))?;
+        library::write_binary_vec(&adjncy, &dir.join("head"))
     }
 
     pub fn has_edge(&self, i: usize, j: usize) -> bool {
@@ -96,7 +102,10 @@ impl Graph {
         (u, v)
     }
 
-    pub fn remove_random_edge_stay_connected_approx(&mut self, mut num_checks: u32) -> (usize, usize) {
+    pub fn remove_random_edge_stay_connected_approx(
+        &mut self,
+        mut num_checks: u32,
+    ) -> (usize, usize) {
         loop {
             let (u, v) = self.remove_random_edge();
 
@@ -292,7 +301,7 @@ mod tests {
 
         for _ in 0..100 {
             let mut g_ = g.clone();
-            g_.remove_random_edge_stay_connected_approx();
+            g_.remove_random_edge_stay_connected_approx(3);
             //g_.remove_random_edge();
             assert!(g_.is_connected());
         }

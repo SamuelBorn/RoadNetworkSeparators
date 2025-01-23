@@ -1,8 +1,9 @@
 use std::fs::{self, File};
 use std::io::{self, Read};
+use std::path::Path;
 
-pub fn read_binary_vec<T: Sized>(file_path: &str) -> io::Result<Vec<T>> {
-    let mut file = File::open(file_path)?;
+pub fn read_binary_vec<T: Sized>(file: &Path) -> io::Result<Vec<T>> {
+    let mut file = File::open(file)?;
     let mut buffer = Vec::new();
 
     // Read the entire file into the buffer
@@ -29,8 +30,23 @@ pub fn read_binary_vec<T: Sized>(file_path: &str) -> io::Result<Vec<T>> {
     Ok(vec)
 }
 
-pub fn read_edge_list(file_path: &str) -> io::Result<Vec<(usize, usize)>> {
-    Ok(std::fs::read_to_string(file_path)?
+pub fn write_binary_vec<T: Sized>(input: &[T], file: &Path) -> io::Result<()> {
+    let element_size = std::mem::size_of::<T>();
+    let buffer_size = input.len() * element_size;
+    let mut buffer = Vec::with_capacity(buffer_size);
+
+    for elem in input {
+        // Convert the reference to type T into a byte slice
+        let elem_bytes =
+            unsafe { std::slice::from_raw_parts((elem as *const T) as *const u8, element_size) };
+        buffer.extend_from_slice(elem_bytes);
+    }
+
+    fs::write(file, buffer)
+}
+
+pub fn read_edge_list(file: &str) -> io::Result<Vec<(usize, usize)>> {
+    Ok(std::fs::read_to_string(file)?
         .lines()
         .skip(1)
         .filter_map(|line| {
@@ -38,4 +54,25 @@ pub fn read_edge_list(file_path: &str) -> io::Result<Vec<(usize, usize)>> {
             Some((nums.next()?.parse().ok()?, nums.next()?.parse().ok()?))
         })
         .collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::File;
+    use std::io::Write;
+    use std::path::Path;
+
+    #[test]
+    fn test_read_write_binary_vec() -> Result<(), Box<dyn std::error::Error>> {
+        //let input = vec![1, 2, 3, 4, 5];
+        //let mut tmpfile = tempfile::NamedTempFile::new()?;
+        //
+        //write_binary_vec(&input, tmpfile.path())?;
+        //let output = read_binary_vec::<i32>()?;
+        //
+        //assert_eq!(input, output);
+        //
+        Ok(())
+    }
 }
