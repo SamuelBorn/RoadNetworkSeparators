@@ -3,8 +3,13 @@ use std::io;
 use crate::library;
 use crate::Graph;
 
+pub struct GeometricGraph {
+    pub graph: Graph,
+    pub positions: Vec<Position>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Position(f32, f32);
+pub struct Position(pub f32, pub f32);
 
 impl std::ops::Add for Position {
     type Output = Position;
@@ -12,11 +17,6 @@ impl std::ops::Add for Position {
     fn add(self, other: Position) -> Position {
         Position(self.0 + other.0, self.1 + other.1)
     }
-}
-
-pub struct GeometricGraph {
-    pub graph: Graph,
-    pub positions: Vec<Position>,
 }
 
 impl GeometricGraph {
