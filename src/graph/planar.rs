@@ -1,0 +1,99 @@
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
+
+use super::geometric_graph::{GeometricGraph, Position};
+
+const EPS: f32 = 0.000001;
+
+pub fn intersection(a1: Position, a2: Position, b1: Position, b2: Position) -> Option<Position> {
+    let denom = (b2.1 - b1.1) * (a2.0 - a1.0) - (b2.0 - b1.0) * (a2.1 - a1.1);
+
+    if denom.abs() < EPS {
+        return None;
+    }
+
+    let ua = ((b2.0 - b1.0) * (a1.1 - b1.1) - (b2.1 - b1.1) * (a1.0 - b1.0)) / denom;
+    let ub = ((a2.0 - a1.0) * (a1.1 - b1.1) - (a2.1 - a1.1) * (a1.0 - b1.0)) / denom;
+
+    if ua > EPS && ua < 1.0 - EPS && ub > EPS && ub < 1.0 - EPS {
+        Some(Position(
+            a1.0 + ua * (a2.0 - a1.0),
+            a1.1 + ua * (a2.1 - a1.1),
+        ))
+    } else {
+        None
+    }
+}
+
+pub fn naive_find_intersections(g: &GeometricGraph) -> Vec<Position> {
+    let edges = g.graph.get_edges();
+
+    (0..edges.len())
+        .into_par_iter()
+        .flat_map(|i| {
+            println!("Checking edge {}/{}", i, edges.len());
+            let mut local_intersections = Vec::new();
+            for j in i + 1..edges.len() {
+                let (a1, a2) = edges[i];
+                let (b1, b2) = edges[j];
+
+                if a1 == b1 || a1 == b2 || a2 == b1 || a2 == b2 {
+                    continue;
+                }
+
+                if let Some(pos) = intersection(
+                    g.get_position(a1),
+                    g.get_position(a2),
+                    g.get_position(b1),
+                    g.get_position(b2),
+                ) {
+                    local_intersections.push(pos);
+                }
+            }
+            local_intersections
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::graph::Graph;
+
+    use super::*;
+
+    #[test]
+    fn test_intersection() {
+        let pos1 = Position(0.0, 0.0);
+        let pos2 = Position(1.0, 1.0);
+        let pos3 = Position(0.0, 1.0);
+        let pos4 = Position(1.0, 0.0);
+
+        assert_eq!(
+            intersection(pos1, pos2, pos3, pos4),
+            Some(Position(0.5, 0.5))
+        );
+
+        assert_eq!(intersection(pos1, pos3, pos2, pos4), None);
+
+        assert_eq!(intersection(pos1, pos2, pos1, pos3), None);
+    }
+
+    #[test]
+    fn test_naive_find_intersections() {
+        let g = GeometricGraph::new(
+            Graph::from_edge_list(vec![(0, 5), (1, 2), (2, 4), (4, 3), (3, 1), (0, 5)]),
+            vec![
+                Position(0.0, 0.0),
+                Position(1.0, 0.0),
+                Position(2.0, 0.0),
+                Position(1.0, 1.0),
+                Position(2.0, 1.0),
+                Position(3.0, 1.0),
+            ],
+        );
+
+        let intersections = naive_find_intersections(&g);
+        assert_eq!(intersections.len(), 2);
+
+        println!("{:?}", intersections);
+    }
+}

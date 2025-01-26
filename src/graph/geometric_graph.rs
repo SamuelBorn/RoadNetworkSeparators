@@ -6,7 +6,7 @@ use crate::Graph;
 
 pub struct GeometricGraph {
     pub graph: Graph,
-    pub positions: Vec<Position>,
+    positions: Vec<Position>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -54,6 +54,10 @@ impl GeometricGraph {
             &self.positions.iter().map(|p| p.1).collect::<Vec<f32>>(),
             &dir.join("longitude"),
         )
+    }
+
+    pub fn get_position(&self, node: usize) -> Position {
+        self.positions[node]
     }
 }
 
