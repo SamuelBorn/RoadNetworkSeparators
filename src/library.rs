@@ -2,6 +2,8 @@ use std::fs::{self, File};
 use std::io::{self, Read};
 use std::path::Path;
 
+use crate::graph::geometric_graph::Position;
+
 pub fn read_binary_vec<T: Sized>(file: &Path) -> io::Result<Vec<T>> {
     let mut file = File::open(file)?;
     let mut buffer = Vec::new();
@@ -45,13 +47,26 @@ pub fn write_binary_vec<T: Sized>(input: &[T], file: &Path) -> io::Result<()> {
     fs::write(file, buffer)
 }
 
-pub fn read_edge_list(file: &str) -> io::Result<Vec<(usize, usize)>> {
+pub fn read_edge_list(file: &Path) -> io::Result<Vec<(usize, usize)>> {
     Ok(std::fs::read_to_string(file)?
         .lines()
         .skip(1)
         .filter_map(|line| {
             let mut nums = line.split_whitespace();
             Some((nums.next()?.parse().ok()?, nums.next()?.parse().ok()?))
+        })
+        .collect())
+}
+
+pub fn read_position_list(file: &Path) -> io::Result<Vec<Position>> {
+    Ok(std::fs::read_to_string(file)?
+        .lines()
+        .filter_map(|line| {
+            let mut nums = line.split(',');
+            Some(Position::new(
+                nums.next()?.parse().ok()?,
+                nums.next()?.parse().ok()?,
+            ))
         })
         .collect())
 }

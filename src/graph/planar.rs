@@ -1,23 +1,51 @@
+use ordered_float::OrderedFloat;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use rstar::{Point, RTree, AABB};
+use serde_json::Map;
 
 use super::geometric_graph::{GeometricGraph, Position};
 
-const EPS: f32 = 0.000001;
+const EPS: f32 = 0.0000001;
+
+impl Point for Position {
+    type Scalar = OrderedFloat<f32>;
+    const DIMENSIONS: usize = 2;
+
+    fn generate(mut generator: impl FnMut(usize) -> Self::Scalar) -> Self {
+        Position::new_ordered(generator(0), generator(1))
+    }
+
+    fn nth(&self, index: usize) -> Self::Scalar {
+        match index {
+            0 => OrderedFloat(self.latitude()),
+            1 => OrderedFloat(self.longitude()),
+            _ => unreachable!(),
+        }
+    }
+
+    fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
+        match index {
+            0 => self.latitude_mut(),
+            1 => self.longitude_mut(),
+            _ => unreachable!(),
+        }
+    }
+}
 
 pub fn intersection(a1: Position, a2: Position, b1: Position, b2: Position) -> Option<Position> {
-    let denom = (b2.1 - b1.1) * (a2.0 - a1.0) - (b2.0 - b1.0) * (a2.1 - a1.1);
+    let denom = (b2.latitude() - b1.latitude()) * (a2.longitude() - a1.longitude()) - (b2.longitude() - b1.longitude()) * (a2.latitude() - a1.latitude());
 
     if denom.abs() < EPS {
         return None;
     }
 
-    let ua = ((b2.0 - b1.0) * (a1.1 - b1.1) - (b2.1 - b1.1) * (a1.0 - b1.0)) / denom;
-    let ub = ((a2.0 - a1.0) * (a1.1 - b1.1) - (a2.1 - a1.1) * (a1.0 - b1.0)) / denom;
+    let ua = ((b2.longitude() - b1.longitude()) * (a1.latitude() - b1.latitude()) - (b2.latitude() - b1.latitude()) * (a1.longitude() - b1.longitude())) / denom;
+    let ub = ((a2.longitude() - a1.longitude()) * (a1.latitude() - b1.latitude()) - (a2.latitude() - a1.latitude()) * (a1.longitude() - b1.longitude())) / denom;
 
     if ua > EPS && ua < 1.0 - EPS && ub > EPS && ub < 1.0 - EPS {
-        Some(Position(
-            a1.0 + ua * (a2.0 - a1.0),
-            a1.1 + ua * (a2.1 - a1.1),
+        Some(Position::new(
+            a1.longitude() + ua * (a2.longitude() - a1.longitude()),
+            a1.latitude() + ua * (a2.latitude() - a1.latitude()),
         ))
     } else {
         None
@@ -54,6 +82,12 @@ pub fn naive_find_intersections(g: &GeometricGraph) -> Vec<Position> {
         .collect()
 }
 
+pub fn planarize(g: &GeometricGraph, intersections: &[Position]) -> GeometricGraph {
+    let mut rtree = RTree::bulk_load(intersections.to_vec());
+
+    unimplemented!()
+}
+
 #[cfg(test)]
 mod tests {
     use crate::graph::Graph;
@@ -62,14 +96,14 @@ mod tests {
 
     #[test]
     fn test_intersection() {
-        let pos1 = Position(0.0, 0.0);
-        let pos2 = Position(1.0, 1.0);
-        let pos3 = Position(0.0, 1.0);
-        let pos4 = Position(1.0, 0.0);
+        let pos1 = Position::new(0.0, 0.0);
+        let pos2 = Position::new(1.0, 1.0);
+        let pos3 = Position::new(0.0, 1.0);
+        let pos4 = Position::new(1.0, 0.0);
 
         assert_eq!(
             intersection(pos1, pos2, pos3, pos4),
-            Some(Position(0.5, 0.5))
+            Some(Position::new(0.5, 0.5))
         );
 
         assert_eq!(intersection(pos1, pos3, pos2, pos4), None);
@@ -82,12 +116,12 @@ mod tests {
         let g = GeometricGraph::new(
             Graph::from_edge_list(vec![(0, 5), (1, 2), (2, 4), (4, 3), (3, 1), (0, 5)]),
             vec![
-                Position(0.0, 0.0),
-                Position(1.0, 0.0),
-                Position(2.0, 0.0),
-                Position(1.0, 1.0),
-                Position(2.0, 1.0),
-                Position(3.0, 1.0),
+                Position::new(0.0, 0.0),
+                Position::new(1.0, 0.0),
+                Position::new(2.0, 0.0),
+                Position::new(1.0, 1.0),
+                Position::new(2.0, 1.0),
+                Position::new(3.0, 1.0),
             ],
         );
 

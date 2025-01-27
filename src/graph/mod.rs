@@ -35,7 +35,7 @@ impl Graph {
         g
     }
 
-    pub fn from_edge_list_file(file: &str) -> io::Result<Self> {
+    pub fn from_edge_list_file(file: &Path) -> io::Result<Self> {
         let edges = library::read_edge_list(file)?;
         Ok(Graph::from_edge_list(edges))
     }
@@ -152,6 +152,11 @@ impl Graph {
         }
         let v = self.get_neighbors(u).choose(&mut rng).unwrap();
         (u, *v)
+    }
+
+    pub fn add_node(&mut self) -> usize {
+        self.data.push(Vec::new());
+        self.data.len() - 1
     }
 
     pub fn get_num_nodes(&self) -> usize {

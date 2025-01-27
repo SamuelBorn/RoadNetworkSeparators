@@ -3,20 +3,59 @@ use std::path::Path;
 
 use crate::library;
 use crate::Graph;
+use ordered_float::OrderedFloat;
 
 pub struct GeometricGraph {
     pub graph: Graph,
     positions: Vec<Position>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Position(pub f32, pub f32);
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Position {
+    latitude: OrderedFloat<f32>,
+    longitude: OrderedFloat<f32>,
+}
+
+impl Position {
+    pub fn new(lat: f32, lon: f32) -> Position {
+        Position {
+            latitude: OrderedFloat(lat),
+            longitude: OrderedFloat(lon),
+        }
+    }
+
+    pub fn new_ordered(lat: OrderedFloat<f32>, lon: OrderedFloat<f32>) -> Position {
+        Position {
+            latitude: lat,
+            longitude: lon,
+        }
+    }
+
+    pub fn latitude(&self) -> f32 {
+        self.latitude.into_inner()
+    }
+
+    pub fn longitude(&self) -> f32 {
+        self.longitude.into_inner()
+    }
+
+    pub fn latitude_mut(&mut self) -> &mut OrderedFloat<f32> {
+        &mut self.latitude
+    }
+
+    pub fn longitude_mut(&mut self) -> &mut OrderedFloat<f32> {
+        &mut self.longitude
+    }
+}
 
 impl std::ops::Add for Position {
     type Output = Position;
 
     fn add(self, other: Position) -> Position {
-        Position(self.0 + other.0, self.1 + other.1)
+        Position::new(
+            self.latitude() + other.latitude(),
+            self.longitude() + other.longitude(),
+        )
     }
 }
 
@@ -38,7 +77,7 @@ impl GeometricGraph {
         let positions = latitudes
             .into_iter()
             .zip(longitudes)
-            .map(|(lat, lon)| Position(lat, lon))
+            .map(|(lat, lon)| Position::new(lat, lon))
             .collect();
 
         Ok(GeometricGraph::new(g, positions))
@@ -47,17 +86,30 @@ impl GeometricGraph {
     pub fn to_file(self, dir: &Path) -> io::Result<()> {
         self.graph.to_file(dir)?;
         library::write_binary_vec(
-            &self.positions.iter().map(|p| p.0).collect::<Vec<f32>>(),
+            &self
+                .positions
+                .iter()
+                .map(|p| p.latitude())
+                .collect::<Vec<f32>>(),
             &dir.join("latitude"),
         )?;
         library::write_binary_vec(
-            &self.positions.iter().map(|p| p.1).collect::<Vec<f32>>(),
+            &self
+                .positions
+                .iter()
+                .map(|p| p.longitude())
+                .collect::<Vec<f32>>(),
             &dir.join("longitude"),
         )
     }
 
     pub fn get_position(&self, node: usize) -> Position {
         self.positions[node]
+    }
+
+    pub fn add_position(&mut self, pos: Position) -> usize {
+        self.positions.push(pos);
+        self.graph.add_node()
     }
 }
 
@@ -70,10 +122,10 @@ mod tests {
         let g = GeometricGraph::new(
             Graph::from_edge_list(vec![(0, 1), (1, 2), (2, 3), (3, 0)]),
             vec![
-                Position(0.0, 0.0),
-                Position(0.0, 1.0),
-                Position(1.0, 1.0),
-                Position(1.0, 0.0),
+                Position::new(0.0, 0.0),
+                Position::new(0.0, 1.0),
+                Position::new(1.0, 1.0),
+                Position::new(1.0, 0.0),
             ],
         );
 
