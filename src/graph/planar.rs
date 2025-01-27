@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use ordered_float::OrderedFloat;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use rstar::{Point, RTree, AABB};
@@ -33,14 +35,19 @@ impl Point for Position {
 }
 
 pub fn intersection(a1: Position, a2: Position, b1: Position, b2: Position) -> Option<Position> {
-    let denom = (b2.latitude() - b1.latitude()) * (a2.longitude() - a1.longitude()) - (b2.longitude() - b1.longitude()) * (a2.latitude() - a1.latitude());
+    let denom = (b2.latitude() - b1.latitude()) * (a2.longitude() - a1.longitude())
+        - (b2.longitude() - b1.longitude()) * (a2.latitude() - a1.latitude());
 
     if denom.abs() < EPS {
         return None;
     }
 
-    let ua = ((b2.longitude() - b1.longitude()) * (a1.latitude() - b1.latitude()) - (b2.latitude() - b1.latitude()) * (a1.longitude() - b1.longitude())) / denom;
-    let ub = ((a2.longitude() - a1.longitude()) * (a1.latitude() - b1.latitude()) - (a2.latitude() - a1.latitude()) * (a1.longitude() - b1.longitude())) / denom;
+    let ua = ((b2.longitude() - b1.longitude()) * (a1.latitude() - b1.latitude())
+        - (b2.latitude() - b1.latitude()) * (a1.longitude() - b1.longitude()))
+        / denom;
+    let ub = ((a2.longitude() - a1.longitude()) * (a1.latitude() - b1.latitude())
+        - (a2.latitude() - a1.latitude()) * (a1.longitude() - b1.longitude()))
+        / denom;
 
     if ua > EPS && ua < 1.0 - EPS && ub > EPS && ub < 1.0 - EPS {
         Some(Position::new(
@@ -58,7 +65,6 @@ pub fn naive_find_intersections(g: &GeometricGraph) -> Vec<Position> {
     (0..edges.len())
         .into_par_iter()
         .flat_map(|i| {
-            println!("Checking edge {}/{}", i, edges.len());
             let mut local_intersections = Vec::new();
             for j in i + 1..edges.len() {
                 let (a1, a2) = edges[i];
@@ -82,14 +88,36 @@ pub fn naive_find_intersections(g: &GeometricGraph) -> Vec<Position> {
         .collect()
 }
 
-pub fn planarize(g: &GeometricGraph, intersections: &[Position]) -> GeometricGraph {
-    let mut rtree = RTree::bulk_load(intersections.to_vec());
+impl GeometricGraph {
+    pub fn planarize(&mut self, intersections: Vec<Position>) {
+        let mut rtree = RTree::bulk_load(intersections.to_vec());
+        let mut map = HashMap::with_capacity(intersections.len());
 
-    unimplemented!()
+        for intersection in intersections {
+            let index = self.add_position(intersection);
+            map.insert(intersection, index);
+        }
+
+        for (u, v) in self.graph.get_edges() {
+            let bounding_box = AABB::from_corners(self.get_position(u), self.get_position(v));
+            let possible_intersections = rtree.locate_in_envelope_intersecting(&bounding_box);
+
+            for intersection in possible_intersections {
+                if intersection.on_line(self.get_position(u), self.get_position(v)) {
+                    let index = *map.get(&intersection).unwrap();
+                    self.graph.remove_edge(u, v);
+                    self.graph.add_edge(u, index);
+                    self.graph.add_edge(v, index);
+                }
+            }
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use crate::graph::Graph;
 
     use super::*;
@@ -127,7 +155,28 @@ mod tests {
 
         let intersections = naive_find_intersections(&g);
         assert_eq!(intersections.len(), 2);
+        assert!(intersections.contains(&Position::new(0.33333334, 1.0)));
+        assert!(intersections.contains(&Position::new(0.6666667, 2.0)));
+    }
 
-        println!("{:?}", intersections);
+    #[test]
+    fn test_planarize() {
+        let mut g = GeometricGraph::new(
+            Graph::from_edge_list(vec![(0, 1), (1, 2), (2, 3), (3, 0), (0, 2), (1, 3)]),
+            vec![
+                Position::new(0.0, 1.0),
+                Position::new(0.0, 0.0),
+                Position::new(1.0, 0.0),
+                Position::new(1.0, 1.0),
+            ],
+        );
+
+        let intersections = naive_find_intersections(&g);
+        assert_eq!(intersections.len(), 1);
+        assert!(intersections.contains(&Position::new(0.5, 0.5)));
+
+        g.planarize(intersections);
+        assert_eq!(g.graph.get_num_nodes(), 5);
+        assert_eq!(g.graph.get_num_edges(), 8);
     }
 }

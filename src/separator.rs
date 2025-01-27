@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::hash::Hash;
 use std::io::Write;
+use std::path::Path;
 use std::{fs, ptr};
 
 use crate::graph::Graph;
@@ -119,7 +120,7 @@ impl Graph {
         subgraphs.iter().map(|x| get_graph(&x)).collect()
     }
 
-    pub fn recurse_separator(&self, mode: Mode, file: Option<&str>) {
+    pub fn recurse_separator(&self, mode: Mode, file: Option<&Path>) {
         let mut separator = self.get_separator_wrapper(mode);
         let mut subgraphs = self.get_subgraphs(&separator);
 

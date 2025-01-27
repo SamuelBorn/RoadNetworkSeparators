@@ -1,12 +1,16 @@
 import argparse
 import os
 
+from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 import numpy as np
 
 
-def scatter(filename, color, marker, alpha=0.05):
-    x_values, y_values = zip(*[map(int, line.split()) for line in open(filename)])
+def get_values(filename):
+    return zip(*[map(int, line.split()) for line in open(filename)])
+
+def scatter(filename, color, marker, alpha=1):
+    x_values, y_values = get_values(filename)
     plt.scatter(
         x_values,
         y_values,
@@ -16,11 +20,26 @@ def scatter(filename, color, marker, alpha=0.05):
         alpha=alpha,
     )
 
+def heatmap(filename, bins=50):
+    x_values, y_values = get_values(filename)
+    x_values = np.cbrt(x_values)
+    
+    # Create a 2D histogram
+    heatmap_data, x_edges, y_edges = np.histogram2d(x_values, y_values, bins=bins)
+    
+    # Plot the heatmap
+    plt.imshow(
+        heatmap_data.T,  # Transpose to align x and y correctly
+        origin="lower",  # Set the origin to lower-left
+        extent=(x_edges[0], x_edges[-1], y_edges[0], y_edges[-1]),  # Define the bounds
+        norm=LogNorm()
+    )
+
 
 def find_max_x(files):
     max_x = 0
     for filename in files:
-        x_values, _ = zip(*[map(int, line.split()) for line in open(filename)])
+        x_values, _ = get_values(filename)
         max_x = max(max_x, max(x_values))
     return max_x
 
@@ -57,6 +76,7 @@ def visualize(args):
 
     for i, filename in enumerate(args.files):
         scatter(filename, colors[i], markers[i])
+        # heatmap(filename)
 
     plt.title(args.title)
     plt.xlabel(args.x_label)

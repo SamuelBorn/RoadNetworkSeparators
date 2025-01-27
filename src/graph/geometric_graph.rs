@@ -10,7 +10,7 @@ pub struct GeometricGraph {
     positions: Vec<Position>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Position {
     latitude: OrderedFloat<f32>,
     longitude: OrderedFloat<f32>,
@@ -45,6 +45,15 @@ impl Position {
 
     pub fn longitude_mut(&mut self) -> &mut OrderedFloat<f32> {
         &mut self.longitude
+    }
+
+    // checks if self is on a line defined by a1 and a2
+    // does not make sure that self is between a1 and a2
+    pub fn on_line(&self, a1: Position, a2: Position) -> bool {
+        let cross_product = (self.latitude.0 - a1.latitude.0) * (a2.longitude.0 - a1.longitude.0)
+            - (self.longitude.0 - a1.longitude.0) * (a2.latitude.0 - a1.latitude.0);
+
+        return cross_product.abs() < 0.0000001;
     }
 }
 
@@ -83,7 +92,7 @@ impl GeometricGraph {
         Ok(GeometricGraph::new(g, positions))
     }
 
-    pub fn to_file(self, dir: &Path) -> io::Result<()> {
+    pub fn to_file(&self, dir: &Path) -> io::Result<()> {
         self.graph.to_file(dir)?;
         library::write_binary_vec(
             &self
@@ -133,5 +142,18 @@ mod tests {
         assert_eq!(g.positions.len(), 4);
 
         let file = tempfile::NamedTempFile::new().unwrap();
+    }
+
+    #[test]
+    fn test_on_line() {
+        let p1 = Position::new(0.0, 0.0);
+        let p2 = Position::new(2.0, 2.0);
+        let p3 = Position::new(1.0, 1.0); // On the line segment
+        let p4 = Position::new(3.0, 3.0); // Outside the segment
+        let p5 = Position::new(-3.0, 4.0); // Outside the segment
+
+        assert!(p3.on_line(p1, p2));
+        assert!(p4.on_line(p1, p2));
+        assert!(!p5.on_line(p1, p2));
     }
 }
