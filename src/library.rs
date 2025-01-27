@@ -1,5 +1,5 @@
 use std::fs::{self, File};
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 use std::path::Path;
 
 use crate::graph::geometric_graph::Position;
@@ -69,6 +69,22 @@ pub fn read_position_list(file: &Path) -> io::Result<Vec<Position>> {
             ))
         })
         .collect())
+}
+
+pub fn append_to_file(file: &Path, content: &str) {
+    let mut file = fs::OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(file)
+        .unwrap();
+
+    file.write_all(content.as_bytes());
+}
+
+pub fn optional_append_to_file(file: Option<&Path>, content: &str) {
+    if let Some(file) = file {
+        append_to_file(file, content);
+    }
 }
 
 #[cfg(test)]

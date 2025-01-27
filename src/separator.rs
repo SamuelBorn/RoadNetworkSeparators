@@ -4,8 +4,11 @@ use std::io::Write;
 use std::path::Path;
 use std::{fs, ptr};
 
+use chrono::format;
+
 use crate::graph::Graph;
-use crate::{graph, separator};
+use crate::library::optional_append_to_file;
+use crate::{graph, library, separator};
 
 #[link(name = "kahip")]
 extern "C" {
@@ -121,26 +124,48 @@ impl Graph {
     }
 
     pub fn recurse_separator(&self, mode: Mode, file: Option<&Path>) {
-        let mut separator = self.get_separator_wrapper(mode);
-        let mut subgraphs = self.get_subgraphs(&separator);
+        let separator = self.get_separator_wrapper(mode);
+        let subgraphs = self.get_subgraphs(&separator);
 
         println!("{} {}", self.get_num_nodes(), separator.len());
 
-        if let Some(file) = file {
-            let mut separator_file = fs::OpenOptions::new()
-                .append(true)
-                .create(true)
-                .open(file)
-                .unwrap();
-            separator_file
-                .write_all(format!("{} {}\n", self.get_num_nodes(), separator.len()).as_bytes())
-                .unwrap();
-        }
+        library::optional_append_to_file(
+            file,
+            &format!("{} {}\n", self.get_num_nodes(), separator.len()),
+        );
 
         for i in 0..subgraphs.len() {
             if subgraphs[i].get_num_nodes() > 200 {
                 subgraphs[i].recurse_separator(mode, file);
                 break;
+            }
+        }
+    }
+
+    pub fn queue_separator(&self, mode: Mode, file: Option<&Path>) {
+        let mut queue = VecDeque::from(vec![self.clone()]);
+        if let Some(file) = file {
+            fs::write(file, "");
+        }
+
+        let mut remaining = 300;
+        while (!queue.is_empty() && remaining > 0) {
+            remaining -= 1;
+            let g = queue.pop_front().unwrap();
+            let separator = g.get_separator_wrapper(mode);
+            let mut subgraphs = g.get_subgraphs(&separator);
+
+            println!("{} {}", g.get_num_nodes(), separator.len());
+            library::optional_append_to_file(
+                file,
+                &format!("{} {}\n", g.get_num_nodes(), separator.len()),
+            );
+
+            for i in 0..subgraphs.len() {
+                let subgraph = subgraphs.swap_remove(0);
+                if subgraph.get_num_nodes() > 200 {
+                    queue.push_back(subgraph);
+                }
             }
         }
     }
@@ -162,7 +187,6 @@ fn get_graph(g_map: &HashMap<usize, Vec<usize>>) -> Graph {
 
     Graph::new(data)
 }
-
 
 #[cfg(test)]
 mod tests {
