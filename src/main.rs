@@ -17,9 +17,9 @@ fn main() {
     //let g = Graph::from_file(Path::new("../Graphs/germany).unwrap();
     //g.graph.recurse_separator(Eco, Some(Path::new("output/separator_karlsruhe_non_planar.txt")));
     //
-    let intersections = library::read_position_list(Path::new("output/intersections_karlsruhe.txt")).unwrap();
-
-    g.graph.queue_separator(Eco, Some(Path::new("output/separator_karlsruhe_non_planar.txt")));
+    //let intersections = library::read_position_list(Path::new("output/intersections_karlsruhe.txt")).unwrap();
+    //
+    //g.graph.queue_separator(Eco, Some(Path::new("output/separator_karlsruhe_non_planar.txt")));
 
     //println!("{} {}", g.graph.get_num_nodes(), g.graph.get_num_edges());
     //g.planarize(intersections.clone());
@@ -27,4 +27,6 @@ fn main() {
     //println!("{} {}", g.graph.get_num_nodes(), g.graph.get_num_edges());
     //
     //g.graph.queue_separator(Strong, Some(Path::new("output/separator_karlsruhe_planar.txt")));
+
+    g.save_distance_overview(Path::new("output/distance_overview.txt"));
 }

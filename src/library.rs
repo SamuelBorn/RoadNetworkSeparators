@@ -71,6 +71,10 @@ pub fn read_position_list(file: &Path) -> io::Result<Vec<Position>> {
         .collect())
 }
 
+pub fn clear_file(file: &Path) {
+    fs::write(file, "");
+}
+
 pub fn append_to_file(file: &Path, content: &str) {
     let mut file = fs::OpenOptions::new()
         .append(true)

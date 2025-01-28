@@ -1,3 +1,4 @@
+use std::fs;
 use std::io;
 use std::path::Path;
 
@@ -29,6 +30,13 @@ impl Position {
             latitude: lat,
             longitude: lon,
         }
+    }
+
+    pub fn random(min: f32, max: f32) -> Position {
+        Position::new(
+            rand::random::<f32>() * (max - min) + min,
+            rand::random::<f32>() * (max - min) + min,
+        )
     }
 
     pub fn latitude(&self) -> f32 {
@@ -119,6 +127,26 @@ impl GeometricGraph {
     pub fn add_position(&mut self, pos: Position) -> usize {
         self.positions.push(pos);
         self.graph.add_node()
+    }
+
+    pub fn distance(&self, a: usize, b: usize) -> f32 {
+        let pos_a = self.positions[a];
+        let pos_b = self.positions[b];
+
+        let lat_diff = pos_a.latitude() - pos_b.latitude();
+        let lon_diff = pos_a.longitude() - pos_b.longitude();
+
+        (lat_diff.powi(2) + lon_diff.powi(2)).sqrt()
+    }
+
+    pub fn save_distance_overview(&self, file: &Path) {
+        let mut res = String::new();
+        for (u,v) in self.graph.get_edges() {
+            let distance = self.distance(u, v);
+            // append distance to res
+            res.push_str(&format!("{}\n", distance));
+        }
+        fs::write(file, res);
     }
 }
 

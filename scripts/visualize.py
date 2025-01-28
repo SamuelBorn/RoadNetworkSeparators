@@ -109,8 +109,6 @@ def parse_args():
     if not args.output:
         args.output = f"output/{args.title}.pdf"
 
-    print(args)
-
     return args
 
 
