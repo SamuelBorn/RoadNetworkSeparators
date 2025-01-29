@@ -5,10 +5,11 @@ use std::path::Path;
 use crate::library;
 use crate::Graph;
 use ordered_float::OrderedFloat;
+use rand::Rng;
 
 pub struct GeometricGraph {
     pub graph: Graph,
-    positions: Vec<Position>,
+    pub positions: Vec<Position>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -32,10 +33,11 @@ impl Position {
         }
     }
 
-    pub fn random(min: f32, max: f32) -> Position {
+    pub fn random(lat_min: f32, lat_max: f32, lon_min: f32, lon_max: f32) -> Position {
+        let mut rng = rand::thread_rng();
         Position::new(
-            rand::random::<f32>() * (max - min) + min,
-            rand::random::<f32>() * (max - min) + min,
+            rng.gen_range(lat_min..lat_max),
+            rng.gen_range(lon_min..lon_max),
         )
     }
 
