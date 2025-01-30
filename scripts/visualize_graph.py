@@ -1,32 +1,61 @@
 import argparse
-import json
+import struct
+from pathlib import Path
 
-import matplotlib.pyplot as plt
-import networkx as nx
+from graph_tool.all import Graph, graph_draw
 
 
 def visualize(args):
-    with open(args.filename) as f:
-        graph_data = json.load(f)
+    first_out = read_binary_vec(args.dirname / "first_out", "i")
+    head = read_binary_vec(args.dirname / "head", "i")
+    latitude = read_binary_vec(args.dirname / "latitude", "f")
+    longitude = read_binary_vec(args.dirname / "longitude", "f")
+    assert len(first_out) - 1 == len(latitude) == len(longitude)
 
-    G = nx.Graph()
-    for node, neighbors in graph_data.items():
-        for neighbor in neighbors:
-            G.add_edge(node, str(neighbor))
+    g = Graph()
+    g.set_directed(False)
+    g.add_vertex(len(first_out) - 1)
 
-    # pos = nx.spring_layout(G)
-    nx.draw(G, with_labels=True)
-    plt.show()
+    for v in range(len(first_out) - 1):
+        for h in head[first_out[v] : first_out[v + 1]]:
+            g.add_edge(v, h)
 
-    if args.output:
-        plt.savefig(args.output)
+    pos = g.new_vertex_property("vector<double>")
+    for v in g.vertices():
+        pos[v] = [longitude[int(v)], latitude[int(v)]]
+
+    graph_draw(
+        g,
+        pos=pos,
+        output=str(args.output),
+        output_size=(8000, 8000),
+        vertex_size=0,
+        edge_pen_width=1,
+    )
+
+
+def read_binary_vec(filename: Path, format_char: str):  # format_char: "i", "f"
+    with open(filename, "rb") as f:
+        data = f.read()
+    return list(
+        struct.unpack(f"{len(data) // struct.calcsize(format_char)}{format_char}", data)
+    )
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("filename", help="JSON file containing graph data")
-    parser.add_argument("--output", help="Output file for the visualization")
+    parser.add_argument("dirname")
+    parser.add_argument("--output")
+    parser.add_argument("--without-embedding", action="store_true")
     args = parser.parse_args()
+
+    args.dirname = Path(args.dirname)
+
+    if args.output:
+        args.output = Path(args.output)
+    else:
+        args.output = Path("output") / args.dirname.name
+    args.output = args.output.with_suffix(".png")
 
     visualize(args)
 
