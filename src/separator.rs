@@ -83,7 +83,7 @@ impl Graph {
         self.get_separator_wrapper(mode).len()
     }
 
-    pub fn get_subgraphs(&self, separator: &HashSet<usize>) -> Vec<Graph> {
+    pub fn get_subgraphs_map(&self, separator: &HashSet<usize>) -> Vec<HashMap<usize, Vec<usize>>> {
         let mut used = vec![false; self.get_num_nodes()];
         let mut subgraphs = Vec::new();
 
@@ -119,7 +119,11 @@ impl Graph {
             subgraphs.push(subgraph);
         }
 
-        subgraphs.iter().map(|x| get_graph(&x)).collect()
+        subgraphs
+    }
+
+    pub fn get_subgraphs(&self, separator: &HashSet<usize>) -> Vec<Graph> {
+        self.get_subgraphs_map(separator).iter().map(|x| get_graph(&x)).collect()
     }
 
     pub fn recurse_separator(&self, mode: Mode, file: Option<&Path>) {

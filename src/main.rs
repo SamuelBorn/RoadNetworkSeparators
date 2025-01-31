@@ -6,27 +6,19 @@ pub mod separator;
 use std::fs;
 use std::path::Path;
 
-use graph::geometric_graph::{GeometricGraph, Position};
+use graph::geometric_graph::{GeometricGraph, Position, AABB};
 use graph::planar::naive_find_intersections;
-use graph::{grid, Graph};
+use graph::{delaunay, grid, Graph};
 use separator::Mode::*;
 
 fn main() {
-    //let g = Graph::from_file(Path::new("../Graphs/karlsruhe")).unwrap();
     let mut g = GeometricGraph::from_file(Path::new("../Graphs/karlsruhe")).unwrap();
-    //let g = Graph::from_file(Path::new("../Graphs/germany).unwrap();
-    //g.graph.recurse_separator(Eco, Some(Path::new("output/separator_karlsruhe_non_planar.txt")));
-    //
-    //let intersections = library::read_position_list(Path::new("output/intersections_karlsruhe.txt")).unwrap();
-    //
-    //g.graph.queue_separator(Eco, Some(Path::new("output/separator_karlsruhe_non_planar.txt")));
 
-    //println!("{} {}", g.graph.get_num_nodes(), g.graph.get_num_edges());
-    //g.planarize(intersections.clone());
-    //g.planarize(intersections);
-    //println!("{} {}", g.graph.get_num_nodes(), g.graph.get_num_edges());
-    //
-    //g.graph.queue_separator(Strong, Some(Path::new("output/separator_karlsruhe_planar.txt")));
+    //let g = delaunay::length_restricted_delaunay(120000, AABB::karlsruhe(), 0.01);
 
-    g.save_distance_overview(Path::new("output/distance_overview.txt"));
+    //dbg!(g.graph.is_connected());
+    //dbg!(g.graph.get_average_degree());
+    //dbg!(g.graph.get_separator_size(Eco));
+
+    g.graph.queue_separator(Eco, None);
 }
