@@ -96,8 +96,7 @@ impl Graph {
             let mut q = vec![i];
             used[i] = true;
 
-            while !q.is_empty() {
-                let u = q.pop().unwrap();
+            while let Some(u) = q.pop() {
                 for &v in self.get_neighbors(u) {
                     if separator.contains(&v) {
                         continue;
