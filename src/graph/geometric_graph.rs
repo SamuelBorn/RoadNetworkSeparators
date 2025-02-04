@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -18,6 +19,24 @@ pub struct Position {
     longitude: OrderedFloat<f32>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct AABB {
+    pub min: Position,
+    pub max: Position,
+}
+
+impl AABB {
+    pub fn new(min: Position, max: Position) -> AABB {
+        assert!(min.latitude() <= max.latitude());
+        assert!(min.longitude() <= max.longitude());
+        AABB { min, max }
+    }
+
+    pub fn karlsruhe() -> AABB {
+        AABB::new(Position::new(48.3, 8.0), Position::new(49.2, 9.0))
+    }
+}
+
 impl Position {
     pub fn new(lat: f32, lon: f32) -> Position {
         Position {
@@ -33,12 +52,16 @@ impl Position {
         }
     }
 
-    pub fn random(lat_min: f32, lat_max: f32, lon_min: f32, lon_max: f32) -> Position {
+    pub fn random(aabb: AABB) -> Position {
         let mut rng = rand::thread_rng();
         Position::new(
-            rng.gen_range(lat_min..lat_max),
-            rng.gen_range(lon_min..lon_max),
+            rng.gen_range(aabb.min.latitude()..aabb.max.latitude()),
+            rng.gen_range(aabb.min.longitude()..aabb.max.longitude()),
         )
+    }
+
+    pub fn random_positions(n: usize, aabb: AABB) -> Vec<Position> {
+        (0..n).map(|_| Position::random(aabb)).collect()
     }
 
     pub fn latitude(&self) -> f32 {
@@ -64,6 +87,13 @@ impl Position {
             - (self.longitude.0 - a1.longitude.0) * (a2.latitude.0 - a1.latitude.0);
 
         return cross_product.abs() < 0.0000001;
+    }
+
+    pub fn distance(&self, other: Position) -> f32 {
+        let lat_diff = self.latitude() - other.latitude();
+        let lon_diff = self.longitude() - other.longitude();
+
+        (lat_diff.powi(2) + lon_diff.powi(2)).sqrt()
     }
 }
 
@@ -143,12 +173,23 @@ impl GeometricGraph {
 
     pub fn save_distance_overview(&self, file: &Path) {
         let mut res = String::new();
-        for (u,v) in self.graph.get_edges() {
+        for (u, v) in self.graph.get_edges() {
             let distance = self.distance(u, v);
             // append distance to res
             res.push_str(&format!("{}\n", distance));
         }
         fs::write(file, res);
+    }
+
+    pub fn largest_subgraph(&self) -> GeometricGraph {
+        let map = self
+            .graph
+            .get_subgraphs_map(&HashSet::new())
+            .iter()
+            .max_by_key(|(g)| g.len())
+            .unwrap();
+
+        unimplemented!()
     }
 }
 

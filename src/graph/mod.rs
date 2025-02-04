@@ -1,16 +1,18 @@
 use rand::seq::SliceRandom;
 use rand::Rng;
 use std::{
-    collections::{HashMap, HashSet}, fs, io, path::Path
+    collections::{HashMap, HashSet},
+    fs, io,
+    path::Path,
 };
 
 use crate::{library, separator};
+pub mod delaunay;
 pub mod geometric_graph;
 pub mod grid;
 pub mod planar;
 pub mod tree;
 pub mod unit_disk;
-pub mod delaunay;
 
 #[derive(Debug, Clone)]
 pub struct Graph {
@@ -153,6 +155,13 @@ impl Graph {
         }
         let v = self.get_neighbors(u).choose(&mut rng).unwrap();
         (u, *v)
+    }
+
+    pub fn add_max_node(&mut self, n: usize) {
+        if n < self.data.len() {
+            return;
+        }
+        self.data.resize(n, Vec::new());
     }
 
     pub fn add_node(&mut self) -> usize {
