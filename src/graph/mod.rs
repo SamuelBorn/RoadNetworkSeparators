@@ -13,6 +13,7 @@ pub mod grid;
 pub mod planar;
 pub mod tree;
 pub mod unit_disk;
+pub mod example;
 
 #[derive(Debug, Clone)]
 pub struct Graph {
