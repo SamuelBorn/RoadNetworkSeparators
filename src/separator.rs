@@ -218,12 +218,16 @@ impl Graph {
             let v = self
                 .get_neighbors(u)
                 .iter()
-                .max_by_key(|&v| order[*v])
-                .unwrap();
-            g.add_edge(u, *v);
+                .filter(|&&v| pos[v] > pos[u])
+                .min_by_key(|&v| pos[*v]);
+
+            if let Some(v) = v {
+                println!("{} {}", u, *v);
+            }
+            //g.add_edge(u, *v);
         }
 
-        g.to_file(file);
+        //g.to_file(file);
     }
 }
 
@@ -246,8 +250,10 @@ fn get_graph(g_map: &HashMap<usize, Vec<usize>>) -> Graph {
 
 #[cfg(test)]
 mod tests {
-    use graph::{example::example_c4, geometric_graph::GeometricGraph};
-
+    use graph::{
+        example::{example1, example_c4},
+        geometric_graph::GeometricGraph,
+    };
 
     use super::*;
 
@@ -315,17 +321,17 @@ mod tests {
 
     #[test]
     fn test_chordalize() {
-        let mut g = Graph::from_edge_list(vec![(0, 1), (1, 2), (2, 3), (3, 4), (4, 0)]);
-        let order = vec![0, 2, 1, 3, 4];
+        let mut g = example1();
 
-        g.chordalize(&order);
+        g.graph.chordalize(&[0, 2, 6, 8, 3, 7, 1, 5, 4]);
 
-        g.print();
+        g.graph.print();
     }
 
     #[test]
     fn test_tree() {
-        let mut g = example_c4();
-        g.graph.save_tree(&[0,2,1,3], Path::new("output/tree"));
+        let mut g = example1();
+        g.graph
+            .save_tree(&[0, 2, 6, 8, 3, 7, 1, 5, 4], Path::new("output/tree"));
     }
 }
