@@ -123,7 +123,10 @@ impl Graph {
     }
 
     pub fn get_subgraphs(&self, separator: &HashSet<usize>) -> Vec<Graph> {
-        self.get_subgraphs_map(separator).iter().map(|x| get_graph(&x)).collect()
+        self.get_subgraphs_map(separator)
+            .iter()
+            .map(|x| get_graph(&x))
+            .collect()
     }
 
     pub fn recurse_separator(&self, mode: Mode, file: Option<&Path>) {
@@ -168,6 +171,29 @@ impl Graph {
                 let subgraph = subgraphs.swap_remove(0);
                 if subgraph.get_num_nodes() > 200 {
                     queue.push_back(subgraph);
+                }
+            }
+        }
+    }
+
+    pub fn chordalize(&mut self, order: &[usize]) {
+        assert_eq!(order.len(), self.get_num_nodes());
+        let mut pos = vec![0; self.get_num_nodes()];
+
+        for (i, &v) in order.iter().enumerate() {
+            pos[v] = i;
+        }
+
+        for i in 0..self.get_num_nodes() {
+            let v = order[i];
+            let mut later_neighbors = self.get_neighbors(v).iter().filter(|&&u| pos[u] > i).collect::<Vec<_>>();
+
+            for a in 0..later_neighbors.len() {
+                for b in (a + 1)..later_neighbors.len() {
+                    let u = later_neighbors[a];
+                    let w = later_neighbors[b];
+
+
                 }
             }
         }
