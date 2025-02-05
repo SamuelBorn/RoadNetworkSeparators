@@ -186,17 +186,44 @@ impl Graph {
 
         for i in 0..self.get_num_nodes() {
             let v = order[i];
-            let mut later_neighbors = self.get_neighbors(v).iter().filter(|&&u| pos[u] > i).collect::<Vec<_>>();
+            let mut later_neighbors = Vec::new();
+
+            for &u in self.get_neighbors(v) {
+                if pos[u] > i {
+                    later_neighbors.push(u);
+                }
+            }
 
             for a in 0..later_neighbors.len() {
                 for b in (a + 1)..later_neighbors.len() {
-                    let u = later_neighbors[a];
-                    let w = later_neighbors[b];
+                    let u1 = later_neighbors[a];
+                    let u2 = later_neighbors[b];
 
-
+                    if !self.has_edge(u1, u2) {
+                        self.add_edge(u1, u2);
+                    }
                 }
             }
         }
+    }
+
+    fn save_tree(&mut self, order: &[usize], file: &Path) {
+        let mut pos = vec![0; order.len()];
+        order.iter().enumerate().for_each(|(i, &v)| pos[v] = i);
+        self.chordalize(order);
+
+        let mut g = Graph::with_node_count(self.get_num_nodes());
+
+        for u in 0..self.get_num_nodes() {
+            let v = self
+                .get_neighbors(u)
+                .iter()
+                .max_by_key(|&v| order[*v])
+                .unwrap();
+            g.add_edge(u, *v);
+        }
+
+        g.to_file(file);
     }
 }
 
@@ -219,6 +246,9 @@ fn get_graph(g_map: &HashMap<usize, Vec<usize>>) -> Graph {
 
 #[cfg(test)]
 mod tests {
+    use graph::{example::example_c4, geometric_graph::GeometricGraph};
+
+
     use super::*;
 
     #[test]
@@ -281,5 +311,21 @@ mod tests {
             }
             //println!();
         }
+    }
+
+    #[test]
+    fn test_chordalize() {
+        let mut g = Graph::from_edge_list(vec![(0, 1), (1, 2), (2, 3), (3, 4), (4, 0)]);
+        let order = vec![0, 2, 1, 3, 4];
+
+        g.chordalize(&order);
+
+        g.print();
+    }
+
+    #[test]
+    fn test_tree() {
+        let mut g = example_c4();
+        g.graph.save_tree(&[0,2,1,3], Path::new("output/tree"));
     }
 }
