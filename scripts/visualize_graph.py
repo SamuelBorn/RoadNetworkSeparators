@@ -2,15 +2,12 @@ import argparse
 import struct
 from pathlib import Path
 
-from graph_tool.all import Graph, graph_draw
+from graph_tool.all import Graph, graph_draw, sfdp_layout
 
 
 def visualize(args):
     first_out = read_binary_vec(args.dirname / "first_out", "i")
     head = read_binary_vec(args.dirname / "head", "i")
-    latitude = read_binary_vec(args.dirname / "latitude", "f")
-    longitude = read_binary_vec(args.dirname / "longitude", "f")
-    assert len(first_out) - 1 == len(latitude) == len(longitude)
 
     g = Graph()
     g.set_directed(False)
@@ -20,9 +17,15 @@ def visualize(args):
         for h in head[first_out[v] : first_out[v + 1]]:
             g.add_edge(v, h)
 
-    pos = g.new_vertex_property("vector<double>")
-    for v in g.vertices():
-        pos[v] = [longitude[int(v)], latitude[int(v)]]
+    if args.auto_layout:
+        pos = sfdp_layout(g)
+    else:
+        latitude = read_binary_vec(args.dirname / "latitude", "f")
+        longitude = read_binary_vec(args.dirname / "longitude", "f")
+        assert len(latitude) == len(longitude) == len(g.get_vertices())
+        pos = g.new_vertex_property("vector<double>")
+        for v in g.vertices():
+            pos[v] = [longitude[int(v)], latitude[int(v)]]
 
     graph_draw(
         g,
@@ -46,7 +49,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("dirname")
     parser.add_argument("--output")
-    parser.add_argument("--without-embedding", action="store_true")
+    parser.add_argument("--auto-layout", action="store_true")
     args = parser.parse_args()
 
     args.dirname = Path(args.dirname)
