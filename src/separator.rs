@@ -178,11 +178,7 @@ impl Graph {
 
     pub fn chordalize(&mut self, order: &[usize]) {
         assert_eq!(order.len(), self.get_num_nodes());
-        let mut pos = vec![0; self.get_num_nodes()];
-
-        for (i, &v) in order.iter().enumerate() {
-            pos[v] = i;
-        }
+        let mut pos = get_positions_from_order(order);
 
         for i in 0..self.get_num_nodes() {
             let v = order[i];
@@ -207,12 +203,11 @@ impl Graph {
         }
     }
 
-    fn save_tree(&mut self, order: &[usize], file: &Path) {
-        let mut pos = vec![0; order.len()];
-        order.iter().enumerate().for_each(|(i, &v)| pos[v] = i);
+    fn get_lowest_neighbor_tree_top_down(&mut self, order: &[usize]) -> Graph {
+        let mut pos = get_positions_from_order(order);
         self.chordalize(order);
 
-        let mut g = Graph::with_node_count(self.get_num_nodes());
+        let mut tree = Graph::with_node_count(self.get_num_nodes());
 
         for u in 0..self.get_num_nodes() {
             let v = self
@@ -221,14 +216,48 @@ impl Graph {
                 .filter(|&&v| pos[v] > pos[u])
                 .min_by_key(|&v| pos[*v]);
 
-            if let Some(v) = v {
-                println!("{} {}", u, *v);
+            if let Some(&v) = v {
+                tree.add_directed_edge(v, u);
             }
-            //g.add_edge(u, *v);
         }
 
-        //g.to_file(file);
+        tree
     }
+}
+
+pub fn traverse_separator_tree(tree: &Graph, root: usize) {
+    traverse_separator_tree_rec(tree, root, 1);
+}
+
+fn traverse_separator_tree_rec(tree: &Graph, current_node: usize, path_length: usize) -> usize {
+    let children = tree.get_neighbors(current_node);
+
+    if children.is_empty() {
+        return path_length;
+    }
+
+    if children.len() == 1 {
+        return 1 + traverse_separator_tree_rec(
+            tree,
+            *children.iter().next().unwrap(),
+            path_length + 1,
+        );
+    }
+
+    let num_deeper: usize = children
+        .iter()
+        .map(|&child| traverse_separator_tree_rec(tree, child, 1))
+        .sum();
+    println!("{} {}", path_length, num_deeper + path_length);
+    (num_deeper + 1)
+}
+
+// turns an order into a position array
+// makes O(1) lookups for the position of a node possible
+fn get_positions_from_order(order: &[usize]) -> Vec<usize> {
+    let mut pos = vec![0; order.len()];
+    order.iter().enumerate().for_each(|(i, &v)| pos[v] = i);
+    pos
 }
 
 fn get_graph(g_map: &HashMap<usize, Vec<usize>>) -> Graph {
@@ -331,7 +360,20 @@ mod tests {
     #[test]
     fn test_tree() {
         let mut g = example1();
-        g.graph
-            .save_tree(&[0, 2, 6, 8, 3, 7, 1, 5, 4], Path::new("output/tree"));
+        //g.graph.save_tree(&[0, 2, 6, 8, 3, 7, 1, 5, 4], Path::new("output/tree"));
+    }
+
+    #[test]
+    fn order_tree() {
+        let mut g = example1();
+        let order = [0, 2, 6, 8, 3, 7, 1, 5, 4];
+
+        g.graph.chordalize(&order);
+
+        let tree = g.graph.get_lowest_neighbor_tree_top_down(&order);
+
+        tree.print();
+
+        traverse_separator_tree(&tree, *order.iter().last().unwrap());
     }
 }
