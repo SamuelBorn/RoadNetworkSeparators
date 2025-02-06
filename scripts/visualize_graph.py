@@ -53,7 +53,7 @@ def visualize(args: argparse.Namespace) -> None:
         g,
         pos=pos,
         output=str(args.output),
-        output_size=(2**14, 2**14),
+        output_size=(2**13, 2**13),
         vertex_size=4,
         vertex_fill_color=vertex_color,
         edge_pen_width=1,
