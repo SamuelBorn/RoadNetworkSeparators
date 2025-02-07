@@ -1,6 +1,7 @@
 use std::fs::{self, File};
 use std::io::{self, Read, Write};
 use std::path::Path;
+use std::str::FromStr;
 
 use crate::graph::geometric_graph::Position;
 
@@ -47,6 +48,17 @@ pub fn write_binary_vec<T: Sized>(input: &[T], file: &Path) -> io::Result<()> {
     fs::write(file, buffer)
 }
 
+pub fn read_text_vec<T: FromStr>(file: &Path) -> io::Result<Vec<T>> {
+    fs::read_to_string(file)?
+        .lines()
+        .map(|line| line.parse().map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "Invalid data")))
+        .collect()
+}
+
+pub fn write_text_vec<T: std::fmt::Display>(input: &[T], file: &Path) -> io::Result<()> {
+    fs::write(file, input.iter().map(|elem| elem.to_string()).collect::<Vec<String>>().join("\n"))
+}
+
 pub fn read_edge_list(file: &Path) -> io::Result<Vec<(usize, usize)>> {
     Ok(std::fs::read_to_string(file)?
         .lines()
@@ -57,6 +69,7 @@ pub fn read_edge_list(file: &Path) -> io::Result<Vec<(usize, usize)>> {
         })
         .collect())
 }
+
 
 pub fn read_position_list(file: &Path) -> io::Result<Vec<Position>> {
     Ok(std::fs::read_to_string(file)?

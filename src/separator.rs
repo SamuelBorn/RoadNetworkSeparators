@@ -203,7 +203,7 @@ impl Graph {
         }
     }
 
-    fn get_lowest_neighbor_tree_top_down(&mut self, order: &[usize]) -> Graph {
+    pub fn get_lowest_neighbor_tree_top_down(&mut self, order: &[usize]) -> Graph {
         let mut pos = get_positions_from_order(order);
         self.chordalize(order);
 
@@ -225,34 +225,59 @@ impl Graph {
     }
 }
 
+pub fn get_subtree_sizes(tree: &Graph, root: usize) -> Vec<usize> {
+    let mut subtree_sizes = vec![1; tree.get_num_nodes()];
+    get_subtree_sizes_rec(tree, root, &mut subtree_sizes);
+    subtree_sizes
+}
+
+fn get_subtree_sizes_rec(tree: &Graph, node: usize, subtree_sizes: &mut [usize]) {
+    for child in tree.get_neighbors(node) {
+        get_subtree_sizes_rec(tree, *child, subtree_sizes);
+        subtree_sizes[node] += subtree_sizes[*child];
+    }
+}
+
 pub fn traverse_separator_tree(tree: &Graph, root: usize) {
-    traverse_separator_tree_rec(tree, root, 1);
+    let subtree_sizes = get_subtree_sizes(tree, root);
+    traverse_separator_tree_rec(tree, root, &subtree_sizes, [root].to_vec());
 }
 
-fn traverse_separator_tree_rec(tree: &Graph, current_node: usize, path_length: usize) -> usize {
-    let children = tree.get_neighbors(current_node);
-
-    if children.is_empty() {
-        return path_length;
-    }
-
-    if children.len() == 1 {
-        return 1 + traverse_separator_tree_rec(
-            tree,
-            *children.iter().next().unwrap(),
-            path_length + 1,
-        );
-    }
-
-    let num_deeper: usize = children
+pub fn traverse_separator_tree_rec(
+    tree: &Graph,
+    node: usize,
+    subtree_sizes: &[usize],
+    mut separator: Vec<usize>,
+) {
+    let children = tree.get_neighbors(node);
+    let sizes = children
         .iter()
-        .map(|&child| traverse_separator_tree_rec(tree, child, 1))
-        .sum();
-    println!("{} {}", path_length, num_deeper + path_length);
-    (num_deeper + 1)
+        .map(|&x| subtree_sizes[x])
+        .collect::<Vec<_>>();
+    let total_size = sizes.iter().sum::<usize>();
+    let cutoff_size = usize::max(((0.2 * total_size as f64) as usize), 300);
+    let branches = sizes.iter().filter(|&size| size > &cutoff_size).count();
+
+    if branches == 1 {
+        for (child, size) in children.iter().zip(sizes.iter()) {
+            if size > &cutoff_size {
+                separator.push(*child);
+                traverse_separator_tree_rec(tree, *child, subtree_sizes, separator);
+                return;
+            }
+        }
+    }
+
+    for (child, size) in children.iter().zip(sizes.iter()) {
+        if size > &cutoff_size {
+            traverse_separator_tree_rec(tree, *child, subtree_sizes, [*child].to_vec());
+        }
+    }
+
+    println!("{} {}", total_size + separator.len(), separator.len());
 }
 
-// turns an order into a position array
+// turns an order into a position array: at index i is the position of node i
 // makes O(1) lookups for the position of a node possible
 fn get_positions_from_order(order: &[usize]) -> Vec<usize> {
     let mut pos = vec![0; order.len()];
