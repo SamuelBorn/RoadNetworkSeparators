@@ -14,17 +14,20 @@ use library::{read_binary_vec, read_text_vec, write_binary_vec};
 use separator::{traverse_separator_tree, Mode::*};
 
 fn main() {
-    let mut g = GeometricGraph::from_file(Path::new("../Graphs/karlsruhe"))
+    let mut g = GeometricGraph::from_file(Path::new("../Graphs/germany"))
         .unwrap()
         .graph;
 
-    let ord = read_binary_vec::<u32>(Path::new("output/order_karlsruhe.bin"))
+    let ord = read_binary_vec::<u32>(Path::new("output/ord_germany.bin"))
         .unwrap()
         .iter()
         .map(|&x| x as usize)
         .collect::<Vec<_>>();
 
+    println!("read data");
     g.chordalize(&ord);
+    println!("chordalized");
     let tree = g.get_lowest_neighbor_tree_top_down(&ord);
+    println!("tree build");
     traverse_separator_tree(&tree, *ord.last().unwrap());
 }

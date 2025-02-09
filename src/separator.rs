@@ -181,6 +181,7 @@ impl Graph {
         let mut pos = get_positions_from_order(order);
 
         for i in 0..self.get_num_nodes() {
+            dbg!(i);
             let v = order[i];
             let mut later_neighbors = Vec::new();
 
@@ -275,6 +276,10 @@ pub fn traverse_separator_tree_rec(
     }
 
     println!("{} {}", total_size + separator.len(), separator.len());
+    library::append_to_file(
+        Path::new("output/sep_germany_ifs.txt"),
+        &format!("{} {}\n", total_size + separator.len(), separator.len()),
+    );
 }
 
 // turns an order into a position array: at index i is the position of node i

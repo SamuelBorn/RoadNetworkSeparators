@@ -85,10 +85,6 @@ impl Graph {
     }
 
     pub fn add_edge(&mut self, i: usize, j: usize) {
-        if std::cmp::max(i, j) >= self.data.len() {
-            self.data.resize(std::cmp::max(i, j) + 1, HashSet::new());
-        }
-
         self.data[i].insert(j);
         self.data[j].insert(i);
     }
@@ -96,10 +92,6 @@ impl Graph {
     // warning! using this method breaks the assumption of undirected graphs
     // Only use it if you know what you are doing
     pub fn add_directed_edge(&mut self, i: usize, j: usize) {
-        if std::cmp::max(i, j) >= self.data.len() {
-            self.data.resize(std::cmp::max(i, j) + 1, HashSet::new());
-        }
-
         self.data[i].insert(j);
     }
 
