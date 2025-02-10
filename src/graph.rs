@@ -100,10 +100,16 @@ impl Graph {
 
         for (u, v) in self.get_edges() {
             if pos[u] < pos[v] {
-                self.data[u].remove(&v);
-            } else {
                 self.data[v].remove(&u);
+            } else {
+                self.data[u].remove(&v);
             }
+        }
+    }
+
+    pub fn make_undirected(&mut self) {
+        for (u, v) in self.get_edges() {
+            self.add_edge(u, v);
         }
     }
 

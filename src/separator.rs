@@ -183,14 +183,17 @@ impl Graph {
         let mut pos = get_positions_from_order(order);
 
         for i in 0..self.get_num_nodes() {
+            if i % 1000 == 0 {
+                println!("{}", i);
+            }
             let u = order[i];
             let neighbors = self.get_neighbors(u).clone();
 
             for combination in neighbors.iter().combinations(2) {
                 let (v, w) = (combination[0], combination[1]);
-                if pos[*v] > pos[*w] {
-                    self.add_directed_edge(*w, *v);
-                } else {
+                let (v, w) = if pos[*v] < pos[*w] { (v, w) } else { (w, v) };
+
+                if !self.has_edge(*v, *w) {
                     self.add_directed_edge(*v, *w);
                 }
             }
@@ -199,7 +202,6 @@ impl Graph {
 
     pub fn get_lowest_neighbor_tree_top_down(&mut self, order: &[usize]) -> Graph {
         let mut pos = get_positions_from_order(order);
-        self.chordalize(order);
 
         let mut tree = Graph::with_node_count(self.get_num_nodes());
 
