@@ -5,6 +5,7 @@ use std::path::Path;
 use std::{fs, ptr};
 
 use chrono::format;
+use itertools::{Combinations, Itertools};
 
 use crate::graph::Graph;
 use crate::library::optional_append_to_file;
@@ -178,27 +179,19 @@ impl Graph {
 
     pub fn chordalize(&mut self, order: &[usize]) {
         assert_eq!(order.len(), self.get_num_nodes());
+        self.make_directed(order);
         let mut pos = get_positions_from_order(order);
 
         for i in 0..self.get_num_nodes() {
-            dbg!(i);
-            let v = order[i];
-            let mut later_neighbors = Vec::new();
+            let u = order[i];
+            let neighbors = self.get_neighbors(u).clone();
 
-            for &u in self.get_neighbors(v) {
-                if pos[u] > i {
-                    later_neighbors.push(u);
-                }
-            }
-
-            for a in 0..later_neighbors.len() {
-                for b in (a + 1)..later_neighbors.len() {
-                    let u1 = later_neighbors[a];
-                    let u2 = later_neighbors[b];
-
-                    if !self.has_edge(u1, u2) {
-                        self.add_edge(u1, u2);
-                    }
+            for combination in neighbors.iter().combinations(2) {
+                let (v, w) = (combination[0], combination[1]);
+                if pos[*v] > pos[*w] {
+                    self.add_directed_edge(*w, *v);
+                } else {
+                    self.add_directed_edge(*v, *w);
                 }
             }
         }
@@ -284,7 +277,7 @@ pub fn traverse_separator_tree_rec(
 
 // turns an order into a position array: at index i is the position of node i
 // makes O(1) lookups for the position of a node possible
-fn get_positions_from_order(order: &[usize]) -> Vec<usize> {
+pub fn get_positions_from_order(order: &[usize]) -> Vec<usize> {
     let mut pos = vec![0; order.len()];
     order.iter().enumerate().for_each(|(i, &v)| pos[v] = i);
     pos
@@ -305,6 +298,21 @@ fn get_graph(g_map: &HashMap<usize, Vec<usize>>) -> Graph {
     }
 
     Graph::new(data)
+}
+
+pub fn get_directed_graph(graph: &Graph, order: &[usize]) -> Graph {
+    let mut pos = get_positions_from_order(order);
+    let mut g = Graph::with_node_count(graph.get_num_nodes());
+
+    for (u, v) in graph.get_edges() {
+        if pos[u] < pos[v] {
+            g.add_directed_edge(u, v);
+        } else {
+            g.add_directed_edge(v, u);
+        }
+    }
+
+    g
 }
 
 #[cfg(test)]

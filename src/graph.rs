@@ -95,6 +95,18 @@ impl Graph {
         self.data[i].insert(j);
     }
 
+    pub fn make_directed(&mut self, ord: &[usize]) {
+        let pos = separator::get_positions_from_order(ord);
+
+        for (u, v) in self.get_edges() {
+            if pos[u] < pos[v] {
+                self.data[u].remove(&v);
+            } else {
+                self.data[v].remove(&u);
+            }
+        }
+    }
+
     pub fn remove_edge(&mut self, i: usize, j: usize) {
         self.data[i].remove(&j);
         self.data[j].remove(&i);
