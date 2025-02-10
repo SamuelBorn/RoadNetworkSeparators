@@ -14,7 +14,7 @@ use library::{read_binary_vec, read_text_vec, write_binary_vec};
 use separator::{traverse_separator_tree, Mode::*};
 
 fn main() {
-    let mut g = GeometricGraph::from_file(Path::new("../Graphs/germany"))
+    let mut g = GeometricGraph::from_file(Path::new("../Graphs/karlsruhe"))
         .unwrap()
         .graph;
 

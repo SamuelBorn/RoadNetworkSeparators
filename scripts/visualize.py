@@ -7,7 +7,7 @@ import numpy as np
 
 
 def get_values(filename):
-    return zip(*[map(int, line.split()) for line in open(filename)])
+    return zip(*[map(float, line.split()) for line in open(filename)])
 
 def scatter(filename, color, marker, alpha=1):
     x_values, y_values = get_values(filename)
