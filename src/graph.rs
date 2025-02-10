@@ -95,6 +95,24 @@ impl Graph {
         self.data[i].insert(j);
     }
 
+    pub fn make_directed(&mut self, ord: &[usize]) {
+        let pos = separator::get_positions_from_order(ord);
+
+        for (u, v) in self.get_edges() {
+            if pos[u] < pos[v] {
+                self.data[v].remove(&u);
+            } else {
+                self.data[u].remove(&v);
+            }
+        }
+    }
+
+    pub fn make_undirected(&mut self) {
+        for (u, v) in self.get_edges() {
+            self.add_edge(u, v);
+        }
+    }
+
     pub fn remove_edge(&mut self, i: usize, j: usize) {
         self.data[i].remove(&j);
         self.data[j].remove(&i);
