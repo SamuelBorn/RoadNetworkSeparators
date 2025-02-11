@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import linregress
@@ -41,12 +40,24 @@ def sqrt_model(x, a, b):
     return a * np.sqrt(x)
 
 
+def sqrt_model_no_intercept(x, a):
+    return a * np.sqrt(x)
+
+
 def cbrt_model(x, a, b):
     return a * np.cbrt(x) + b
 
 
+def cbrt_model_no_intercept(x, a):
+    return a * np.cbrt(x)
+
+
 def poly_model(x, a, b, c):
     return a * np.power(x, b) + c
+
+
+def poly_model_no_intercept(x, a, b):
+    return a * np.power(x, b)
 
 
 def apply_log_log_transformation(x, y):
@@ -77,23 +88,42 @@ def fit_curve(x, y):
     r2 = r2_score(y, y_pred)
     print(f"{params[0]:.4f} * x^{params[1]:.4f} + {params[2]:.4f}   R²: {r2:.4f}\n")
 
+    params, _ = curve_fit(cbrt_model_no_intercept, x, y, p0=[0.5])
+    y_pred = cbrt_model_no_intercept(x, *params)
+    r2 = r2_score(y, y_pred)
+    print(f"{params[0]:.4f} * cbrt(x)   R²: {r2:.4f}")
+
+    params, _ = curve_fit(sqrt_model_no_intercept, x, y, p0=[0.5])
+    y_pred = sqrt_model_no_intercept(x, *params)
+    r2 = r2_score(y, y_pred)
+    print(f"{params[0]:.4f} * sqrt(x)   R²: {r2:.4f}")
+
+
+def analyze_data(x, y):
+    print("\n\nLog-Log Transformation")
+    fit_line(*apply_log_log_transformation(x, y))
+
+    print("\n\nNormal Fit")
+    fit_curve(x, y)
+
+    print("\n\nAdjusted pow 3")
+    fit_line(x, np.power(y, 3))
+
+    print("\n\nAdjusted pow 2")
+    fit_line(x, np.power(y, 2))
+
 
 def main():
-    x, y = load_data(Path("output/sep_germany.txt"))
-    # fit_line(*apply_log_log_transformation(x, y))
-    # fit_curve(x, y)
-    fit_line(x, np.power(y, 3))
-    fit_line(x, np.power(y, 2))
-    plt.scatter(x, y**2, label="y^3")
-    plt.show()
+    x, y = load_data(Path("output/sep_karlsruhe_ifc.txt"))
+    analyze_data(x, y)
 
-    # x,y = load_data(Path("output/sep_germany.txt"))
-    # fit_line(*apply_log_log_transformation(x, y))
-    # fit_curve(x, y)
-    #
-    # x,y = load_data(Path("output/sep_karlsruhe_ifc.txt"))
-    # fit_line(*apply_log_log_transformation(x, y))
-    # fit_curve(x, y)
+    print("\n\nBinned")
+    x, y = bin_data(x, y, 50)
+    analyze_data(x, y)
+
+    print("\n\nGermany")
+    x, y = load_data(Path("output/sep_germany.txt"))
+    analyze_data(x, y)
 
 
 if __name__ == "__main__":
