@@ -40,7 +40,13 @@ impl Graph {
     }
 
     pub fn from_edge_list(edges: Vec<(usize, usize)>) -> Self {
-        let mut g = Graph::with_node_count(0);
+        let max_idx = edges
+            .iter()
+            .map(|(a, b)| usize::max(*a, *b))
+            .max()
+            .unwrap_or(0);
+
+        let mut g = Graph::with_node_count(max_idx + 1);
         for (u, v) in edges {
             g.add_edge(u, v);
         }
@@ -177,15 +183,15 @@ impl Graph {
     }
 
     pub fn get_random_edge(&mut self) -> (usize, usize) {
-        let u = self.get_random_node();
-        let v = loop {
+        loop {
+            let u = self.get_random_node();
             if let Some(v) = self.get_random_neighbor(u) {
                 return (u, *v);
             }
         };
     }
 
-    pub fn add_max_node(&mut self, n: usize) {
+    pub fn increase_size_to(&mut self, n: usize) {
         if n < self.data.len() {
             return;
         }
