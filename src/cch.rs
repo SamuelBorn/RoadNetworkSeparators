@@ -24,34 +24,36 @@ pub fn compute_separator_sizes_from_order(graph: &Graph, order: &[usize], output
 
 pub fn chordalize(directed_graph: &Graph, order: &[usize]) -> Graph {
     let pos = get_positions_from_order(order);
-    let mut data = directed_graph
+    let mut data: Vec<Vec<usize>> = directed_graph
         .nodes_iter()
         .map(|v| {
             directed_graph
                 .get_neighbors(v)
-                .iter()
-                .map(|&e| OrderedNode {
-                    position: pos[e],
-                    node: e,
-                })
-                .collect::<BTreeSet<_>>()
+                .into_iter()
+                .copied()
+                .collect::<Vec<_>>()
         })
-        .collect::<Vec<_>>();
+        .collect();
 
     for i in 0..directed_graph.get_num_nodes() {
-        dbg!(i);
+        if i & 0x1111 == 0 {
+            println!("Chordalizing: {}/{}", i, directed_graph.get_num_nodes());
+        }
+
         let v = order[i];
-        let mut lowest_neighbor = data[v].first().copied();
-        if let Some(lowest_neighbor) = lowest_neighbor {
-            if lowest_neighbor.node < v {
-                let (l, r) = data.split_at_mut(v);
-                l[lowest_neighbor.node].extend(r[0].iter());
-                l[lowest_neighbor.node].remove(&lowest_neighbor);
-            } else {
-                let (l, r) = data.split_at_mut(v + 1);
-                r[lowest_neighbor.node - v - 1].extend(l[v].iter());
-                r[lowest_neighbor.node - v - 1].remove(&lowest_neighbor);
-            }
+        if data[v].is_empty() {
+            continue;
+        }
+        data[v].sort_by_key(|&x| pos[x]);
+        data[v].dedup();
+        let lowest_neighbor = data[v][0];
+
+        if lowest_neighbor < v {
+            let (l, r) = data.split_at_mut(v);
+            l[lowest_neighbor].extend(&r[0][1..]);
+        } else {
+            let (l, r) = data.split_at_mut(v + 1);
+            r[lowest_neighbor - v - 1].extend(&l[v][1..]);
         }
     }
 
@@ -60,7 +62,7 @@ pub fn chordalize(directed_graph: &Graph, order: &[usize]) -> Graph {
     for (idx, neighbors) in data.iter().enumerate() {
         g.add_neighbors(
             idx,
-            &neighbors.iter().map(|x| x.node).collect::<HashSet<_>>(),
+            &neighbors.into_iter().copied().collect::<HashSet<_>>(),
         );
     }
     g
@@ -173,6 +175,7 @@ mod test {
         let directed = get_directed_graph(&g, &order);
         let chordalized = chordalize(&directed, &order);
 
+        chordalized.print();
         assert_eq!(chordalized.get_neighbors(0), &HashSet::from([1, 3]));
         assert_eq!(chordalized.get_neighbors(1), &HashSet::from([3]));
         assert_eq!(chordalized.get_neighbors(2), &HashSet::from([1, 3]));
