@@ -43,7 +43,9 @@ pub fn chordalize_and_tree(directed_graph: &Graph, order: &[usize]) -> Graph {
         }
 
         let v = order[i];
-        if data[v].is_empty() { continue; }
+        if data[v].is_empty() {
+            continue;
+        }
 
         // deduplicate, find lowest neighbor, remember edge
         data[v].sort_by(|a, b| pos[*b].cmp(&pos[*a]));
@@ -80,16 +82,30 @@ pub fn get_lowest_neighbor_tree(chordalized_graph: &Graph, order: &[usize]) -> G
 }
 
 pub fn get_subtree_sizes(tree: &Graph, root: usize) -> Vec<usize> {
-    let mut subtree_sizes = vec![1; tree.get_num_nodes()];
-    get_subtree_sizes_rec(tree, root, &mut subtree_sizes);
-    subtree_sizes
-}
+    let num_nodes = tree.get_num_nodes();
+    // Every node initially counts as size 1 (itself)
+    let mut subtree_sizes = vec![1; num_nodes];
+    // The stack holds tuples: (current_node, parent_of_current_node, visited_flag)
+    let mut stack = Vec::new();
+    stack.push((root, None, false));
 
-fn get_subtree_sizes_rec(tree: &Graph, node: usize, subtree_sizes: &mut [usize]) {
-    for child in tree.get_neighbors(node) {
-        get_subtree_sizes_rec(tree, *child, subtree_sizes);
-        subtree_sizes[node] += subtree_sizes[*child];
+    while let Some((node, parent, visited)) = stack.pop() {
+        if !visited {
+            // Push the node back as visited to process after its children.
+            stack.push((node, parent, true));
+            // Push each child. No need to reverse because HashSet doesn't implement DoubleEndedIterator.
+            for &child in tree.get_neighbors(node) {
+                stack.push((child, Some(node), false));
+            }
+        } else {
+            // All children of `node` have been processed, so update parent's subtree size.
+            if let Some(p) = parent {
+                subtree_sizes[p] += subtree_sizes[node];
+            }
+        }
     }
+
+    subtree_sizes
 }
 
 pub fn traverse_separator_tree(
@@ -105,7 +121,7 @@ pub fn traverse_separator_tree(
         .map(|&x| subtree_sizes[x])
         .collect::<Vec<_>>();
     let total_size = sizes.iter().sum::<usize>();
-    let cutoff_size = usize::max(((0.1 * total_size as f64) as usize), 0);
+    let cutoff_size = usize::max(((0.1 * total_size as f64) as usize), 100);
     let branches = sizes.iter().filter(|&size| size > &cutoff_size).count();
 
     if branches == 1 {
