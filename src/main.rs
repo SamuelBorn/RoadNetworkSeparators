@@ -7,7 +7,6 @@ pub mod separator;
 use std::fs;
 use std::path::Path;
 
-use cch::get_lowest_neighbor_tree;
 use graph::delaunay::{length_restricted_delaunay, random_delaunay};
 use graph::geometric_graph::{GeometricGraph, Position, AABB};
 use graph::planar::naive_find_intersections;
