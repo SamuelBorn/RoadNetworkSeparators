@@ -1,6 +1,3 @@
 [submodule "dependencies/KaHIP"]
 	path = dependencies/KaHIP
-	url = https://github.com/KaHIP/KaHIP
-[submodule "dependencies/InertialFlowCutter"]
-	path = dependencies/InertialFlowCutter
-	url = https://github.com/kit-algo/InertialFlowCutter
+	url = https://github.com/KaHIP/KaHIP.git
