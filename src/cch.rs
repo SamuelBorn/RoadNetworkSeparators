@@ -15,7 +15,6 @@ struct OrderedNode {
 pub fn compute_separator_sizes_from_order(graph: &Graph, order: &[usize], output: &Path) {
     let directed = get_directed_graph(graph, order);
     let tree = chordalize_and_tree(&directed, order);
-    //let tree = get_lowest_neighbor_tree(&chordalized, order);
     let root = *order.last().unwrap();
     let subtree_sizes = get_subtree_sizes(&tree, root);
     library::clear_file(output);
@@ -56,26 +55,6 @@ pub fn chordalize_and_tree(directed_graph: &Graph, order: &[usize]) -> Graph {
         // add neighbors to lowest neighbor
         let mut temp = std::mem::take(&mut data[v]);
         data[lowest_neighbor].append(&mut temp);
-    }
-
-    tree
-}
-
-pub fn get_lowest_neighbor_tree(chordalized_graph: &Graph, order: &[usize]) -> Graph {
-    let mut pos = get_positions_from_order(order);
-
-    let mut tree = Graph::with_node_count(chordalized_graph.get_num_nodes());
-
-    for u in 0..chordalized_graph.get_num_nodes() {
-        let v = chordalized_graph
-            .get_neighbors(u)
-            .iter()
-            .filter(|&&v| pos[v] > pos[u])
-            .min_by_key(|&v| pos[*v]);
-
-        if let Some(&v) = v {
-            tree.add_directed_edge(v, u);
-        }
     }
 
     tree
