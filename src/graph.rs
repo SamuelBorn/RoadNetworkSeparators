@@ -108,6 +108,18 @@ impl Graph {
         }
     }
 
+    pub fn invert(&mut self) {
+        let mut new_data = vec![HashSet::new(); self.get_num_nodes()];
+
+        for (u, neighbors) in self.data.iter().enumerate() {
+            for &v in neighbors {
+                new_data[v].insert(u);
+            }
+        }
+
+        self.data = new_data;
+    }
+
     pub fn make_undirected(&mut self) {
         for (u, v) in self.get_edges() {
             self.add_edge(u, v);

@@ -16,8 +16,8 @@ use library::{read_bin_u32_vec_to_usize, read_binary_vec, read_text_vec, write_b
 use separator::Mode::*;
 
 fn main() {
-    let mut g = Graph::from_file(Path::new("../Graphs/germany")).unwrap();
-    let ord = read_bin_u32_vec_to_usize(Path::new("output/ord_germany.bin"));
+    let mut g = example::karlsruhe();
+    let ord = read_bin_u32_vec_to_usize(Path::new("output/ord_karlsruhe.bin"));
 
     cch::compute_separator_sizes_from_order(&g, &ord, Path::new("output/sep_germany_ifc.txt"));
 }
