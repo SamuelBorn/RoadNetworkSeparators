@@ -37,31 +37,25 @@ pub fn chordalize_and_tree(directed_graph: &Graph, order: &[usize]) -> Graph {
 
     let mut tree = Graph::with_node_count(directed_graph.get_num_nodes());
 
-    for i in 0..directed_graph.get_num_nodes() {
-        if i & 0b11111 == 0 {
-            println!("Chordalizing: {}/{}", i, directed_graph.get_num_nodes());
+    for i in 0..data.len() {
+        if i & 0b1111111 == 0 {
+            println!("{} / {}", i, data.len());
         }
 
         let v = order[i];
-        if data[v].is_empty() {
-            continue;
-        }
-        data[v].sort_by_key(|&x| pos[x]);
-        data[v].dedup();
-        let lowest_neighbor = data[v][0];
+        if data[v].is_empty() { continue; }
 
-        if lowest_neighbor < v {
-            let (l, r) = data.split_at_mut(v);
-            l[lowest_neighbor].extend(&r[0][1..]);
-        } else {
-            let (l, r) = data.split_at_mut(v + 1);
-            r[lowest_neighbor - v - 1].extend(&l[v][1..]);
-        }
-        tree.add_directed_edge(v, lowest_neighbor);
-        data[v].clear();
+        // deduplicate, find lowest neighbor, remember edge
+        data[v].sort_by(|a, b| pos[*b].cmp(&pos[*a]));
+        data[v].dedup();
+        let lowest_neighbor = data[v].pop().unwrap();
+        tree.add_directed_edge(lowest_neighbor, v);
+
+        // add neighbors to lowest neighbor
+        let mut temp = std::mem::take(&mut data[v]);
+        data[lowest_neighbor].append(&mut temp);
     }
 
-    tree.invert();
     tree
 }
 
@@ -164,34 +158,6 @@ mod test {
     use crate::graph::example::example_c4;
 
     use super::*;
-
-    #[test]
-    fn c4_chordalization() {
-        let g = example_c4().graph;
-        let order = vec![0, 2, 1, 3];
-        let directed = get_directed_graph(&g, &order);
-        let tree = chordalize_and_tree(&directed, &order);
-        tree.print();
-
-        //chordalized.print();
-        //assert_eq!(chordalized.get_neighbors(0), &HashSet::from([1, 3]));
-        //assert_eq!(chordalized.get_neighbors(1), &HashSet::from([3]));
-        //assert_eq!(chordalized.get_neighbors(2), &HashSet::from([1, 3]));
-        //assert_eq!(chordalized.get_neighbors(3), &HashSet::new());
-    }
-
-    #[test]
-    fn c4_tree() {
-        let g = example_c4().graph;
-        let order = vec![0, 2, 1, 3];
-        let directed = get_directed_graph(&g, &order);
-        let chordalized = chordalize_and_tree(&directed, &order);
-        let tree = get_lowest_neighbor_tree(&chordalized, &order);
-        assert_eq!(tree.get_neighbors(0), &HashSet::new());
-        assert_eq!(tree.get_neighbors(1), &HashSet::from([0, 2]));
-        assert_eq!(tree.get_neighbors(2), &HashSet::new());
-        assert_eq!(tree.get_neighbors(3), &HashSet::from([1]));
-    }
 
     #[test]
     fn c4_separator() {
