@@ -2,11 +2,12 @@ use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;
 use rand::Rng;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeSet, HashMap, HashSet},
     fs, io,
     path::Path,
 };
 
+use crate::cch::get_positions_from_order;
 use crate::{library, separator};
 pub mod delaunay;
 pub mod example;
@@ -59,14 +60,8 @@ impl Graph {
     }
 
     pub fn from_file(dir: &Path) -> io::Result<Self> {
-        let xadj = library::read_binary_vec::<u32>(&dir.join("first_out"))?
-            .into_iter()
-            .map(|x| x as usize)
-            .collect::<Vec<usize>>();
-        let adjncy = library::read_binary_vec::<u32>(&dir.join("head"))?
-            .into_iter()
-            .map(|x| x as usize)
-            .collect::<Vec<usize>>();
+        let xadj = library::read_bin_u32_vec_to_usize(&dir.join("first_out"));
+        let adjncy = library::read_bin_u32_vec_to_usize(&dir.join("head"));
 
         let mut g = Graph::with_node_count(xadj.len() - 1);
 
@@ -102,7 +97,7 @@ impl Graph {
     }
 
     pub fn make_directed(&mut self, ord: &[usize]) {
-        let pos = separator::get_positions_from_order(ord);
+        let pos = get_positions_from_order(ord);
 
         for (u, v) in self.get_edges() {
             if pos[u] < pos[v] {
@@ -188,7 +183,7 @@ impl Graph {
             if let Some(v) = self.get_random_neighbor(u) {
                 return (u, *v);
             }
-        };
+        }
     }
 
     pub fn increase_size_to(&mut self, n: usize) {
@@ -208,6 +203,10 @@ impl Graph {
         self.data.len()
     }
 
+    pub fn nodes_iter(&self) -> std::ops::Range<usize> {
+        0..self.get_num_nodes()
+    }
+
     pub fn get_num_edges(&self) -> usize {
         self.data.iter().map(|v| v.len()).sum::<usize>() / 2
     }
@@ -218,6 +217,14 @@ impl Graph {
 
     pub fn get_neighbors(&self, u: usize) -> &HashSet<usize> {
         &self.data[u]
+    }
+
+    pub fn get_neighbors_mut(&mut self, u: usize) -> &mut HashSet<usize> {
+        &mut self.data[u]
+    }
+
+    pub fn add_neighbors(&mut self, u: usize, neighbors: &HashSet<usize>) {
+        self.data[u].extend(neighbors);
     }
 
     pub fn get_adjacency_array(&self) -> (Vec<i32>, Vec<i32>) {

@@ -5,6 +5,23 @@ use std::str::FromStr;
 
 use crate::graph::geometric_graph::Position;
 
+pub fn read_bin_u32_vec_to_usize(file: &Path) -> Vec<usize> {
+    let mut file = File::open(file).unwrap();
+    let mut buffer = Vec::new();
+
+    file.read_to_end(&mut buffer).unwrap();
+    assert!(buffer.len() % std::mem::size_of::<u32>() == 0);
+    let num_elements = buffer.len() / std::mem::size_of::<u32>();
+    let mut vec = Vec::with_capacity(num_elements);
+
+    for chunk in buffer.chunks(std::mem::size_of::<u32>()) {
+        let elem = unsafe { std::ptr::read(chunk.as_ptr() as *const u32) } as usize;
+        vec.push(elem as usize);
+    }
+
+    vec
+}
+
 pub fn read_binary_vec<T: Sized>(file: &Path) -> io::Result<Vec<T>> {
     let mut file = File::open(file)?;
     let mut buffer = Vec::new();
@@ -51,12 +68,22 @@ pub fn write_binary_vec<T: Sized>(input: &[T], file: &Path) -> io::Result<()> {
 pub fn read_text_vec<T: FromStr>(file: &Path) -> io::Result<Vec<T>> {
     fs::read_to_string(file)?
         .lines()
-        .map(|line| line.parse().map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "Invalid data")))
+        .map(|line| {
+            line.parse()
+                .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "Invalid data"))
+        })
         .collect()
 }
 
 pub fn write_text_vec<T: std::fmt::Display>(input: &[T], file: &Path) -> io::Result<()> {
-    fs::write(file, input.iter().map(|elem| elem.to_string()).collect::<Vec<String>>().join("\n"))
+    fs::write(
+        file,
+        input
+            .iter()
+            .map(|elem| elem.to_string())
+            .collect::<Vec<String>>()
+            .join("\n"),
+    )
 }
 
 pub fn read_edge_list(file: &Path) -> io::Result<Vec<(usize, usize)>> {
@@ -69,7 +96,6 @@ pub fn read_edge_list(file: &Path) -> io::Result<Vec<(usize, usize)>> {
         })
         .collect())
 }
-
 
 pub fn read_position_list(file: &Path) -> io::Result<Vec<Position>> {
     Ok(std::fs::read_to_string(file)?

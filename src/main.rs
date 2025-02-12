@@ -1,3 +1,4 @@
+pub mod cch;
 pub mod graph;
 pub mod library;
 pub mod local;
@@ -6,28 +7,17 @@ pub mod separator;
 use std::fs;
 use std::path::Path;
 
+use cch::get_lowest_neighbor_tree;
 use graph::delaunay::{length_restricted_delaunay, random_delaunay};
 use graph::geometric_graph::{GeometricGraph, Position, AABB};
 use graph::planar::naive_find_intersections;
 use graph::{delaunay, example, grid, Graph};
-use library::{read_binary_vec, read_text_vec, write_binary_vec};
-use separator::{traverse_separator_tree, Mode::*};
+use library::{read_bin_u32_vec_to_usize, read_binary_vec, read_text_vec, write_binary_vec};
+use separator::Mode::*;
 
 fn main() {
-    let mut g = GeometricGraph::from_file(Path::new("../Graphs/karlsruhe"))
-        .unwrap()
-        .graph;
+    let mut g = Graph::from_file(Path::new("../Graphs/germany")).unwrap();
+    let ord = read_bin_u32_vec_to_usize(Path::new("output/ord_germany.bin"));
 
-    let ord = read_binary_vec::<u32>(Path::new("output/ord_germany.bin"))
-        .unwrap()
-        .iter()
-        .map(|&x| x as usize)
-        .collect::<Vec<_>>();
-
-    println!("read data");
-    g.chordalize(&ord);
-    println!("chordalized");
-    let tree = g.get_lowest_neighbor_tree_top_down(&ord);
-    println!("tree build");
-    traverse_separator_tree(&tree, *ord.last().unwrap());
+    cch::compute_separator_sizes_from_order(&g, &ord, Path::new("output/sep_germany_ifc.txt"));
 }

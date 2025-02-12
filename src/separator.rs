@@ -176,113 +176,6 @@ impl Graph {
             }
         }
     }
-
-    pub fn chordalize(&mut self, order: &[usize]) {
-        assert_eq!(order.len(), self.get_num_nodes());
-        self.make_directed(order);
-        let mut pos = get_positions_from_order(order);
-
-        for i in 0..self.get_num_nodes() {
-            if i % 1000 == 0 {
-                println!("{}", i);
-            }
-            let u = order[i];
-            let neighbors = self.get_neighbors(u).clone();
-
-            for combination in neighbors.iter().combinations(2) {
-                let (v, w) = (combination[0], combination[1]);
-                let (v, w) = if pos[*v] < pos[*w] { (v, w) } else { (w, v) };
-
-                if !self.has_edge(*v, *w) {
-                    self.add_directed_edge(*v, *w);
-                }
-            }
-        }
-    }
-
-    pub fn get_lowest_neighbor_tree_top_down(&mut self, order: &[usize]) -> Graph {
-        let mut pos = get_positions_from_order(order);
-
-        let mut tree = Graph::with_node_count(self.get_num_nodes());
-
-        for u in 0..self.get_num_nodes() {
-            let v = self
-                .get_neighbors(u)
-                .iter()
-                .filter(|&&v| pos[v] > pos[u])
-                .min_by_key(|&v| pos[*v]);
-
-            if let Some(&v) = v {
-                tree.add_directed_edge(v, u);
-            }
-        }
-
-        tree
-    }
-}
-
-pub fn get_subtree_sizes(tree: &Graph, root: usize) -> Vec<usize> {
-    let mut subtree_sizes = vec![1; tree.get_num_nodes()];
-    get_subtree_sizes_rec(tree, root, &mut subtree_sizes);
-    subtree_sizes
-}
-
-fn get_subtree_sizes_rec(tree: &Graph, node: usize, subtree_sizes: &mut [usize]) {
-    for child in tree.get_neighbors(node) {
-        get_subtree_sizes_rec(tree, *child, subtree_sizes);
-        subtree_sizes[node] += subtree_sizes[*child];
-    }
-}
-
-pub fn traverse_separator_tree(tree: &Graph, root: usize) {
-    let subtree_sizes = get_subtree_sizes(tree, root);
-    traverse_separator_tree_rec(tree, root, &subtree_sizes, [root].to_vec());
-}
-
-pub fn traverse_separator_tree_rec(
-    tree: &Graph,
-    node: usize,
-    subtree_sizes: &[usize],
-    mut separator: Vec<usize>,
-) {
-    let children = tree.get_neighbors(node);
-    let sizes = children
-        .iter()
-        .map(|&x| subtree_sizes[x])
-        .collect::<Vec<_>>();
-    let total_size = sizes.iter().sum::<usize>();
-    let cutoff_size = usize::max(((0.2 * total_size as f64) as usize), 300);
-    let branches = sizes.iter().filter(|&size| size > &cutoff_size).count();
-
-    if branches == 1 {
-        for (child, size) in children.iter().zip(sizes.iter()) {
-            if size > &cutoff_size {
-                separator.push(*child);
-                traverse_separator_tree_rec(tree, *child, subtree_sizes, separator);
-                return;
-            }
-        }
-    }
-
-    for (child, size) in children.iter().zip(sizes.iter()) {
-        if size > &cutoff_size {
-            traverse_separator_tree_rec(tree, *child, subtree_sizes, [*child].to_vec());
-        }
-    }
-
-    println!("{} {}", total_size + separator.len(), separator.len());
-    library::append_to_file(
-        Path::new("output/sep_germany_ifs.txt"),
-        &format!("{} {}\n", total_size + separator.len(), separator.len()),
-    );
-}
-
-// turns an order into a position array: at index i is the position of node i
-// makes O(1) lookups for the position of a node possible
-pub fn get_positions_from_order(order: &[usize]) -> Vec<usize> {
-    let mut pos = vec![0; order.len()];
-    order.iter().enumerate().for_each(|(i, &v)| pos[v] = i);
-    pos
 }
 
 fn get_graph(g_map: &HashMap<usize, Vec<usize>>) -> Graph {
@@ -302,25 +195,10 @@ fn get_graph(g_map: &HashMap<usize, Vec<usize>>) -> Graph {
     Graph::new(data)
 }
 
-pub fn get_directed_graph(graph: &Graph, order: &[usize]) -> Graph {
-    let mut pos = get_positions_from_order(order);
-    let mut g = Graph::with_node_count(graph.get_num_nodes());
-
-    for (u, v) in graph.get_edges() {
-        if pos[u] < pos[v] {
-            g.add_directed_edge(u, v);
-        } else {
-            g.add_directed_edge(v, u);
-        }
-    }
-
-    g
-}
-
 #[cfg(test)]
 mod tests {
     use graph::{
-        example::{example1, example_c4},
+        example::{self, example1, example_c4},
         geometric_graph::GeometricGraph,
     };
 
@@ -386,34 +264,5 @@ mod tests {
             }
             //println!();
         }
-    }
-
-    #[test]
-    fn test_chordalize() {
-        let mut g = example1();
-
-        g.graph.chordalize(&[0, 2, 6, 8, 3, 7, 1, 5, 4]);
-
-        g.graph.print();
-    }
-
-    #[test]
-    fn test_tree() {
-        let mut g = example1();
-        //g.graph.save_tree(&[0, 2, 6, 8, 3, 7, 1, 5, 4], Path::new("output/tree"));
-    }
-
-    #[test]
-    fn order_tree() {
-        let mut g = example1();
-        let order = [0, 2, 6, 8, 3, 7, 1, 5, 4];
-
-        g.graph.chordalize(&order);
-
-        let tree = g.graph.get_lowest_neighbor_tree_top_down(&order);
-
-        tree.print();
-
-        traverse_separator_tree(&tree, *order.iter().last().unwrap());
     }
 }
