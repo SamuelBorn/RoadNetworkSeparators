@@ -17,12 +17,9 @@ use separator::Mode::*;
 fn main() {
     //let mut g = example::karlsruhe();
     //let ord = read_bin_u32_vec_to_usize(Path::new("output/ord_karlsruhe.bin"));
-    //let g = example::germany();
-    let ord = read_bin_u32_vec_to_usize(Path::new("output/ord_germany.bin"));
-    let root = *ord.last().unwrap();
+    let g = example::germany_server();
+    g.to_file(Path::new("output/germany"));
 
-    //cch::compute_separator_sizes_from_order(&g, &ord, Path::new("output/sep_germany_ifc.txt"));
-    let mut tree = Graph::from_file_directed(Path::new("output/sep_tree_germany")).unwrap();
-    let subtree_sizes = cch::get_subtree_sizes(&tree, root);
-    cch::traverse_separator_tree(&tree, root, &subtree_sizes, Path::new("output/sep_germany.txt"));
+    //let ord = read_bin_u32_vec_to_usize(Path::new("output/ord_germany_new.bin"));
+    //cch::compute_separator_sizes_from_order(&g, &ord);
 }
