@@ -15,11 +15,9 @@ struct OrderedNode {
 pub fn compute_separator_sizes_from_order(graph: &Graph, order: &[usize]) {
     let directed = get_directed_graph(graph, order);
     let tree = chordalize_and_tree(&directed, order);
-    tree.to_file(Path::new("output/tree_germany")).unwrap();
-    //let root = *order.last().unwrap();
-    //let subtree_sizes = get_subtree_sizes(&tree, root);
-    //println!("{:?}", subtree_sizes[0..10].to_vec());
-    //traverse_separator_tree(&tree, root, &subtree_sizes);
+    let root = *order.last().unwrap();
+    let subtree_sizes = get_subtree_sizes(&tree, root);
+    traverse_separator_tree(&tree, root, &subtree_sizes);
 }
 
 pub fn chordalize_and_tree(directed_graph: &Graph, order: &[usize]) -> Graph {
