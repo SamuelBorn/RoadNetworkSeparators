@@ -17,7 +17,7 @@ use separator::Mode::*;
 fn main() {
     //let mut g = example::karlsruhe();
     //let ord = read_bin_u32_vec_to_usize(Path::new("output/ord_karlsruhe.bin"));
-    let g = example::germany_server();
+    let g = example::geometric_germany_server();
     g.to_file(Path::new("output/germany"));
 
     //let ord = read_bin_u32_vec_to_usize(Path::new("output/ord_germany_new.bin"));

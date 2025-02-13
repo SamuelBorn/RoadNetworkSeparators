@@ -60,3 +60,19 @@ pub fn germany() -> Graph {
 pub fn germany_server() -> Graph {
     Graph::from_file(Path::new("/algoDaten/praktikum-ws-24-25/graph/germany")).unwrap()
 }
+
+pub fn geometric_karlsruhe_server() -> GeometricGraph {
+    GeometricGraph::from_file(Path::new("/algoDaten/praktikum-ws-24-25/graph/karlsruhe")).unwrap()
+}
+
+pub fn geometric_germany_server() -> GeometricGraph {
+    GeometricGraph::from_file(Path::new("/algoDaten/praktikum-ws-24-25/graph/germany")).unwrap()
+}
+
+pub fn geometric_karlsruhe() -> GeometricGraph {
+    GeometricGraph::from_file(Path::new("../Graphs/karlsruhe")).unwrap()
+}
+
+pub fn geometric_germany() -> GeometricGraph {
+    GeometricGraph::from_file(Path::new("../Graphs/germany")).unwrap()
+}
