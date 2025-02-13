@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeSet, HashSet},
+    collections::{BTreeSet, HashSet, VecDeque},
     hash::Hash,
     path::Path,
 };
@@ -15,9 +15,11 @@ struct OrderedNode {
 pub fn compute_separator_sizes_from_order(graph: &Graph, order: &[usize]) {
     let directed = get_directed_graph(graph, order);
     let tree = chordalize_and_tree(&directed, order);
-    let root = *order.last().unwrap();
-    let subtree_sizes = get_subtree_sizes(&tree, root);
-    traverse_separator_tree(&tree, root, &subtree_sizes);
+    tree.to_file(Path::new("output/tree_germany")).unwrap();
+    //let root = *order.last().unwrap();
+    //let subtree_sizes = get_subtree_sizes(&tree, root);
+    //println!("{:?}", subtree_sizes[0..10].to_vec());
+    //traverse_separator_tree(&tree, root, &subtree_sizes);
 }
 
 pub fn chordalize_and_tree(directed_graph: &Graph, order: &[usize]) -> Graph {
@@ -60,30 +62,21 @@ pub fn chordalize_and_tree(directed_graph: &Graph, order: &[usize]) -> Graph {
 }
 
 pub fn get_subtree_sizes(tree: &Graph, root: usize) -> Vec<usize> {
-    let num_nodes = tree.get_num_nodes();
-    // Every node initially counts as size 1 (itself)
-    let mut subtree_sizes = vec![1; num_nodes];
-    // The stack holds tuples: (current_node, parent_of_current_node, visited_flag)
-    let mut stack = Vec::new();
-    stack.push((root, None, false));
+    let mut stack = Vec::from([(root, false)]);
+    let mut sizes = vec![0; tree.get_num_nodes()];
 
-    while let Some((node, parent, visited)) = stack.pop() {
-        if !visited {
-            // Push the node back as visited to process after its children.
-            stack.push((node, parent, true));
-            // Push each child. No need to reverse because HashSet doesn't implement DoubleEndedIterator.
-            for &child in tree.get_neighbors(node) {
-                stack.push((child, Some(node), false));
-            }
+    while let Some((node, processed)) = stack.pop() {
+        if processed {
+            sizes[node] = tree.get_neighbors(node).iter().map(|&v| sizes[v]).sum::<usize>() + 1;
         } else {
-            // All children of `node` have been processed, so update parent's subtree size.
-            if let Some(p) = parent {
-                subtree_sizes[p] += subtree_sizes[node];
+            stack.push((node, true));
+            for &child in tree.get_neighbors(node) {
+                stack.push((child, false));
             }
         }
     }
 
-    subtree_sizes
+    sizes
 }
 
 pub fn traverse_separator_tree(tree: &Graph, root: usize, subtree_sizes: &[usize]) {

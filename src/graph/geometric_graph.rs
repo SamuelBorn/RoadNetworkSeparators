@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fs;
 use std::io;
@@ -8,6 +9,7 @@ use crate::Graph;
 use ordered_float::OrderedFloat;
 use rand::Rng;
 
+#[derive(Debug)]
 pub struct GeometricGraph {
     pub graph: Graph,
     pub positions: Vec<Position>,
@@ -182,19 +184,32 @@ impl GeometricGraph {
     }
 
     pub fn largest_subgraph(&self) -> GeometricGraph {
-        let map = self
-            .graph
-            .get_subgraphs_map(&HashSet::new())
-            .iter()
-            .max_by_key(|(g)| g.len())
-            .unwrap();
+        let g_map = self.graph.get_subgraphs_map(&HashSet::new());
+        let g_map = g_map.iter().max_by_key(|(g)| g.len()).unwrap();
 
-        unimplemented!()
+        let mut mapping = HashMap::new();
+        let mut data = vec![Vec::new(); g_map.len()];
+        let mut positions = vec![Position::new(0.0, 0.0); g_map.len()];
+
+        for (&from_idx, to_nodes) in g_map.iter() {
+            let possbile_next_idx = mapping.len();
+            let new_from_idx = *mapping.entry(from_idx).or_insert(possbile_next_idx);
+            positions[new_from_idx] = self.get_position(from_idx);
+            for &to in to_nodes {
+                let next_id = mapping.len();
+                let to_idx = *mapping.entry(to).or_insert(next_id);
+                data[new_from_idx].push(to_idx);
+            }
+        }
+
+        GeometricGraph::new(Graph::new(data), positions)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use super::*;
 
     #[test]
@@ -226,5 +241,33 @@ mod tests {
         assert!(p3.on_line(p1, p2));
         assert!(p4.on_line(p1, p2));
         assert!(!p5.on_line(p1, p2));
+    }
+
+    #[test]
+    fn largest_subgraph() {
+        let mut g = GeometricGraph::new(
+            Graph::from_edge_list(vec![(0, 1), (1, 2), (3, 4)]),
+            vec![
+                Position::new(1.0, 1.0),
+                Position::new(2.0, 2.0),
+                Position::new(3.0, 3.0),
+                Position::new(4.0, 4.0),
+                Position::new(5.0, 5.0),
+            ],
+        );
+
+        let g_sub = g.largest_subgraph();
+        assert_eq!(g_sub.graph.get_num_nodes(), 3);
+        assert_eq!(g_sub.graph.get_num_edges(), 2);
+        assert_eq!(g_sub.positions.len(), 3);
+        assert!(g_sub.positions.contains(&Position::new(1.0, 1.0)));
+        assert!(g_sub.positions.contains(&Position::new(2.0, 2.0)));
+        assert!(g_sub.positions.contains(&Position::new(3.0, 3.0)));
+        
+        g.graph.add_edge(2, 3);
+        let g_sub = g.largest_subgraph();
+        assert_eq!(g_sub.graph.get_num_nodes(), 5);
+        assert_eq!(g_sub.graph.get_num_edges(), 4);
+        assert_eq!(g_sub.positions.len(), 5);
     }
 }
