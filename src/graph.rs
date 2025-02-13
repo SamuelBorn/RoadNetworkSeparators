@@ -54,6 +54,10 @@ impl Graph {
         g
     }
 
+    pub fn info(&self) {
+        println!("n={}\tm={}\tdeg={:.4}\tconn:{}", self.get_num_nodes(), self.get_num_edges(), self.get_average_degree(), self.is_connected());
+    }
+
     pub fn from_edge_list_file(file: &Path) -> io::Result<Self> {
         let edges = library::read_edge_list(file)?;
         Ok(Graph::from_edge_list(edges))
@@ -68,6 +72,21 @@ impl Graph {
         for i in 0..xadj.len() - 1 {
             for j in xadj[i]..xadj[i + 1] {
                 g.add_edge(i, adjncy[j]);
+            }
+        }
+
+        Ok(g)
+    }
+
+    pub fn from_file_directed(dir: &Path) -> io::Result<Self> {
+        let xadj = library::read_bin_u32_vec_to_usize(&dir.join("first_out"));
+        let adjncy = library::read_bin_u32_vec_to_usize(&dir.join("head"));
+
+        let mut g = Graph::with_node_count(xadj.len() - 1);
+
+        for i in 0..xadj.len() - 1 {
+            for j in xadj[i]..xadj[i + 1] {
+                g.add_directed_edge(i, adjncy[j]);
             }
         }
 
