@@ -1,4 +1,8 @@
 use hashbrown::{HashMap, HashSet};
+use rayon::iter::IndexedParallelIterator;
+use rayon::iter::IntoParallelIterator;
+use rayon::iter::IntoParallelRefIterator;
+use rayon::iter::ParallelIterator;
 
 use std::borrow::Borrow;
 use std::fs;
@@ -127,11 +131,10 @@ impl GeometricGraph {
         assert_eq!(g.get_num_nodes(), longitudes.len());
 
         let positions = latitudes
-            .into_iter()
-            .zip(longitudes)
-            .map(|(lat, lon)| Position::new(lat, lon))
+            .par_iter()
+            .zip(longitudes.par_iter())
+            .map(|(lat, lon)| Position::new(*lat, *lon))
             .collect();
-
         Ok(GeometricGraph::new(g, positions))
     }
 

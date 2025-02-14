@@ -46,33 +46,25 @@ pub fn example_c4() -> GeometricGraph {
 }
 
 pub fn karlsruhe() -> Graph {
-    Graph::from_file(Path::new("../Graphs/karlsruhe")).unwrap()
-}
-
-pub fn karlsruhe_server() -> Graph {
-    Graph::from_file(Path::new("/algoDaten/praktikum-ws-24-25/graph/karlsruhe")).unwrap()
+    Graph::from_file(Path::new("../Graphs/karlsruhe-connected-bidirectional")).unwrap()
 }
 
 pub fn germany() -> Graph {
-    Graph::from_file(Path::new("../Graphs/germany")).unwrap()
+    Graph::from_file(Path::new("../Graphs/germany-connected-bidirectional")).unwrap()
 }
 
-pub fn germany_server() -> Graph {
-    Graph::from_file(Path::new("/algoDaten/praktikum-ws-24-25/graph/germany")).unwrap()
-}
-
-pub fn geometric_karlsruhe_server() -> GeometricGraph {
-    GeometricGraph::from_file(Path::new("/algoDaten/praktikum-ws-24-25/graph/karlsruhe")).unwrap()
-}
-
-pub fn geometric_germany_server() -> GeometricGraph {
-    GeometricGraph::from_file(Path::new("/algoDaten/praktikum-ws-24-25/graph/germany")).unwrap()
+pub fn europe() -> Graph {
+    Graph::from_file(Path::new("../Graphs/europe-connected-bidirectional")).unwrap()
 }
 
 pub fn geometric_karlsruhe() -> GeometricGraph {
-    GeometricGraph::from_file(Path::new("../Graphs/karlsruhe")).unwrap()
+    GeometricGraph::from_file(Path::new("../Graphs/karlsruhe-connected-bidirectional")).unwrap()
 }
 
 pub fn geometric_germany() -> GeometricGraph {
-    GeometricGraph::from_file(Path::new("../Graphs/germany")).unwrap()
+    GeometricGraph::from_file(Path::new("../Graphs/germany-connected-bidirectional")).unwrap()
+}
+
+pub fn geometric_europe() -> GeometricGraph {
+    GeometricGraph::from_file(Path::new("../Graphs/europe-connected-bidirectional")).unwrap()
 }

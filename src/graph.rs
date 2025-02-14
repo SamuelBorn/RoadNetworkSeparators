@@ -2,6 +2,11 @@ use hashbrown::{HashMap, HashSet};
 use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;
 use rand::Rng;
+use rayon::iter::IntoParallelIterator;
+use rayon::iter::ParallelBridge;
+use rayon::iter::ParallelIterator;
+use std::hash::Hash;
+use std::thread;
 use std::{collections::BTreeSet, fs, io, path::Path};
 
 use crate::cch::get_positions_from_order;
@@ -67,18 +72,20 @@ impl Graph {
     }
 
     pub fn from_file(dir: &Path) -> io::Result<Self> {
-        let xadj = library::read_bin_u32_vec_to_usize(&dir.join("first_out"));
-        let adjncy = library::read_bin_u32_vec_to_usize(&dir.join("head"));
+        let first_out_path = dir.join("first_out");
+        let head_path = dir.join("head");
+        let a = thread::spawn(move || library::read_bin_u32_vec_to_usize(&first_out_path));
+        let b = thread::spawn(move || library::read_bin_u32_vec_to_usize(&head_path));
+        let xadj = a.join().unwrap();
+        let adjncy = b.join().unwrap();
 
-        let mut g = Graph::with_node_count(xadj.len() - 1);
+        let data: Vec<HashSet<_>> = xadj
+            .windows(2)
+            .par_bridge()
+            .map(|window| adjncy[window[0]..window[1]].iter().copied().collect())
+            .collect();
 
-        for i in 0..xadj.len() - 1 {
-            for j in xadj[i]..xadj[i + 1] {
-                g.add_edge(i, adjncy[j]);
-            }
-        }
-
-        Ok(g)
+        Ok(Graph { data })
     }
 
     pub fn from_file_directed(dir: &Path) -> io::Result<Self> {
