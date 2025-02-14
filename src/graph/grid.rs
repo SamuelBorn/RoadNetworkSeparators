@@ -1,4 +1,5 @@
-use std::collections::HashSet;
+use hashbrown::{HashMap, HashSet};
+
 use std::fs;
 use std::io::Write;
 use std::sync::mpsc::channel;
@@ -117,7 +118,8 @@ pub fn save_separator_distribution_multithreaded(
 #[cfg(test)]
 mod tests {
     use crate::separator::Mode::*;
-    use std::collections::HashSet;
+    use hashbrown::{HashMap, HashSet};
+
 
     use super::*;
 

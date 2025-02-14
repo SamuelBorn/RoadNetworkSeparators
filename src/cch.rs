@@ -1,16 +1,10 @@
+use hashbrown::{HashMap, HashSet};
 use std::{
-    collections::{BTreeSet, HashSet, VecDeque},
-    hash::Hash,
+    collections::{BTreeSet, VecDeque},
     path::Path,
 };
 
 use crate::{graph::Graph, library, separator};
-
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Copy)]
-struct OrderedNode {
-    position: usize,
-    node: usize,
-}
 
 pub fn compute_separator_sizes_from_order(graph: &Graph, order: &[usize]) {
     let directed = get_directed_graph(graph, order);
@@ -65,7 +59,12 @@ pub fn get_subtree_sizes(tree: &Graph, root: usize) -> Vec<usize> {
 
     while let Some((node, processed)) = stack.pop() {
         if processed {
-            sizes[node] = tree.get_neighbors(node).iter().map(|&v| sizes[v]).sum::<usize>() + 1;
+            sizes[node] = tree
+                .get_neighbors(node)
+                .iter()
+                .map(|&v| sizes[v])
+                .sum::<usize>()
+                + 1;
         } else {
             stack.push((node, true));
             for &child in tree.get_neighbors(node) {

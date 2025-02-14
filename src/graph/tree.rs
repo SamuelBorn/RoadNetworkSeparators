@@ -1,5 +1,6 @@
 use rand::Rng;
-use std::collections::HashSet;
+use hashbrown::{HashMap, HashSet};
+
 
 use crate::graph::Graph;
 

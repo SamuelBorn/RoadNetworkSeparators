@@ -16,9 +16,11 @@ use library::{read_bin_u32_vec_to_usize, read_binary_vec, read_text_vec, write_b
 use separator::Mode::*;
 
 fn main() {
-    let order = read_bin_u32_vec_to_usize(Path::new("output/ord_germany_connected.bin"));
-    let root = *order.last().unwrap();
+    //let order = read_bin_u32_vec_to_usize(Path::new("output/ord_germany_connected.bin"));
+    //let root = *order.last().unwrap();
 
-    let g = Graph::from_file(Path::new("output/germany_connected")).unwrap();
-    cch::compute_separator_sizes_from_order(&g, &order);
+    //let g = Graph::from_file(Path::new("output/germany_connected")).unwrap();
+    //cch::compute_separator_sizes_from_order(&g, &order);
+    let g = example::karlsruhe();
+    g.queue_separator(Fast, None);
 }

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use hashbrown::{HashMap, HashSet};
 
 use ordered_float::OrderedFloat;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -104,7 +104,7 @@ impl GeometricGraph {
 
             for intersection in possible_intersections {
                 if intersection.on_line(self.get_position(u), self.get_position(v)) {
-                    let index = *map.get(&intersection).unwrap();
+                    let index = *map.get(intersection).unwrap();
                     self.graph.remove_edge(u, v);
                     self.graph.add_edge(u, index);
                     self.graph.add_edge(v, index);

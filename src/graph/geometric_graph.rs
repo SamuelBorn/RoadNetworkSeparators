@@ -1,5 +1,6 @@
-use std::collections::HashMap;
-use std::collections::HashSet;
+use hashbrown::{HashMap, HashSet};
+
+use std::borrow::Borrow;
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -263,7 +264,7 @@ mod tests {
         assert!(g_sub.positions.contains(&Position::new(1.0, 1.0)));
         assert!(g_sub.positions.contains(&Position::new(2.0, 2.0)));
         assert!(g_sub.positions.contains(&Position::new(3.0, 3.0)));
-        
+
         g.graph.add_edge(2, 3);
         let g_sub = g.largest_subgraph();
         assert_eq!(g_sub.graph.get_num_nodes(), 5);

@@ -1,5 +1,5 @@
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::hash::Hash;
+use hashbrown::{HashMap, HashSet};
+use std::collections::VecDeque;
 use std::io::Write;
 use std::path::Path;
 use std::{fs, ptr};

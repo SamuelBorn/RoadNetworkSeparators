@@ -1,11 +1,8 @@
+use hashbrown::{HashMap, HashSet};
 use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;
 use rand::Rng;
-use std::{
-    collections::{BTreeSet, HashMap, HashSet},
-    fs, io,
-    path::Path,
-};
+use std::{collections::BTreeSet, fs, io, path::Path};
 
 use crate::cch::get_positions_from_order;
 use crate::{library, separator};
@@ -55,7 +52,13 @@ impl Graph {
     }
 
     pub fn info(&self) {
-        println!("n={}\tm={}\tdeg={:.4}\tconn:{}", self.get_num_nodes(), self.get_num_edges(), self.get_average_degree(), self.is_connected());
+        println!(
+            "n={}\tm={}\tdeg={:.4}\tconn:{}",
+            self.get_num_nodes(),
+            self.get_num_edges(),
+            self.get_average_degree(),
+            self.is_connected()
+        );
     }
 
     pub fn from_edge_list_file(file: &Path) -> io::Result<Self> {
@@ -354,18 +357,6 @@ impl Graph {
         for (i, neighbors) in self.data.iter().enumerate() {
             println!("{}: {:?}", i, neighbors);
         }
-    }
-
-    pub fn to_json(&self) -> String {
-        let mut json_representation = HashMap::new();
-        for (index, neighbors) in self.data.iter().enumerate() {
-            json_representation.insert(index, neighbors);
-        }
-        serde_json::to_string(&json_representation).unwrap()
-    }
-
-    pub fn to_json_file(&self, filename: &str) {
-        std::fs::write(filename, self.to_json());
     }
 }
 
