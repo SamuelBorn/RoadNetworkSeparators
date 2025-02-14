@@ -16,11 +16,19 @@ use library::{read_bin_u32_vec_to_usize, read_binary_vec, read_text_vec, write_b
 use separator::Mode::*;
 
 fn main() {
-    //let order = read_bin_u32_vec_to_usize(Path::new("output/ord_germany_connected.bin"));
-    //let root = *order.last().unwrap();
+    let mut g = GeometricGraph::from_file(Path::new("../Graphs2/karlsruhe")).unwrap();
+    g.graph.make_undirected();
+    let g = g.largest_connected_component();
+    g.save(Path::new("../Graphs2/karlsruhe-connected-bidirectional"));
 
-    //let g = Graph::from_file(Path::new("output/germany_connected")).unwrap();
-    //cch::compute_separator_sizes_from_order(&g, &order);
-    let g = example::karlsruhe();
-    g.queue_separator(Fast, None);
+    let mut g = GeometricGraph::from_file(Path::new("../Graphs2/germany")).unwrap();
+    g.graph.make_undirected();
+    let g = g.largest_connected_component();
+    g.save(Path::new("../Graphs2/germany-connected-bidirectional"));
+    println!("done");
+
+    let mut g = GeometricGraph::from_file(Path::new("../Graphs2/europe")).unwrap();
+    g.graph.make_undirected();
+    let g = g.largest_connected_component();
+    g.save(Path::new("../Graphs2/europe-connected-bidirectional"));
 }

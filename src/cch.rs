@@ -7,6 +7,7 @@ use std::{
 use crate::{graph::Graph, library, separator};
 
 pub fn compute_separator_sizes_from_order(graph: &Graph, order: &[usize]) {
+    assert_eq!(graph.get_num_nodes(), order.len());
     let directed = get_directed_graph(graph, order);
     let tree = chordalize_and_tree(&directed, order);
     let root = *order.last().unwrap();

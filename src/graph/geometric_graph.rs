@@ -138,7 +138,7 @@ impl GeometricGraph {
         Ok(GeometricGraph::new(g, positions))
     }
 
-    pub fn to_file(&self, dir: &Path) -> io::Result<()> {
+    pub fn save(&self, dir: &Path) -> io::Result<()> {
         self.graph.to_file(dir)?;
         library::write_binary_vec(
             &self
@@ -187,7 +187,7 @@ impl GeometricGraph {
         fs::write(file, res);
     }
 
-    pub fn largest_subgraph(&self) -> GeometricGraph {
+    pub fn largest_connected_component(&self) -> GeometricGraph {
         let g_map = self.graph.get_subgraphs_map(&HashSet::new());
         let g_map = g_map.iter().max_by_key(|(g)| g.len()).unwrap();
 
@@ -260,7 +260,7 @@ mod tests {
             ],
         );
 
-        let g_sub = g.largest_subgraph();
+        let g_sub = g.largest_connected_component();
         assert_eq!(g_sub.graph.get_num_nodes(), 3);
         assert_eq!(g_sub.graph.get_num_edges(), 2);
         assert_eq!(g_sub.positions.len(), 3);
@@ -269,7 +269,7 @@ mod tests {
         assert!(g_sub.positions.contains(&Position::new(3.0, 3.0)));
 
         g.graph.add_edge(2, 3);
-        let g_sub = g.largest_subgraph();
+        let g_sub = g.largest_connected_component();
         assert_eq!(g_sub.graph.get_num_nodes(), 5);
         assert_eq!(g_sub.graph.get_num_edges(), 4);
         assert_eq!(g_sub.positions.len(), 5);

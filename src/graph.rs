@@ -5,6 +5,7 @@ use rand::Rng;
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelBridge;
 use rayon::iter::ParallelIterator;
+use rayon::prelude::*;
 use std::hash::Hash;
 use std::thread;
 use std::{collections::BTreeSet, fs, io, path::Path};
@@ -23,7 +24,7 @@ pub mod unit_disk;
 // all algorithms assume that if a,b is in the graph, then b,a is also in the graph
 #[derive(Debug, Clone)]
 pub struct Graph {
-    data: Vec<HashSet<usize>>,
+    pub data: Vec<HashSet<usize>>,
 }
 
 impl Graph {
@@ -56,13 +57,28 @@ impl Graph {
         g
     }
 
+    pub fn from_edge_list_directed(edges: Vec<(usize, usize)>) -> Self {
+        let max_idx = edges
+            .iter()
+            .map(|(a, b)| usize::max(*a, *b))
+            .max()
+            .unwrap_or(0);
+
+        let mut g = Graph::with_node_count(max_idx + 1);
+        for (u, v) in edges {
+            g.add_directed_edge(u, v);
+        }
+        g
+    }
+
     pub fn info(&self) {
         println!(
-            "n={}\tm={}\tdeg={:.4}\tconn:{}",
+            "n={}\tm={}\tdeg={:.4}\tconn:{}\tbi:{}",
             self.get_num_nodes(),
             self.get_num_edges(),
             self.get_average_degree(),
-            self.is_connected()
+            self.is_connected(),
+            self.is_bidirectional(),
         );
     }
 
@@ -72,17 +88,17 @@ impl Graph {
     }
 
     pub fn from_file(dir: &Path) -> io::Result<Self> {
-        let first_out_path = dir.join("first_out");
-        let head_path = dir.join("head");
-        let a = thread::spawn(move || library::read_bin_u32_vec_to_usize(&first_out_path));
-        let b = thread::spawn(move || library::read_bin_u32_vec_to_usize(&head_path));
-        let xadj = a.join().unwrap();
-        let adjncy = b.join().unwrap();
+        let mut xadj = library::read_bin_u32_vec_to_usize(&dir.join("first_out"));
+        xadj.pop();
+        let adjncy = library::read_bin_u32_vec_to_usize(&dir.join("head"));
 
         let data: Vec<HashSet<_>> = xadj
-            .windows(2)
-            .par_bridge()
-            .map(|window| adjncy[window[0]..window[1]].iter().copied().collect())
+            .par_iter()
+            .enumerate()
+            .map(|(i, &start)| {
+                let end = xadj.get(i + 1).copied().unwrap_or(adjncy.len());
+                adjncy[start..end].iter().copied().collect()
+            })
             .collect();
 
         Ok(Graph { data })
@@ -197,15 +213,11 @@ impl Graph {
     }
 
     pub fn get_edges(&self) -> Vec<(usize, usize)> {
-        let mut edges = Vec::with_capacity(self.get_num_edges());
-        for (i, neighbors) in self.data.iter().enumerate() {
-            for &j in neighbors {
-                if i < j {
-                    edges.push((i, j));
-                }
-            }
-        }
-        edges
+        self.data
+            .par_iter()
+            .enumerate()
+            .flat_map(|(i, neighbors)| neighbors.iter().map(|&j| (i, j)).collect::<Vec<_>>())
+            .collect()
     }
 
     pub fn get_random_neighbor(&self, u: usize) -> Option<&usize> {
@@ -309,7 +321,13 @@ impl Graph {
 
     pub fn is_connected(&self) -> bool {
         let distances = self.bfs(0);
-        distances.iter().all(|&d| d != usize::MAX)
+        distances.par_iter().all(|&d| d != usize::MAX)
+    }
+
+    pub fn is_bidirectional(&self) -> bool {
+        self.get_edges()
+            .par_iter()
+            .all(|&(u, v)| self.has_edge(v, u))
     }
 
     pub fn bfs(&self, start: usize) -> Vec<usize> {
