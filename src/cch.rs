@@ -8,15 +8,15 @@ use crate::{graph::Graph, library, separator};
 
 pub fn compute_separator_sizes_from_order(graph: &Graph, order: &[usize]) {
     assert_eq!(graph.get_num_nodes(), order.len());
-    let directed = get_directed_graph(graph, order);
-    let tree = chordalize_and_tree(&directed, order);
+    let pos = get_positions_from_order(order);
+    let directed = get_directed_graph(graph, &pos);
+    let tree = chordalize_and_tree(&directed, order, &pos);
     let root = *order.last().unwrap();
     let subtree_sizes = get_subtree_sizes(&tree, root);
     traverse_separator_tree(&tree, root, &subtree_sizes);
 }
 
-pub fn chordalize_and_tree(directed_graph: &Graph, order: &[usize]) -> Graph {
-    let pos = get_positions_from_order(order);
+pub fn chordalize_and_tree(directed_graph: &Graph, order: &[usize], pos: &[usize]) -> Graph {
     let mut data: Vec<Vec<usize>> = directed_graph
         .nodes_iter()
         .map(|v| {
@@ -31,10 +31,6 @@ pub fn chordalize_and_tree(directed_graph: &Graph, order: &[usize]) -> Graph {
     let mut tree = Graph::with_node_count(directed_graph.get_num_nodes());
 
     for i in 0..data.len() {
-        if i & 0b1111111 == 0 {
-            println!("{} / {}", i, data.len());
-        }
-
         let v = order[i];
         if data[v].is_empty() {
             continue;
@@ -117,8 +113,7 @@ pub fn get_positions_from_order(order: &[usize]) -> Vec<usize> {
     pos
 }
 
-pub fn get_directed_graph(graph: &Graph, order: &[usize]) -> Graph {
-    let mut pos = get_positions_from_order(order);
+pub fn get_directed_graph(graph: &Graph, pos: &[usize]) -> Graph {
     let mut g = Graph::with_node_count(graph.get_num_nodes());
 
     for (u, v) in graph.get_edges() {

@@ -10,7 +10,6 @@ use std::hash::Hash;
 use std::thread;
 use std::{collections::BTreeSet, fs, io, path::Path};
 
-use crate::cch::get_positions_from_order;
 use crate::{library, separator};
 pub mod delaunay;
 pub mod example;
@@ -88,9 +87,9 @@ impl Graph {
     }
 
     pub fn from_file(dir: &Path) -> io::Result<Self> {
-        let mut xadj = library::read_bin_u32_vec_to_usize(&dir.join("first_out"));
+        let mut xadj = library::read_to_usize_vec(&dir.join("first_out"));
         xadj.pop();
-        let adjncy = library::read_bin_u32_vec_to_usize(&dir.join("head"));
+        let adjncy = library::read_to_usize_vec(&dir.join("head"));
 
         let data: Vec<HashSet<_>> = xadj
             .par_iter()
@@ -105,8 +104,8 @@ impl Graph {
     }
 
     pub fn from_file_directed(dir: &Path) -> io::Result<Self> {
-        let xadj = library::read_bin_u32_vec_to_usize(&dir.join("first_out"));
-        let adjncy = library::read_bin_u32_vec_to_usize(&dir.join("head"));
+        let xadj = library::read_to_usize_vec(&dir.join("first_out"));
+        let adjncy = library::read_to_usize_vec(&dir.join("head"));
 
         let mut g = Graph::with_node_count(xadj.len() - 1);
 
@@ -139,18 +138,6 @@ impl Graph {
     // Only use it if you know what you are doing
     pub fn add_directed_edge(&mut self, i: usize, j: usize) {
         self.data[i].insert(j);
-    }
-
-    pub fn make_directed(&mut self, ord: &[usize]) {
-        let pos = get_positions_from_order(ord);
-
-        for (u, v) in self.get_edges() {
-            if pos[u] < pos[v] {
-                self.data[v].remove(&u);
-            } else {
-                self.data[u].remove(&v);
-            }
-        }
     }
 
     pub fn invert(&mut self) {

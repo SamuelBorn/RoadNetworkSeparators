@@ -12,23 +12,11 @@ use graph::delaunay::{length_restricted_delaunay, random_delaunay};
 use graph::geometric_graph::{GeometricGraph, Position, AABB};
 use graph::planar::naive_find_intersections;
 use graph::{delaunay, example, grid, Graph};
-use library::{read_bin_u32_vec_to_usize, read_binary_vec, read_text_vec, write_binary_vec};
+use library::{read_binary_vec, read_text_vec, read_to_usize_vec, write_binary_vec};
 use separator::Mode::*;
 
 fn main() {
-    let mut g = GeometricGraph::from_file(Path::new("../Graphs2/karlsruhe")).unwrap();
-    g.graph.make_undirected();
-    let g = g.largest_connected_component();
-    g.save(Path::new("../Graphs2/karlsruhe-connected-bidirectional"));
-
-    let mut g = GeometricGraph::from_file(Path::new("../Graphs2/germany")).unwrap();
-    g.graph.make_undirected();
-    let g = g.largest_connected_component();
-    g.save(Path::new("../Graphs2/germany-connected-bidirectional"));
-    println!("done");
-
-    let mut g = GeometricGraph::from_file(Path::new("../Graphs2/europe")).unwrap();
-    g.graph.make_undirected();
-    let g = g.largest_connected_component();
-    g.save(Path::new("../Graphs2/europe-connected-bidirectional"));
+    let g = example::europe();
+    let ord = read_to_usize_vec(Path::new("output/ord_europe.bin"));
+    cch::compute_separator_sizes_from_order(&g, &ord);
 }

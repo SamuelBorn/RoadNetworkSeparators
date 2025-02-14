@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use crate::graph::geometric_graph::Position;
 
-pub fn read_bin_u32_vec_to_usize(file: &Path) -> Vec<usize> {
+pub fn read_to_usize_vec(file: &Path) -> Vec<usize> {
     let mut file = File::open(file).unwrap();
     let mut buffer = Vec::new();
 
