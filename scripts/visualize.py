@@ -1,5 +1,6 @@
 import argparse
 import os
+from scipy.stats import linregress
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,20 +11,34 @@ def get_values(filename):
     return zip(*[map(float, line.split()) for line in open(filename)])
 
 
-def scatter(filename, color, marker, alpha=1):
-    x_values, y_values = get_values(filename)
+def bin_data(x, y, num_bins):
+    data = np.column_stack((x, y))
+    bins = np.linspace(np.min(x), np.max(x) + 1, num_bins + 1)
+    bin_indices = np.digitize(x, bins) - 1
+    binned_means = []
+    for i in range(num_bins):
+        mask = bin_indices == i
+        if np.any(mask):
+            mean_values = data[mask].mean(axis=0)
+            # mean_values = np.median(data[mask], axis=0)
+            binned_means.append(mean_values)
+
+    binned_means = np.array(binned_means)
+    return binned_means[:, 0], binned_means[:, 1]
+
+
+def scatter(x_values, y_values, label, color, marker, alpha=1):
     plt.scatter(
         x_values,
         y_values,
         color=color,
         marker=marker,
-        label=os.path.splitext(os.path.basename(filename))[0],
+        label=label,
         alpha=alpha,
     )
 
 
-def plot_heatmap(filename, bins=50):
-    x_values, y_values = get_values(filename)
+def plot_heatmap(x_values, y_values, bins=50):
     # scale log log
     x_values = np.log10(x_values)
     y_values = np.log10(y_values)
@@ -62,39 +77,52 @@ def plot_function(fn, max_x, label, color="black", alpha=0.2, linestyle="-"):
 
 def visualize(args):
     plt.figure(figsize=(8, 6))
+    plt.title(args.title)
+    plt.xlabel(args.x_label)
+    plt.ylabel(args.y_label)
 
     if args.loglog:
         plt.xscale("log")
         plt.yscale("log")
 
-    if args.sqrt:
-        plot_function(np.sqrt, find_max_x(args.files), "$\sqrt{x}$")
-    if args.cbrt:
-        plot_function(np.cbrt, find_max_x(args.files), "$\sqrt[3]{x}$", linestyle="-.")
+    # if args.sqrt:
+    #     plot_function(np.sqrt, find_max_x(args.files), "$\sqrt{x}$")
+    # if args.cbrt:
+    #     plot_function(np.cbrt, find_max_x(args.files), "$\sqrt[3]{x}$", linestyle="-.")
 
-    markers = ["^", "x", "v", "+", "*", "o", "s"]
-    colors = [
-        "#56B4E9",
-        "#E69F00",
-        "#009E73",
-        "#F0E442",
-        "#0072B2",
-        "#D55E00",
-        "#CC79A7",
-        "#000000",
-    ]
+    markers = ["^", "v", "x", "+"]
+    colors = ["#009682", "#df9b1b", "#4664aa", "#a3107c"]
 
-    if args.heatmap:
-        for i, filename in enumerate(args.files):
-            plot_heatmap(filename)
-    else:
-        for i, filename in enumerate(args.files):
-            scatter(filename, colors[i], markers[i])
-        plt.grid(True, linestyle="--", alpha=0.6)
+    plt.plot([0, np.log(1_000_000)], [0, np.log(np.sqrt(1_000_000))])
+    plt.plot([0, np.log(1_000_000)], [0, np.log(np.cbrt(1_000_000))])
+    for i, filename in enumerate(args.files):
+        x_values, y_values = get_values(filename)
+        x_values = np.log(x_values)
+        y_values = np.log(y_values)
 
-    plt.title(args.title)
-    plt.xlabel(args.x_label)
-    plt.ylabel(args.y_label)
+        # filter out europe outliers
+        x_values, y_values = zip(
+            *[(x, y) for x, y in zip(x_values, y_values) if x < 13]
+        )
+        label = os.path.splitext(os.path.basename(filename))[0]
+
+        if args.bins:
+            x_values, y_values = bin_data(x_values, y_values, args.bins)
+            # fit line 
+            slope, intercept, r_value, p_value, std_err = linregress(x_values, y_values)
+            print(f"Fitted Line: y = {slope:.4f}x + {intercept:.4f}")
+            print(f"R² Score: {r_value:.4f} (closer to 1 is better)")
+            print(f"P-value: {p_value:.4e} (for slope, closer to 0 is better)")
+            print(f"Standard Error: {std_err:.4f}\n")
+
+
+        if args.heatmap:
+            plot_heatmap(x_values, y_values)
+            break
+        else:
+            scatter(x_values, y_values, label, colors[i], markers[i])
+
+    plt.grid(True, linestyle="--", alpha=0.6)
     plt.legend()
     plt.savefig(args.output, format="pdf")
     plt.show()
@@ -110,6 +138,7 @@ def parse_args():
     parser.add_argument("--cbrt", action="store_true")
     parser.add_argument("--sqrt", action="store_true")
     parser.add_argument("--heatmap", action="store_true")
+    parser.add_argument("--bins", type=int)
     parser.add_argument("files", nargs="*")
 
     args = parser.parse_args()

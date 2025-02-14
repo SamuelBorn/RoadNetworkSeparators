@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import linregress
@@ -114,16 +115,32 @@ def analyze_data(x, y):
 
 
 def main():
-    x, y = load_data(Path("output/sep_karlsruhe_ifc.txt"))
-    analyze_data(x, y)
+    # x, y = load_data(Path("output/sep_karlsruhe_ifc.txt"))
+    # analyze_data(x, y)
+    #
+    # print("\n\nBinned")
+    # x, y = bin_data(x, y, 50)
+    # analyze_data(x, y)
+    #
+    # print("\n\nGermany")
+    x, y = load_data(Path("output/sep_germany_ifc.txt"))
+    x = np.log(x)
+    y = np.log(y)
+    x, y = bin_data(x, y, 100)
+    plt.scatter(x, y)
+    
+    # plot cbrt function
+    x = [0, max(x)]
+    y = [1/3*i for i in x]
+    plt.plot(x, y, color='red')
 
-    print("\n\nBinned")
-    x, y = bin_data(x, y, 50)
-    analyze_data(x, y)
+    # plot sqrt function
+    x = [0, max(x)]
+    y = [1/2*i for i in x]
+    plt.plot(x, y, color='green')
 
-    print("\n\nGermany")
-    x, y = load_data(Path("output/sep_germany.txt"))
-    analyze_data(x, y)
+    plt.show()
+    # analyze_data(x, y)
 
 
 if __name__ == "__main__":
