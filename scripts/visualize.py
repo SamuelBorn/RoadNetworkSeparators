@@ -1,13 +1,14 @@
 import argparse
 import os
 
-from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 
 def get_values(filename):
     return zip(*[map(float, line.split()) for line in open(filename)])
+
 
 def scatter(filename, color, marker, alpha=1):
     x_values, y_values = get_values(filename)
@@ -20,20 +21,29 @@ def scatter(filename, color, marker, alpha=1):
         alpha=alpha,
     )
 
-def heatmap(filename, bins=50):
+
+def plot_heatmap(filename, bins=50):
     x_values, y_values = get_values(filename)
-    x_values = np.cbrt(x_values)
-    
-    # Create a 2D histogram
-    heatmap_data, x_edges, y_edges = np.histogram2d(x_values, y_values, bins=bins)
-    
-    # Plot the heatmap
-    plt.imshow(
-        heatmap_data.T,  # Transpose to align x and y correctly
-        origin="lower",  # Set the origin to lower-left
-        extent=(x_edges[0], x_edges[-1], y_edges[0], y_edges[-1]),  # Define the bounds
-        norm=LogNorm()
+    # scale log log
+    x_values = np.log10(x_values)
+    y_values = np.log10(y_values)
+    x_min, x_max = 0, max(x_values)
+    y_min, y_max = 0, max(y_values)
+
+    heatmap, xlabels, ylabels = np.histogram2d(
+        x_values, y_values, bins=bins, range=[[x_min, x_max], [y_min, y_max]]
     )
+    heatmap = np.power(heatmap, 0.01)
+    mask = heatmap == 0
+    sns.heatmap(
+        heatmap.T,
+        cmap="Blues",
+        xticklabels=list(np.round(xlabels, 2)),
+        yticklabels=list(np.round(ylabels, 2)),
+        square=True,
+        mask=mask.T,
+    )
+    plt.gca().invert_yaxis()
 
 
 def find_max_x(files):
@@ -74,15 +84,18 @@ def visualize(args):
         "#000000",
     ]
 
-    for i, filename in enumerate(args.files):
-        scatter(filename, colors[i], markers[i])
-        # heatmap(filename)
+    if args.heatmap:
+        for i, filename in enumerate(args.files):
+            plot_heatmap(filename)
+    else:
+        for i, filename in enumerate(args.files):
+            scatter(filename, colors[i], markers[i])
+        plt.grid(True, linestyle="--", alpha=0.6)
 
     plt.title(args.title)
     plt.xlabel(args.x_label)
     plt.ylabel(args.y_label)
     plt.legend()
-    plt.grid(True, linestyle="--", alpha=0.6)
     plt.savefig(args.output, format="pdf")
     plt.show()
 
@@ -96,6 +109,7 @@ def parse_args():
     parser.add_argument("--loglog", action="store_true")
     parser.add_argument("--cbrt", action="store_true")
     parser.add_argument("--sqrt", action="store_true")
+    parser.add_argument("--heatmap", action="store_true")
     parser.add_argument("files", nargs="*")
 
     args = parser.parse_args()
@@ -108,6 +122,10 @@ def parse_args():
 
     if not args.output:
         args.output = f"output/{args.title}.pdf"
+
+    if args.loglog:
+        args.x_label = args.x_label + " (log scale)"
+        args.y_label = args.y_label + " (log scale)"
 
     return args
 
