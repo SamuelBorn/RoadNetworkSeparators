@@ -1,10 +1,10 @@
 import argparse
 import os
-from scipy.stats import linregress
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from scipy.stats import linregress
 
 
 def get_values(filename):
@@ -70,7 +70,8 @@ def find_max_x(files):
 
 
 def plot_function(fn, max_x, label, color="black", alpha=0.2, linestyle="-"):
-    x = np.logspace(0, np.log10(max_x), 500)
+    # x = np.logspace(0, np.log10(max_x), 500)
+    x = np.linspace(0, max_x, 500)
     y = fn(x)
     plt.plot(x, y, label=label, color=color, alpha=alpha, linestyle=linestyle)
 
@@ -85,36 +86,34 @@ def visualize(args):
         plt.xscale("log")
         plt.yscale("log")
 
-    # if args.sqrt:
-    #     plot_function(np.sqrt, find_max_x(args.files), "$\sqrt{x}$")
-    # if args.cbrt:
-    #     plot_function(np.cbrt, find_max_x(args.files), "$\sqrt[3]{x}$", linestyle="-.")
+    max_x = np.log2(min(find_max_x(args.files), 10_000_000))
+    if args.sqrt:
+        plot_function(np.sqrt, max_x, "$\sqrt{x}$")
+    if args.cbrt:
+        plot_function(np.cbrt, max_x, "$\sqrt[3]{x}$", linestyle="-.")
 
     markers = ["^", "v", "x", "+"]
     colors = ["#009682", "#df9b1b", "#4664aa", "#a3107c"]
 
-    plt.plot([0, np.log(1_000_000)], [0, np.log(np.sqrt(1_000_000))])
-    plt.plot([0, np.log(1_000_000)], [0, np.log(np.cbrt(1_000_000))])
     for i, filename in enumerate(args.files):
-        x_values, y_values = get_values(filename)
-        x_values = np.log(x_values)
-        y_values = np.log(y_values)
-
-        # filter out europe outliers
-        x_values, y_values = zip(
-            *[(x, y) for x, y in zip(x_values, y_values) if x < 13]
-        )
         label = os.path.splitext(os.path.basename(filename))[0]
+        x_values, y_values = get_values(filename)
+        x_values, y_values = zip(
+            *[(x, y) for x, y in zip(x_values, y_values) if x < 10_000_000]
+        )
+        plt.plot([0, np.log2(max(x_values))], [0, np.log2(max(np.sqrt(x_values)))], color="orange", alpha=0.2)
+        plt.plot([0, np.log2(max(x_values))], [0, np.log2(max(np.cbrt(x_values)))], color="blue", alpha=0.2)
+        x_values = np.log2(x_values)
+        y_values = np.log2(y_values)
 
         if args.bins:
             x_values, y_values = bin_data(x_values, y_values, args.bins)
-            # fit line 
+            # fit line
             slope, intercept, r_value, p_value, std_err = linregress(x_values, y_values)
             print(f"Fitted Line: y = {slope:.4f}x + {intercept:.4f}")
             print(f"R² Score: {r_value:.4f} (closer to 1 is better)")
             print(f"P-value: {p_value:.4e} (for slope, closer to 0 is better)")
             print(f"Standard Error: {std_err:.4f}\n")
-
 
         if args.heatmap:
             plot_heatmap(x_values, y_values)
