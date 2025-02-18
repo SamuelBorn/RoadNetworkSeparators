@@ -3,7 +3,7 @@ use std::io::{self, Read, Write};
 use std::path::Path;
 use std::str::FromStr;
 
-use crate::graph::geometric_graph::Position;
+use geo::Point;
 
 pub fn read_to_usize_vec(file: &Path) -> Vec<usize> {
     let mut file = File::open(file).unwrap();
@@ -97,12 +97,12 @@ pub fn read_edge_list(file: &Path) -> io::Result<Vec<(usize, usize)>> {
         .collect())
 }
 
-pub fn read_position_list(file: &Path) -> io::Result<Vec<Position>> {
+pub fn read_position_list(file: &Path) -> io::Result<Vec<Point>> {
     Ok(std::fs::read_to_string(file)?
         .lines()
         .filter_map(|line| {
             let mut nums = line.split(',');
-            Some(Position::new(
+            Some(Point::new(
                 nums.next()?.parse().ok()?,
                 nums.next()?.parse().ok()?,
             ))

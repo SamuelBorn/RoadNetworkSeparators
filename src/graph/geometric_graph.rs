@@ -1,8 +1,11 @@
+use geo::Rect;
+use geo::{Distance, Euclidean, Point};
 use hashbrown::{HashMap, HashSet};
 use rayon::iter::IndexedParallelIterator;
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
+use rstar::PointDistance;
 
 use std::borrow::Borrow;
 use std::fs;
@@ -17,106 +20,29 @@ use rand::Rng;
 #[derive(Debug)]
 pub struct GeometricGraph {
     pub graph: Graph,
-    pub positions: Vec<Position>,
+    pub positions: Vec<Point>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Position {
-    latitude: OrderedFloat<f32>,
-    longitude: OrderedFloat<f32>,
+pub fn karlsruhe_bounding_rect() -> Rect {
+    let min_point = Point::new(48.3, 8.0);
+    let max_point = Point::new(49.2, 9.0);
+    Rect::new(min_point, max_point)
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct AABB {
-    pub min: Position,
-    pub max: Position,
+pub fn random_point(aabb: Rect) -> Point {
+    let mut rng = rand::thread_rng();
+    Point::new(
+        rng.gen_range(aabb.min().x..aabb.max().x),
+        rng.gen_range(aabb.min().y..aabb.max().y),
+    )
 }
 
-impl AABB {
-    pub fn new(min: Position, max: Position) -> AABB {
-        assert!(min.latitude() <= max.latitude());
-        assert!(min.longitude() <= max.longitude());
-        AABB { min, max }
-    }
-
-    pub fn karlsruhe() -> AABB {
-        AABB::new(Position::new(48.3, 8.0), Position::new(49.2, 9.0))
-    }
-}
-
-impl Position {
-    pub fn new(lat: f32, lon: f32) -> Position {
-        Position {
-            latitude: OrderedFloat(lat),
-            longitude: OrderedFloat(lon),
-        }
-    }
-
-    pub fn new_ordered(lat: OrderedFloat<f32>, lon: OrderedFloat<f32>) -> Position {
-        Position {
-            latitude: lat,
-            longitude: lon,
-        }
-    }
-
-    pub fn random(aabb: AABB) -> Position {
-        let mut rng = rand::thread_rng();
-        Position::new(
-            rng.gen_range(aabb.min.latitude()..aabb.max.latitude()),
-            rng.gen_range(aabb.min.longitude()..aabb.max.longitude()),
-        )
-    }
-
-    pub fn random_positions(n: usize, aabb: AABB) -> Vec<Position> {
-        (0..n).map(|_| Position::random(aabb)).collect()
-    }
-
-    pub fn latitude(&self) -> f32 {
-        self.latitude.into_inner()
-    }
-
-    pub fn longitude(&self) -> f32 {
-        self.longitude.into_inner()
-    }
-
-    pub fn latitude_mut(&mut self) -> &mut OrderedFloat<f32> {
-        &mut self.latitude
-    }
-
-    pub fn longitude_mut(&mut self) -> &mut OrderedFloat<f32> {
-        &mut self.longitude
-    }
-
-    // checks if self is on a line defined by a1 and a2
-    // does not make sure that self is between a1 and a2
-    pub fn on_line(&self, a1: Position, a2: Position) -> bool {
-        let cross_product = (self.latitude.0 - a1.latitude.0) * (a2.longitude.0 - a1.longitude.0)
-            - (self.longitude.0 - a1.longitude.0) * (a2.latitude.0 - a1.latitude.0);
-
-        return cross_product.abs() < 0.0000001;
-    }
-
-    pub fn distance(&self, other: Position) -> f32 {
-        let lat_diff = self.latitude() - other.latitude();
-        let lon_diff = self.longitude() - other.longitude();
-
-        (lat_diff.powi(2) + lon_diff.powi(2)).sqrt()
-    }
-}
-
-impl std::ops::Add for Position {
-    type Output = Position;
-
-    fn add(self, other: Position) -> Position {
-        Position::new(
-            self.latitude() + other.latitude(),
-            self.longitude() + other.longitude(),
-        )
-    }
+pub fn random_points(n: usize, aabb: Rect) -> Vec<Point> {
+    (0..n).map(|_| random_point(aabb)).collect()
 }
 
 impl GeometricGraph {
-    pub fn new(graph: Graph, positions: Vec<Position>) -> GeometricGraph {
+    pub fn new(graph: Graph, positions: Vec<Point>) -> GeometricGraph {
         assert_eq!(graph.get_num_nodes(), positions.len());
         GeometricGraph { graph, positions }
     }
@@ -124,8 +50,14 @@ impl GeometricGraph {
     pub fn from_file(dir: &Path) -> io::Result<Self> {
         let g = Graph::from_file(dir)?;
 
-        let latitudes = library::read_binary_vec::<f32>(&dir.join("latitude"))?;
-        let longitudes = library::read_binary_vec::<f32>(&dir.join("longitude"))?;
+        let latitudes = library::read_binary_vec::<f32>(&dir.join("latitude"))?
+            .par_iter()
+            .map(|&f| f as f64)
+            .collect::<Vec<_>>();
+        let longitudes = library::read_binary_vec::<f32>(&dir.join("longitude"))?
+            .par_iter()
+            .map(|&f| f as f64)
+            .collect::<Vec<_>>();
 
         assert_eq!(g.get_num_nodes(), latitudes.len());
         assert_eq!(g.get_num_nodes(), longitudes.len());
@@ -133,7 +65,7 @@ impl GeometricGraph {
         let positions = latitudes
             .par_iter()
             .zip(longitudes.par_iter())
-            .map(|(lat, lon)| Position::new(*lat, *lon))
+            .map(|(&lat, &lon)| Point::new(lat, lon))
             .collect();
         Ok(GeometricGraph::new(g, positions))
     }
@@ -144,7 +76,7 @@ impl GeometricGraph {
             &self
                 .positions
                 .iter()
-                .map(|p| p.latitude())
+                .map(|p| p.x() as f32)
                 .collect::<Vec<f32>>(),
             &dir.join("latitude"),
         )?;
@@ -152,39 +84,35 @@ impl GeometricGraph {
             &self
                 .positions
                 .iter()
-                .map(|p| p.longitude())
+                .map(|p| p.y() as f32)
                 .collect::<Vec<f32>>(),
             &dir.join("longitude"),
         )
     }
 
-    pub fn get_position(&self, node: usize) -> Position {
+    pub fn get_position(&self, node: usize) -> Point {
         self.positions[node]
     }
 
-    pub fn add_position(&mut self, pos: Position) -> usize {
+    pub fn add_position_with_new_node(&mut self, pos: Point) -> usize {
         self.positions.push(pos);
         self.graph.add_node()
     }
 
-    pub fn distance(&self, a: usize, b: usize) -> f32 {
-        let pos_a = self.positions[a];
-        let pos_b = self.positions[b];
-
-        let lat_diff = pos_a.latitude() - pos_b.latitude();
-        let lon_diff = pos_a.longitude() - pos_b.longitude();
-
-        (lat_diff.powi(2) + lon_diff.powi(2)).sqrt()
+    pub fn distance(&self, u: usize, v: usize) -> f64 {
+        Euclidean::distance(self.get_position(u), self.get_position(v))
     }
 
     pub fn save_distance_overview(&self, file: &Path) {
-        let mut res = String::new();
-        for (u, v) in self.graph.get_edges() {
-            let distance = self.distance(u, v);
-            // append distance to res
-            res.push_str(&format!("{}\n", distance));
-        }
-        fs::write(file, res);
+        fs::write(
+            file,
+            self.graph
+                .get_edges()
+                .par_iter()
+                .map(|(u, v)| self.distance(*u, *v).to_string())
+                .collect::<Vec<_>>()
+                .join("\n"),
+        );
     }
 
     pub fn largest_connected_component(&self) -> GeometricGraph {
@@ -193,7 +121,7 @@ impl GeometricGraph {
 
         let mut mapping = HashMap::new();
         let mut data = vec![Vec::new(); g_map.len()];
-        let mut positions = vec![Position::new(0.0, 0.0); g_map.len()];
+        let mut positions = vec![Point::new(0.0, 0.0); g_map.len()];
 
         for (&from_idx, to_nodes) in g_map.iter() {
             let possbile_next_idx = mapping.len();
@@ -207,71 +135,5 @@ impl GeometricGraph {
         }
 
         GeometricGraph::new(Graph::new(data), positions)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::vec;
-
-    use super::*;
-
-    #[test]
-    fn test_geometric_graph() {
-        let g = GeometricGraph::new(
-            Graph::from_edge_list(vec![(0, 1), (1, 2), (2, 3), (3, 0)]),
-            vec![
-                Position::new(0.0, 0.0),
-                Position::new(0.0, 1.0),
-                Position::new(1.0, 1.0),
-                Position::new(1.0, 0.0),
-            ],
-        );
-
-        assert_eq!(g.graph.get_num_nodes(), 4);
-        assert_eq!(g.positions.len(), 4);
-
-        let file = tempfile::NamedTempFile::new().unwrap();
-    }
-
-    #[test]
-    fn test_on_line() {
-        let p1 = Position::new(0.0, 0.0);
-        let p2 = Position::new(2.0, 2.0);
-        let p3 = Position::new(1.0, 1.0); // On the line segment
-        let p4 = Position::new(3.0, 3.0); // Outside the segment
-        let p5 = Position::new(-3.0, 4.0); // Outside the segment
-
-        assert!(p3.on_line(p1, p2));
-        assert!(p4.on_line(p1, p2));
-        assert!(!p5.on_line(p1, p2));
-    }
-
-    #[test]
-    fn largest_subgraph() {
-        let mut g = GeometricGraph::new(
-            Graph::from_edge_list(vec![(0, 1), (1, 2), (3, 4)]),
-            vec![
-                Position::new(1.0, 1.0),
-                Position::new(2.0, 2.0),
-                Position::new(3.0, 3.0),
-                Position::new(4.0, 4.0),
-                Position::new(5.0, 5.0),
-            ],
-        );
-
-        let g_sub = g.largest_connected_component();
-        assert_eq!(g_sub.graph.get_num_nodes(), 3);
-        assert_eq!(g_sub.graph.get_num_edges(), 2);
-        assert_eq!(g_sub.positions.len(), 3);
-        assert!(g_sub.positions.contains(&Position::new(1.0, 1.0)));
-        assert!(g_sub.positions.contains(&Position::new(2.0, 2.0)));
-        assert!(g_sub.positions.contains(&Position::new(3.0, 3.0)));
-
-        g.graph.add_edge(2, 3);
-        let g_sub = g.largest_connected_component();
-        assert_eq!(g_sub.graph.get_num_nodes(), 5);
-        assert_eq!(g_sub.graph.get_num_edges(), 4);
-        assert_eq!(g_sub.positions.len(), 5);
     }
 }

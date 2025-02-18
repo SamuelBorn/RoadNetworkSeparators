@@ -1,22 +1,23 @@
+use geo::{Point, Rect};
 use spade::{DelaunayTriangulation, InsertionError, Point2, Triangulation};
 
 use super::{
-    geometric_graph::{GeometricGraph, Position, AABB},
+    geometric_graph::{self, GeometricGraph},
     Graph,
 };
 
-pub fn triangulation(positions: &[Position]) -> DelaunayTriangulation<Point2<f32>> {
+pub fn triangulation(positions: &[Point]) -> DelaunayTriangulation<Point2<f32>> {
     DelaunayTriangulation::<Point2<f32>>::bulk_load_stable(
         positions
             .iter()
-            .map(|p| Point2::new(p.latitude(), p.longitude()))
+            .map(|p| Point2::new(p.x() as f32, p.y() as f32))
             .collect(),
     )
     .unwrap()
 }
 
-pub fn random_delaunay(n: usize, aabb: AABB) -> GeometricGraph {
-    let positions = Position::random_positions(n, aabb);
+pub fn random_delaunay(n: usize, aabb: Rect) -> GeometricGraph {
+    let positions = geometric_graph::random_points(n, aabb);
     let triangulation = triangulation(&positions);
 
     let g = Graph::from_edge_list(
@@ -33,8 +34,8 @@ pub fn random_delaunay(n: usize, aabb: AABB) -> GeometricGraph {
 }
 
 // karlsruhe: 0.01
-pub fn length_restricted_delaunay(n: usize, aabb: AABB, max_dist: f32) -> GeometricGraph {
-    let positions = Position::random_positions(n, aabb);
+pub fn length_restricted_delaunay(n: usize, aabb: Rect, max_dist: f32) -> GeometricGraph {
+    let positions = geometric_graph::random_points(n, aabb);
     let triangulation = triangulation(&positions);
 
     let mut g = Graph::from_edge_list(
@@ -54,7 +55,7 @@ pub fn length_restricted_delaunay(n: usize, aabb: AABB, max_dist: f32) -> Geomet
 
 pub fn degree_restricted_delaunay(
     n: usize,
-    aabb: AABB,
+    aabb: Rect,
     max_dist: f32,
     avg_deg: f64,
 ) -> GeometricGraph {
@@ -80,7 +81,12 @@ mod test {
     #[test]
     #[ignore]
     fn test_delaunay() {
-        let g = degree_restricted_delaunay(120000, AABB::karlsruhe(), 0.01, 2.5);
+        let g = degree_restricted_delaunay(
+            120000,
+            geometric_graph::karlsruhe_bounding_rect(),
+            0.01,
+            2.5,
+        );
         g.graph.queue_separator(
             crate::separator::Mode::Fast,
             Some(Path::new("output/sep_delaunay_degree")),
