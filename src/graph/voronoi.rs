@@ -1,8 +1,13 @@
-use geo::{polygon, Area, BooleanOps, BoundingRect, Contains, LineString, Point, Polygon};
+use geo::{
+    polygon, Area, BooleanOps, BoundingRect, Contains, Distance, Euclidean, LineString, Point,
+    Polygon,
+};
 use hashbrown::{HashMap, HashSet};
+use petgraph::unionfind::UnionFind;
 use rand::Rng;
 use rand_distr::{Distribution, Exp, Uniform};
 use rayon::{iter::Positions, prelude::*};
+use rstar::PointDistance;
 use std::{f64, path::Path};
 use voronoice::{BoundingBox, Voronoi, VoronoiBuilder};
 
@@ -87,18 +92,17 @@ pub fn subdivide_polgon_points(poly: &Polygon, points: Vec<voronoice::Point>) ->
     polygons
 }
 
-pub fn subdivide_polygon<D1: Distribution<f64>, D2: Distribution<f64>>(
+pub fn subdivide_polygon<D1: Distribution<f64>>(
     poly: &Polygon,
     n: usize,
-    density: D1,
-    radius: D2,
+    density: f64,
+    radius: D1,
 ) -> Vec<Polygon> {
     let mut c = Vec::new();
     for _ in 0..n {
         let px = random_polygon_point(poly);
-        //c.push(px);
         let (x, y) = (px.x, px.y);
-        let alpha = density.sample(&mut rand::thread_rng());
+        let alpha = density;
         let r = radius.sample(&mut rand::thread_rng());
         let m = r.powf(alpha).ceil() as usize;
         c.push(px);
@@ -117,17 +121,12 @@ pub fn voronoi_roadnetwork() {
     let eps = 1e-6;
     let levels = 4;
     let centers = vec![
-        Uniform::new(400.0, 400.0 + eps),
-        Uniform::new(2.0, 10.0),
-        Uniform::new(2.0, 30.0),
-        Uniform::new(4.0, 20.0),
+        Uniform::new(1700.0, 1700.0 + eps),
+        Uniform::new(2.0, 40.0),
+        Uniform::new(2.0, 70.0),
+        Uniform::new(4.0, 40.0),
     ];
-    let densities = vec![
-        Uniform::new(0.2, 0.2 + eps),
-        Uniform::new(0.5, 0.5 + eps),
-        Uniform::new(0.7, 0.7 + eps),
-        Uniform::new(0.0, eps),
-    ];
+    let densities = vec![0.2, 0.5, 0.9, 0.0];
     let radii = vec![
         Exp::new(0.01).unwrap(),
         Exp::new(0.1).unwrap(),
@@ -137,9 +136,9 @@ pub fn voronoi_roadnetwork() {
     let fractions = vec![0.95, 0.9, 0.7, 0.0];
     let poly = polygon![
         (x: 0.0, y: 0.0),
-        (x: 0.0, y: 1000.0),
-        (x: 1000.0, y: 1000.0),
-        (x: 1000.0, y: 0.0),
+        (x: 0.0, y: 10000.0),
+        (x: 10000.0, y: 10000.0),
+        (x: 10000.0, y: 0.0),
         (x: 0.0, y: 0.0),
     ];
 
@@ -157,7 +156,6 @@ pub fn voronoi_roadnetwork() {
                 subdivide_polygon(
                     p,
                     centers[i].sample(&mut rand::thread_rng()) as usize,
-                    //20,
                     densities[i],
                     radii[i],
                 )
@@ -180,7 +178,12 @@ pub fn voronoi_roadnetwork() {
         edges.append(&mut new_edges);
     }
 
-    let g = build_graph(edges);
+    let mut g = build_graph(edges);
+    g.graph.info();
+    println!("Graph build");
+    prune_graph(&mut g, 4.0);
+    g.graph.info();
+    println!("Graph pruned");
     g.save(&Path::new("output/voronoi")).unwrap();
 }
 
@@ -211,7 +214,25 @@ fn build_graph(mut edges: Vec<((usize, usize), (usize, usize))>) -> GeometricGra
     g
 }
 
+// compute a sparse graph spanner of the graph computed in phase one. Given a graph G a graph spanner H of G with stretch t is
+// a subgraph of G such that for each pair of vertices u, v in G we have distH (u, v) ≤ t · distG (u, v).
+// Paper used t = 4
+pub fn prune_graph(g: &mut GeometricGraph, spanning_parameter: f64) {
+    let mut uf: UnionFind<usize> = UnionFind::new(g.graph.get_num_nodes() + 1);
+    let edge_lengths = g.get_edge_lengths();
+    let mut sorted = edge_lengths.iter().collect::<Vec<_>>();
+    sorted.par_sort_by(|(_, l1), (_, l2)| l1.partial_cmp(l2).unwrap());
 
+    for ((u, v), length) in sorted {
+        g.graph.remove_edge(*u, *v);
+        if uf.find(*u) != uf.find(*v)
+            || !g.connected_with_prune_distance(*u, *v, length * spanning_parameter, &edge_lengths)
+        {
+            g.graph.add_edge(*u, *v);
+        }
+        uf.union(*u, *v);
+    }
+}
 
 #[cfg(test)]
 mod test {
@@ -227,10 +248,9 @@ mod test {
             (x: 0.0, y: 0.0),
         ];
 
-        let density = Uniform::new(0.2, 0.2001);
         let radius = Exp::new(0.01).unwrap();
 
-        let polys = subdivide_polygon(&poly, 10, density, radius);
+        let polys = subdivide_polygon(&poly, 10, 0.2, radius);
         //let polys = vec![poly];
 
         // print edge start point and end point

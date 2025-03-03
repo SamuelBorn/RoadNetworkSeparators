@@ -8,6 +8,7 @@ use rayon::iter::ParallelIterator;
 use rstar::PointDistance;
 
 use std::borrow::Borrow;
+use std::collections::BinaryHeap;
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -136,4 +137,62 @@ impl GeometricGraph {
 
         GeometricGraph::new(Graph::new(data), positions)
     }
+
+    pub fn get_edge_lengths(&self) -> HashMap<(usize, usize), f64> {
+        self.graph
+            .get_edges()
+            .into_par_iter()
+            .map(|(u, v)| ((u, v), self.distance(u, v)))
+            .collect()
+    }
+
+    pub fn connected_with_prune_distance(&self, u: usize, v: usize, prune_distance: f64, edge_lengths: &HashMap<(usize, usize), f64>) -> bool {
+        let mut visited = HashSet::new();
+        let mut heap = BinaryHeap::new();
+        heap.push((OrderedFloat(0.0), u));
+
+        while let Some((OrderedFloat(distance), node)) = heap.pop() {
+            if distance > prune_distance {
+                return false;
+            }
+
+            if node == v {
+                return true;
+            }
+
+            if visited.contains(&node) {
+                continue;
+            }
+
+            visited.insert(node);
+
+            for &neighbor in self.graph.get_neighbors(node) {
+                if visited.contains(&neighbor) {
+                    continue;
+                }
+
+                let new_distance = distance + edge_lengths[&(node, neighbor)];
+                heap.push((OrderedFloat(new_distance), neighbor));
+            }
+
+        }
+
+        return false;
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::graph::example;
+
+    use super::*;
+
+    #[test]
+    fn approx_connected() {
+        let g = example::example_c4();
+        let edge_lengths = g.get_edge_lengths();
+        assert!(!g.connected_with_prune_distance(0, 2, 1.0, &edge_lengths));
+        assert!(g.connected_with_prune_distance(0, 2, 2.0, &edge_lengths));
+    }
+
 }
