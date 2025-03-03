@@ -18,6 +18,7 @@ pub mod grid;
 pub mod planar;
 pub mod tree;
 pub mod unit_disk;
+pub mod voronoi;
 
 // representation of bidirectional graph
 // all algorithms assume that if a,b is in the graph, then b,a is also in the graph
@@ -77,7 +78,7 @@ impl Graph {
             self.get_num_edges(),
             self.get_average_degree(),
             self.is_connected(),
-            self.is_bidirectional(),
+            self.is_undirected(),
         );
     }
 
@@ -154,7 +155,7 @@ impl Graph {
 
     pub fn make_undirected(&mut self) {
         for (u, v) in self.get_edges() {
-            self.add_edge(u, v);
+            self.add_directed_edge(v, u);
         }
     }
 
@@ -311,7 +312,7 @@ impl Graph {
         distances.par_iter().all(|&d| d != usize::MAX)
     }
 
-    pub fn is_bidirectional(&self) -> bool {
+    pub fn is_undirected(&self) -> bool {
         self.get_edges()
             .par_iter()
             .all(|&(u, v)| self.has_edge(v, u))

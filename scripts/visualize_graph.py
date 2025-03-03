@@ -53,7 +53,7 @@ def visualize(args: argparse.Namespace) -> None:
         g,
         pos=pos,
         output=str(args.output),
-        output_size=(2**13, 2**13),
+        output_size=(args.size, args.size),
         vertex_size=4,
         vertex_fill_color=vertex_color,
         edge_pen_width=1,
@@ -66,6 +66,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path)
     parser.add_argument("--highlight-nodes", type=Path)
     parser.add_argument("--auto-layout", action="store_true")
+    parser.add_argument("--size", type=int, default=2**10)
     args: argparse.Namespace = parser.parse_args()
 
     if not args.output:
