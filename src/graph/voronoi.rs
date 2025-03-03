@@ -143,9 +143,9 @@ pub fn voronoi_roadnetwork() {
     let levels = 4;
     let centers = vec![
         Uniform::new(1000.0, 1000.0 + eps),
-        Uniform::new(2.0, 20.0),
-        Uniform::new(2.0, 40.0),
-        Uniform::new(4.0, 20.0),
+        Uniform::new(2.0, 30.0),
+        Uniform::new(2.0, 60.0),
+        Uniform::new(4.0, 30.0),
     ];
     //let centers = vec![
     //    Uniform::new(1700.0, 1700.0 + eps),
@@ -163,9 +163,9 @@ pub fn voronoi_roadnetwork() {
     let fractions = vec![0.95, 0.9, 0.7, 0.0];
     let poly = polygon![
         (x: 0.0, y: 0.0),
-        (x: 0.0, y: 10000.0),
-        (x: 10000.0, y: 10000.0),
-        (x: 10000.0, y: 0.0),
+        (x: 0.0, y: 15000.0),
+        (x: 15000.0, y: 15000.0),
+        (x: 15000.0, y: 0.0),
         (x: 0.0, y: 0.0),
     ];
 
