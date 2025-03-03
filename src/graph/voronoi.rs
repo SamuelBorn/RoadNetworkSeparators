@@ -13,7 +13,7 @@ use voronoice::{BoundingBox, Voronoi, VoronoiBuilder};
 
 use super::{geometric_graph::GeometricGraph, Graph};
 
-const SCALE_FACTOR: f64 = 1e6;
+const SCALE_FACTOR: f64 = 1e7;
 
 fn quantize(coord: geo::Coord<f64>) -> (usize, usize) {
     (
@@ -80,6 +80,23 @@ pub fn subdivide_polgon_points(poly: &Polygon, points: Vec<voronoice::Point>) ->
     if points.len() < 3 {
         return vec![];
     }
+
+    // deduplicate points
+    let points = points
+        .iter()
+        .map(|p| {
+            (
+                (p.x * SCALE_FACTOR).round() as usize,
+                (p.y * SCALE_FACTOR).round() as usize,
+            )
+        })
+        .collect::<HashSet<_>>()
+        .iter()
+        .map(|p| voronoice::Point {
+            x: p.0 as f64 / SCALE_FACTOR,
+            y: p.1 as f64 / SCALE_FACTOR,
+        })
+        .collect::<Vec<_>>();
 
     let voronoi = VoronoiBuilder::default()
         .set_sites(points)
