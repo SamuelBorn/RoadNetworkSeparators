@@ -172,7 +172,7 @@ pub fn voronoi_roadnetwork() {
     let mut edges: Vec<((usize, usize), (usize, usize))> = Vec::new();
 
     let mut s = vec![poly];
-    for i in 0..3 {
+    for i in 0..4 {
         let m = (fractions[i] * s.len() as f64) as usize;
         s.select_nth_unstable_by(m, |a, b| {
             f64::total_cmp(&a.unsigned_area(), &b.unsigned_area())
