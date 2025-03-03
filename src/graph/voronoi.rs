@@ -84,8 +84,12 @@ pub fn subdivide_polgon_points(poly: &Polygon, points: Vec<voronoice::Point>) ->
     let voronoi = VoronoiBuilder::default()
         .set_sites(points)
         .set_bounding_box(get_bounding_box(poly))
-        .build()
-        .unwrap();
+        .build();
+
+    if voronoi.is_none() {
+        return vec![];
+    }
+    let voronoi = voronoi.unwrap();
 
     let polygons = get_polygons(&voronoi, &poly);
 
@@ -121,11 +125,17 @@ pub fn voronoi_roadnetwork() {
     let eps = 1e-6;
     let levels = 4;
     let centers = vec![
-        Uniform::new(1700.0, 1700.0 + eps),
+        Uniform::new(1000.0, 1000.0 + eps),
+        Uniform::new(2.0, 20.0),
         Uniform::new(2.0, 40.0),
-        Uniform::new(2.0, 70.0),
-        Uniform::new(4.0, 40.0),
+        Uniform::new(4.0, 20.0),
     ];
+    //let centers = vec![
+    //    Uniform::new(1700.0, 1700.0 + eps),
+    //    Uniform::new(2.0, 40.0),
+    //    Uniform::new(2.0, 70.0),
+    //    Uniform::new(4.0, 40.0),
+    //];
     let densities = vec![0.2, 0.5, 0.9, 0.0];
     let radii = vec![
         Exp::new(0.01).unwrap(),
