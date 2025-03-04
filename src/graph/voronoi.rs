@@ -211,7 +211,7 @@ pub fn voronoi_roadnetwork() {
 
 fn build_graph(mut edges: Vec<((usize, usize), (usize, usize))>) -> GeometricGraph {
     let mut pos: Vec<_> = edges.iter().flat_map(|(p1, p2)| vec![*p1, *p2]).collect();
-    pos.sort();
+    pos.par_sort();
     pos.dedup();
     let mapping = pos
         .iter()
