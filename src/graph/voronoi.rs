@@ -99,11 +99,14 @@ pub fn subdivide_polgon_points(poly: &Polygon, mut points: Vec<voronoice::Point>
     }
 }
 
-pub fn subdivide_polygon<D1: Distribution<f64>>(
+//pub fn subdivide_polygon<D1: Distribution<f64>>(
+//    poly: &Polygon,
+//    n: usize,
+//    density: f64,
+//    radius: D1,
+pub fn subdivide_polygon(
     poly: &Polygon,
     n: usize,
-    density: f64,
-    radius: D1,
 ) -> Vec<Polygon> {
     //let mut c = Vec::new();
     //for _ in 0..n {
@@ -130,12 +133,13 @@ pub fn subdivide_polygon<D1: Distribution<f64>>(
 
 pub fn voronoi_roadnetwork() {
     let eps = 1e-6;
-    let levels = 4;
+    let levels = 5;
     let centers = vec![
         Uniform::new(1700.0, 1700.0 + eps),
-        Uniform::new(2.0, 60.0),
-        Uniform::new(2.0, 90.0),
-        Uniform::new(4.0, 60.0),
+        Uniform::new(2.0, 30.0),
+        Uniform::new(2.0, 30.0),
+        Uniform::new(2.0, 30.0),
+        Uniform::new(4.0, 30.0),
     ];
     //let centers = vec![
     //    Uniform::new(1700.0, 1700.0 + eps),
@@ -151,7 +155,7 @@ pub fn voronoi_roadnetwork() {
         Exp::new(2.0).unwrap(),           // 2^0.9 = 1.3
         Exp::new(f64::INFINITY).unwrap(), // 0
     ];
-    let fractions = vec![0.95, 0.9, 0.7, 0.0];
+    let fractions = vec![0.95, 0.9, 0.7, 0.5, 0.0];
     let poly = polygon![
         (x: 0.0, y: 0.0),
         (x: 0.0, y: 100000.0),
@@ -174,8 +178,8 @@ pub fn voronoi_roadnetwork() {
                 subdivide_polygon(
                     p,
                     centers[i].sample(&mut rand::thread_rng()) as usize,
-                    densities[i],
-                    radii[i],
+                    //densities[i],
+                    //radii[i],
                 )
             })
             .collect();
@@ -254,29 +258,6 @@ pub fn prune_graph(g: &mut GeometricGraph, spanning_parameter: f64) {
 #[cfg(test)]
 mod test {
     use super::*;
-
-    #[test]
-    fn subdivision_works() {
-        let poly = polygon![
-            (x: 0.0, y: 0.0),
-            (x: 0.0, y: 1000.0),
-            (x: 1000.0, y: 1000.0),
-            (x: 1000.0, y: 0.0),
-            (x: 0.0, y: 0.0),
-        ];
-
-        let radius = Exp::new(0.01).unwrap();
-
-        let polys = subdivide_polygon(&poly, 10, 0.2, radius);
-        //let polys = vec![poly];
-
-        // print edge start point and end point
-        for p in polys {
-            for l in p.exterior().lines() {
-                println!("{:?} {:?}", l.start, l.end);
-            }
-        }
-    }
 
     #[test]
     fn voronoi_works() {
