@@ -1,6 +1,6 @@
 use geo::{
-    polygon, Area, BooleanOps, BoundingRect, Contains, Distance, Euclidean, LineString, Point,
-    Polygon,
+    polygon, Area, BooleanOps, BoundingRect, Centroid, Contains, Distance, Euclidean, LineString,
+    Point, Polygon,
 };
 use hashbrown::{HashMap, HashSet};
 use petgraph::unionfind::UnionFind;
@@ -13,7 +13,7 @@ use voronoice::{BoundingBox, Voronoi, VoronoiBuilder};
 
 use super::{geometric_graph::GeometricGraph, Graph};
 
-const SCALE_FACTOR: f64 = 1e7;
+const SCALE_FACTOR: f64 = 1e8;
 
 fn quantize(coord: geo::Coord<f64>) -> (usize, usize) {
     (
@@ -44,7 +44,10 @@ fn random_polygon_point(poly: &Polygon) -> voronoice::Point {
             return voronoice::Point { x, y };
         }
     }
-    unreachable!()
+
+    // if we can't find a point in 1000 tries, just return the centroid
+    let p = poly.centroid().unwrap();
+    voronoice::Point { x: p.x(), y: p.y() }
 }
 
 fn random_disk_point(x: f64, y: f64, radius: f64) -> voronoice::Point {
@@ -143,9 +146,9 @@ pub fn voronoi_roadnetwork() {
     let levels = 4;
     let centers = vec![
         Uniform::new(1000.0, 1000.0 + eps),
-        Uniform::new(2.0, 30.0),
-        Uniform::new(2.0, 60.0),
-        Uniform::new(4.0, 30.0),
+        Uniform::new(2.0, 40.0),
+        Uniform::new(2.0, 70.0),
+        Uniform::new(4.0, 40.0),
     ];
     //let centers = vec![
     //    Uniform::new(1700.0, 1700.0 + eps),
@@ -163,9 +166,9 @@ pub fn voronoi_roadnetwork() {
     let fractions = vec![0.95, 0.9, 0.7, 0.0];
     let poly = polygon![
         (x: 0.0, y: 0.0),
-        (x: 0.0, y: 15000.0),
-        (x: 15000.0, y: 15000.0),
-        (x: 15000.0, y: 0.0),
+        (x: 0.0, y: 100000.0),
+        (x: 100000.0, y: 100000.0),
+        (x: 100000.0, y: 0.0),
         (x: 0.0, y: 0.0),
     ];
 
