@@ -1,5 +1,7 @@
 use std::path::Path;
 
+use rayon::prelude::*;
+
 use geo::Point;
 use geo::{
     polygon, Area, BooleanOps, BoundingRect, Centroid, Contains, Distance, Euclidean, LineString,
@@ -96,15 +98,37 @@ pub fn build_nested_grid(width: usize, levels: usize) -> GeometricGraph {
 }
 
 pub fn analyze_separators() {
-    const TARGET_NUM_NODES: usize = 500_000;
-    for level in (3..8) {
-        let width = TARGET_NUM_NODES.ilog(level);
-        let g = build_nested_grid(width as usize, level);
-        g.graph.recurse_separator(
-            crate::separator::Mode::Strong,
-            Some(Path::new(&format!("output/nested_grid_level_{}", level))),
-        );
-    }
+    //const TARGET_NUM_NODES: usize = 500_000;
+    //for level in (3..8) {
+    //    for width in (0..100) {
+    //        let g = build_nested_grid(width as usize, level);
+    //        println!(
+    //            "Level: {}, Width: {}, Nodes: {}",
+    //            level,
+    //            width,
+    //            g.graph.get_num_nodes()
+    //        );
+    //        if g.graph.get_num_nodes() > TARGET_NUM_NODES {
+    //            break;
+    //        }
+    //    }
+    //}
+
+    vec![(3, 10), (4, 6), (6, 4), (7, 4)]
+        .into_par_iter()
+        .for_each(|(level, width)| {
+            let g = build_nested_grid(width, level);
+            println!(
+                "Level: {}, Width: {}, Nodes: {}",
+                level,
+                width,
+                g.graph.get_num_nodes()
+            );
+            g.graph.recurse_separator(
+                crate::separator::Mode::Strong,
+                Some(Path::new(&format!("output/nested_grid_level_{}", level))),
+            );
+        });
 }
 
 #[cfg(test)]
