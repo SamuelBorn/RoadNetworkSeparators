@@ -148,6 +148,9 @@ def parse_args():
         )
         args.title = file_name_without_extension
 
+    if args.bins:
+        args.title += "-binned"
+
     if not args.output:
         args.output = f"output/{args.title}.pdf"
 
