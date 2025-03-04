@@ -123,7 +123,7 @@ def visualize(args):
 
     plt.grid(True, linestyle="--", alpha=0.6)
     plt.legend()
-    plt.savefig(args.output, format="pdf")
+    plt.savefig(args.output, format="png" if args.png else "pdf")
     plt.show()
 
 
@@ -137,6 +137,7 @@ def parse_args():
     parser.add_argument("--cbrt", action="store_true")
     parser.add_argument("--sqrt", action="store_true")
     parser.add_argument("--heatmap", action="store_true")
+    parser.add_argument("--png", action="store_true")
     parser.add_argument("--bins", type=int)
     parser.add_argument("files", nargs="*")
 
@@ -152,7 +153,12 @@ def parse_args():
         args.title += "-binned"
 
     if not args.output:
-        args.output = f"output/{args.title}.pdf"
+        args.output = f"output/{args.title}"
+
+    if args.png:
+        args.output += ".png"
+    else:
+        args.output += ".pdf"
 
     if args.loglog:
         args.x_label = args.x_label + " (log scale)"
