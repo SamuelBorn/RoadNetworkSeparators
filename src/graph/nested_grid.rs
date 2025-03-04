@@ -114,7 +114,7 @@ pub fn analyze_separators() {
     //    }
     //}
 
-    vec![(3, 10), (4, 6), (6, 4), (7, 4)]
+    vec![(3, 10), (4, 6), (5, 5), (6, 4), (7, 4)]
         .into_par_iter()
         .for_each(|(level, width)| {
             let g = build_nested_grid(width, level);
@@ -125,7 +125,7 @@ pub fn analyze_separators() {
                 g.graph.get_num_nodes()
             );
             g.graph.recurse_separator(
-                crate::separator::Mode::Strong,
+                crate::separator::Mode::Eco,
                 Some(Path::new(&format!("output/nested_grid_level_{}", level))),
             );
         });
