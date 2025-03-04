@@ -79,41 +79,24 @@ fn get_polygons(voronoi: &Voronoi, poly: &Polygon) -> Vec<Polygon> {
         .collect()
 }
 
-pub fn subdivide_polgon_points(poly: &Polygon, points: Vec<voronoice::Point>) -> Vec<Polygon> {
+pub fn subdivide_polgon_points(poly: &Polygon, mut points: Vec<voronoice::Point>) -> Vec<Polygon> {
+    // deduplicate points
+    points.sort_by(|a, b| a.x.total_cmp(&b.x));
+    points.dedup_by(|a, b| (a.x - b.x) < 1e-6 && (a.y - b.y) < 1e-6);
+
     if points.len() < 3 {
         return vec![];
     }
-
-    // deduplicate points
-    let points = points
-        .iter()
-        .map(|p| {
-            (
-                (p.x * SCALE_FACTOR).round() as usize,
-                (p.y * SCALE_FACTOR).round() as usize,
-            )
-        })
-        .collect::<HashSet<_>>()
-        .iter()
-        .map(|p| voronoice::Point {
-            x: p.0 as f64 / SCALE_FACTOR,
-            y: p.1 as f64 / SCALE_FACTOR,
-        })
-        .collect::<Vec<_>>();
 
     let voronoi = VoronoiBuilder::default()
         .set_sites(points)
         .set_bounding_box(get_bounding_box(poly))
         .build();
 
-    if voronoi.is_none() {
-        return vec![];
+    match voronoi {
+        Some(v) => get_polygons(&v, poly),
+        None => vec![],
     }
-    let voronoi = voronoi.unwrap();
-
-    let polygons = get_polygons(&voronoi, &poly);
-
-    polygons
 }
 
 pub fn subdivide_polygon<D1: Distribution<f64>>(
@@ -122,22 +105,26 @@ pub fn subdivide_polygon<D1: Distribution<f64>>(
     density: f64,
     radius: D1,
 ) -> Vec<Polygon> {
-    let mut c = Vec::new();
-    for _ in 0..n {
-        let px = random_polygon_point(poly);
-        let (x, y) = (px.x, px.y);
-        let alpha = density;
-        let r = radius.sample(&mut rand::thread_rng());
-        let m = r.powf(alpha).ceil() as usize;
-        c.push(px);
-        for _ in 0..m {
-            let p = random_disk_point(x, y, r);
-            // not part of paper
-            if poly.contains(&geo::Point::new(p.x, p.y)) {
-                c.push(p);
-            }
-        }
-    }
+    //let mut c = Vec::new();
+    //for _ in 0..n {
+    //    let px = random_polygon_point(poly);
+    //    let (x, y) = (px.x, px.y);
+    //    let alpha = density;
+    //    let r = radius.sample(&mut rand::thread_rng());
+    //    let m = r.powf(alpha).ceil() as usize;
+    //    c.push(px);
+    //    for _ in 0..m {
+    //        let p = random_disk_point(x, y, r);
+    //        // not part of paper
+    //        if poly.contains(&geo::Point::new(p.x, p.y)) {
+    //            c.push(p);
+    //        }
+    //    }
+    //}
+    let mut c = (0..n)
+        .into_par_iter()
+        .map(|_| random_polygon_point(poly))
+        .collect::<Vec<_>>();
     subdivide_polgon_points(poly, c)
 }
 
@@ -145,10 +132,10 @@ pub fn voronoi_roadnetwork() {
     let eps = 1e-6;
     let levels = 4;
     let centers = vec![
-        Uniform::new(1000.0, 1000.0 + eps),
-        Uniform::new(2.0, 40.0),
-        Uniform::new(2.0, 70.0),
-        Uniform::new(4.0, 40.0),
+        Uniform::new(1700.0, 1700.0 + eps),
+        Uniform::new(2.0, 60.0),
+        Uniform::new(2.0, 90.0),
+        Uniform::new(4.0, 60.0),
     ];
     //let centers = vec![
     //    Uniform::new(1700.0, 1700.0 + eps),
@@ -156,12 +143,13 @@ pub fn voronoi_roadnetwork() {
     //    Uniform::new(2.0, 70.0),
     //    Uniform::new(4.0, 40.0),
     //];
+    // mean of densities and radii combined
     let densities = vec![0.2, 0.5, 0.9, 0.0];
     let radii = vec![
-        Exp::new(0.01).unwrap(),
-        Exp::new(0.1).unwrap(),
-        Exp::new(2.0).unwrap(),
-        Exp::new(f64::INFINITY).unwrap(),
+        Exp::new(0.01).unwrap(),          // 100^0.2 = 2.5
+        Exp::new(0.1).unwrap(),           // 10^0.5 = 3.2
+        Exp::new(2.0).unwrap(),           // 2^0.9 = 1.3
+        Exp::new(f64::INFINITY).unwrap(), // 0
     ];
     let fractions = vec![0.95, 0.9, 0.7, 0.0];
     let poly = polygon![
