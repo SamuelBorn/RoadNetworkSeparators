@@ -240,7 +240,6 @@ fn build_graph(mut edges: Vec<((usize, usize), (usize, usize))>) -> GeometricGra
         .collect();
 
     let mut g = GeometricGraph::new(graph, pos);
-    g.graph.make_undirected();
     g
 }
 
