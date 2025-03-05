@@ -14,6 +14,7 @@ use voronoice::{BoundingBox, Voronoi, VoronoiBuilder};
 use super::{geometric_graph::GeometricGraph, Graph};
 
 const SCALE_FACTOR: f64 = 1e8;
+const EPS: f64 = 1e-8;
 
 fn quantize(coord: geo::Coord<f64>) -> (usize, usize) {
     (
@@ -82,7 +83,7 @@ fn get_polygons(voronoi: &Voronoi, poly: &Polygon) -> Vec<Polygon> {
 pub fn subdivide_polgon_points(poly: &Polygon, mut points: Vec<voronoice::Point>) -> Vec<Polygon> {
     // deduplicate points
     points.sort_by(|a, b| a.x.total_cmp(&b.x));
-    points.dedup_by(|a, b| (a.x - b.x) < 1e-6 && (a.y - b.y) < 1e-6);
+    points.dedup_by(|a, b| (a.x - b.x) < EPS && (a.y - b.y) < EPS);
 
     if points.len() < 3 {
         return vec![];
@@ -104,10 +105,7 @@ pub fn subdivide_polgon_points(poly: &Polygon, mut points: Vec<voronoice::Point>
 //    n: usize,
 //    density: f64,
 //    radius: D1,
-pub fn subdivide_polygon(
-    poly: &Polygon,
-    n: usize,
-) -> Vec<Polygon> {
+pub fn subdivide_polygon(poly: &Polygon, n: usize) -> Vec<Polygon> {
     //let mut c = Vec::new();
     //for _ in 0..n {
     //    let px = random_polygon_point(poly);
@@ -129,84 +127,6 @@ pub fn subdivide_polygon(
         .map(|_| random_polygon_point(poly))
         .collect::<Vec<_>>();
     subdivide_polgon_points(poly, c)
-}
-
-pub fn voronoi_roadnetwork() {
-    let eps = 1e-6;
-    let levels = 5;
-    let centers = vec![
-        Uniform::new(1700.0, 1700.0 + eps),
-        Uniform::new(2.0, 30.0),
-        Uniform::new(2.0, 30.0),
-        Uniform::new(2.0, 30.0),
-        Uniform::new(4.0, 30.0),
-    ];
-    //let centers = vec![
-    //    Uniform::new(1700.0, 1700.0 + eps),
-    //    Uniform::new(2.0, 40.0),
-    //    Uniform::new(2.0, 70.0),
-    //    Uniform::new(4.0, 40.0),
-    //];
-    // mean of densities and radii combined
-    let densities = vec![0.2, 0.5, 0.9, 0.0];
-    let radii = vec![
-        Exp::new(0.01).unwrap(),          // 100^0.2 = 2.5
-        Exp::new(0.1).unwrap(),           // 10^0.5 = 3.2
-        Exp::new(2.0).unwrap(),           // 2^0.9 = 1.3
-        Exp::new(f64::INFINITY).unwrap(), // 0
-    ];
-    let fractions = vec![0.95, 0.9, 0.7, 0.5, 0.0];
-    let poly = polygon![
-        (x: 0.0, y: 0.0),
-        (x: 0.0, y: 100000.0),
-        (x: 100000.0, y: 100000.0),
-        (x: 100000.0, y: 0.0),
-        (x: 0.0, y: 0.0),
-    ];
-
-    let mut edges: Vec<((usize, usize), (usize, usize))> = Vec::new();
-
-    let mut s = vec![poly];
-    for i in 0..4 {
-        let m = (fractions[i] * s.len() as f64) as usize;
-        s.select_nth_unstable_by(m, |a, b| {
-            f64::total_cmp(&a.unsigned_area(), &b.unsigned_area())
-        });
-        s = s[0..=m]
-            .par_iter()
-            .flat_map(|p| {
-                subdivide_polygon(
-                    p,
-                    centers[i].sample(&mut rand::thread_rng()) as usize,
-                    //densities[i],
-                    //radii[i],
-                )
-            })
-            .collect();
-        println!("{} polygons on level {}", s.len(), i);
-
-        let mut new_edges: Vec<((usize, usize), (usize, usize))> = s
-            .par_iter()
-            .flat_map(|p| {
-                let mut edges = Vec::new();
-                p.exterior().lines().for_each(|l| {
-                    let edge = (quantize(l.start), quantize(l.end));
-                    edges.push(edge);
-                });
-                edges
-            })
-            .collect();
-
-        edges.append(&mut new_edges);
-    }
-
-    let mut g = build_graph(edges);
-    g.graph.info();
-    println!("Graph build");
-    prune_graph(&mut g, 4.0);
-    g.graph.info();
-    println!("Graph pruned");
-    g.save(&Path::new("output/voronoi")).unwrap();
 }
 
 fn build_graph(mut edges: Vec<((usize, usize), (usize, usize))>) -> GeometricGraph {
@@ -255,12 +175,104 @@ pub fn prune_graph(g: &mut GeometricGraph, spanning_parameter: f64) {
     }
 }
 
-#[cfg(test)]
-mod test {
-    use super::*;
+pub fn build_voronoi_road_network(
+    poly: Polygon,
+    levels: usize,
+    centers: Vec<Uniform<f64>>,
+    fractions: Vec<f64>,
+    output: &Path,
+) {
+    assert_eq!(centers.len(), levels);
+    assert_eq!(fractions.len(), levels);
 
-    #[test]
-    fn voronoi_works() {
-        voronoi_roadnetwork();
+    let mut edges: Vec<((usize, usize), (usize, usize))> = Vec::new();
+
+    let mut s = vec![poly];
+    for i in 0..4 {
+        let m = (fractions[i] * s.len() as f64) as usize;
+        s.select_nth_unstable_by(m, |a, b| {
+            f64::total_cmp(&a.unsigned_area(), &b.unsigned_area())
+        });
+        s = s[0..=m]
+            .par_iter()
+            .flat_map(|p| {
+                subdivide_polygon(
+                    p,
+                    centers[i].sample(&mut rand::thread_rng()) as usize,
+                    //densities[i],
+                    //radii[i],
+                )
+            })
+            .collect();
+        println!("{} polygons on level {}", s.len(), i);
+
+        let mut new_edges: Vec<((usize, usize), (usize, usize))> = s
+            .par_iter()
+            .flat_map(|p| {
+                let mut edges = Vec::new();
+                p.exterior().lines().for_each(|l| {
+                    let edge = (quantize(l.start), quantize(l.end));
+                    edges.push(edge);
+                });
+                edges
+            })
+            .collect();
+
+        edges.append(&mut new_edges);
     }
+
+    let mut g = build_graph(edges);
+    g.graph.info();
+    println!("Graph build");
+    prune_graph(&mut g, 4.0);
+    g.graph.info();
+    println!("Graph pruned");
+    g.save(output).unwrap();
+}
+
+pub fn voronoi_example() {
+    let levels = 4;
+    let centers = vec![
+        Uniform::new(1000.0, 1000.1),
+        Uniform::new(2.0, 30.0),
+        Uniform::new(2.0, 60.0),
+        Uniform::new(2.0, 30.0),
+    ];
+    //let densities = vec![0.2, 0.5, 0.9, 0.0];
+    //let radii = vec![
+    //    Exp::new(0.01).unwrap(),          // 100^0.2 = 2.5
+    //    Exp::new(0.1).unwrap(),           // 10^0.5 = 3.2
+    //    Exp::new(2.0).unwrap(),           // 2^0.9 = 1.3
+    //    Exp::new(f64::INFINITY).unwrap(), // 0
+    //];
+    let fractions = vec![1.0, 0.95, 0.9, 0.7];
+    let poly = polygon![
+        (x: 0.0, y: 0.0),
+        (x: 0.0, y: 100000.0),
+        (x: 100000.0, y: 100000.0),
+        (x: 100000.0, y: 0.0),
+        (x: 0.0, y: 0.0),
+    ];
+
+    build_voronoi_road_network(poly, levels, centers, fractions, Path::new("output/voronoi-non-disk-1000top"));
+}
+
+pub fn voronoi_example_small() {
+    let levels = 4;
+    let centers = vec![
+        Uniform::new(100.0, 100.1),
+        Uniform::new(2.0, 30.0),
+        Uniform::new(2.0, 60.0),
+        Uniform::new(2.0, 30.0),
+    ];
+    let fractions = vec![1.0, 0.95, 0.9, 0.7];
+    let poly = polygon![
+        (x: 0.0, y: 0.0),
+        (x: 0.0, y: 100000.0),
+        (x: 100000.0, y: 100000.0),
+        (x: 100000.0, y: 0.0),
+        (x: 0.0, y: 0.0),
+    ];
+
+    build_voronoi_road_network(poly, levels, centers, fractions, Path::new("output/voronoi-non-disk-100top"));
 }
