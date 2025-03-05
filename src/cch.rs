@@ -1,19 +1,18 @@
 use hashbrown::{HashMap, HashSet};
 use std::{
-    collections::{BTreeSet, VecDeque},
-    path::Path,
+    collections::{BTreeSet, VecDeque}, fs, path::Path
 };
 
 use crate::{graph::Graph, library, separator};
 
-pub fn compute_separator_sizes_from_order(graph: &Graph, order: &[usize]) {
+pub fn compute_separator_sizes_from_order(graph: &Graph, order: &[usize], out_file: &Path) {
     assert_eq!(graph.get_num_nodes(), order.len());
     let pos = get_positions_from_order(order);
     let directed = get_directed_graph(graph, &pos);
     let tree = chordalize_and_tree(&directed, order, &pos);
     let root = *order.last().unwrap();
     let subtree_sizes = get_subtree_sizes(&tree, root);
-    traverse_separator_tree(&tree, root, &subtree_sizes);
+    traverse_separator_tree(&tree, root, &subtree_sizes, out_file);
 }
 
 pub fn chordalize_and_tree(directed_graph: &Graph, order: &[usize], pos: &[usize]) -> Graph {
@@ -73,8 +72,10 @@ pub fn get_subtree_sizes(tree: &Graph, root: usize) -> Vec<usize> {
     sizes
 }
 
-pub fn traverse_separator_tree(tree: &Graph, root: usize, subtree_sizes: &[usize]) {
+pub fn traverse_separator_tree(tree: &Graph, root: usize, subtree_sizes: &[usize], out_file: &Path) {
     let mut queue = vec![(root, 1)];
+
+    let mut res = String::new();
 
     while let Some((node, separator_size)) = queue.pop() {
         let cutoff_size = 10.max((0.1 * subtree_sizes[node] as f64) as usize);
@@ -95,14 +96,12 @@ pub fn traverse_separator_tree(tree: &Graph, root: usize, subtree_sizes: &[usize
                 for child in large_children {
                     queue.push((*child, 1));
                 }
-                println!(
-                    "{} {}",
-                    subtree_sizes[node] + separator_size,
-                    separator_size
-                );
+                res += &format!("{} {}\n", subtree_sizes[node] + separator_size, separator_size);
             }
         }
     }
+
+    fs::write(out_file, res);
 }
 
 // turns an order into a position array: at index i is the position of node i

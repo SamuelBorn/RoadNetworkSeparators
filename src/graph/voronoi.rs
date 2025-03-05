@@ -148,7 +148,7 @@ fn build_graph(mut edges: Vec<((usize, usize), (usize, usize))>) -> GeometricGra
 
     let pos = pos
         .iter()
-        .map(|(x, y)| Point::new(*x as f64, *y as f64))
+        .map(|(x, y)| Point::new(*x as f64 / SCALE_FACTOR, *y as f64 / SCALE_FACTOR))
         .collect();
 
     let mut g = GeometricGraph::new(graph, pos);
@@ -164,10 +164,11 @@ pub fn prune_graph(g: &mut GeometricGraph, spanning_parameter: f64) {
     let mut sorted = edge_lengths.iter().collect::<Vec<_>>();
     sorted.par_sort_by(|(_, l1), (_, l2)| l1.partial_cmp(l2).unwrap());
 
-    for ((u, v), length) in sorted {
+    for (i, ((u, v), length)) in sorted.into_iter().enumerate() {
+        println!("{}", i);
         g.graph.remove_edge(*u, *v);
         if uf.find(*u) != uf.find(*v)
-            || !g.connected_with_prune_distance(*u, *v, length * spanning_parameter, &edge_lengths)
+            || !g.connected_with_prune_distance(*u, *v, length * spanning_parameter * 10.0, &edge_lengths)
         {
             g.graph.add_edge(*u, *v);
         }
@@ -188,8 +189,8 @@ pub fn build_voronoi_road_network(
     let mut edges: Vec<((usize, usize), (usize, usize))> = Vec::new();
 
     let mut s = vec![poly];
-    for i in 0..4 {
-        let m = (fractions[i] * s.len() as f64) as usize;
+    for i in 0..levels {
+        let m = ((fractions[i] * (s.len() - 1) as f64) as usize);
         s.select_nth_unstable_by(m, |a, b| {
             f64::total_cmp(&a.unsigned_area(), &b.unsigned_area())
         });
@@ -222,6 +223,7 @@ pub fn build_voronoi_road_network(
     }
 
     let mut g = build_graph(edges);
+    let mut g = g.largest_connected_component();
     g.graph.info();
     println!("Graph build");
     prune_graph(&mut g, 4.0);
@@ -233,7 +235,7 @@ pub fn build_voronoi_road_network(
 pub fn voronoi_example() {
     let levels = 4;
     let centers = vec![
-        Uniform::new(1000.0, 1000.1),
+        Uniform::new(300.0, 300.1),
         Uniform::new(2.0, 30.0),
         Uniform::new(2.0, 60.0),
         Uniform::new(2.0, 30.0),
@@ -254,13 +256,19 @@ pub fn voronoi_example() {
         (x: 0.0, y: 0.0),
     ];
 
-    build_voronoi_road_network(poly, levels, centers, fractions, Path::new("output/voronoi-non-disk-1000top"));
+    build_voronoi_road_network(
+        poly,
+        levels,
+        centers,
+        fractions,
+        Path::new("output/voronoi-non-disk-300top"),
+    );
 }
 
 pub fn voronoi_example_small() {
     let levels = 4;
     let centers = vec![
-        Uniform::new(100.0, 100.1),
+        Uniform::new(10.0, 10.1),
         Uniform::new(2.0, 30.0),
         Uniform::new(2.0, 60.0),
         Uniform::new(2.0, 30.0),
@@ -268,11 +276,17 @@ pub fn voronoi_example_small() {
     let fractions = vec![1.0, 0.95, 0.9, 0.7];
     let poly = polygon![
         (x: 0.0, y: 0.0),
-        (x: 0.0, y: 100000.0),
-        (x: 100000.0, y: 100000.0),
-        (x: 100000.0, y: 0.0),
+        (x: 0.0, y: 1000.0),
+        (x: 1000.0, y: 1000.0),
+        (x: 1000.0, y: 0.0),
         (x: 0.0, y: 0.0),
     ];
 
-    build_voronoi_road_network(poly, levels, centers, fractions, Path::new("output/voronoi-non-disk-100top"));
+    build_voronoi_road_network(
+        poly,
+        levels,
+        centers,
+        fractions,
+        Path::new("output/voronoi-non-disk-10top"),
+    );
 }
