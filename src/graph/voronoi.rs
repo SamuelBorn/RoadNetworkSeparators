@@ -168,7 +168,7 @@ pub fn prune_graph(g: &mut GeometricGraph, spanning_parameter: f64) {
         println!("{}", i);
         g.graph.remove_edge(*u, *v);
         if uf.find(*u) != uf.find(*v)
-            || !g.connected_with_prune_distance(*u, *v, length * spanning_parameter * 10.0, &edge_lengths)
+            || !g.connected_with_prune_distance(*u, *v, length * spanning_parameter, &edge_lengths)
         {
             g.graph.add_edge(*u, *v);
         }
@@ -226,7 +226,7 @@ pub fn build_voronoi_road_network(
     let mut g = g.largest_connected_component();
     g.graph.info();
     println!("Graph build");
-    prune_graph(&mut g, 4.0);
+    prune_graph(&mut g, 3.0);
     g.graph.info();
     println!("Graph pruned");
     g.save(output).unwrap();
@@ -236,9 +236,9 @@ pub fn voronoi_example() {
     let levels = 4;
     let centers = vec![
         Uniform::new(300.0, 300.1),
-        Uniform::new(2.0, 30.0),
         Uniform::new(2.0, 60.0),
-        Uniform::new(2.0, 30.0),
+        Uniform::new(2.0, 90.0),
+        Uniform::new(2.0, 60.0),
     ];
     //let densities = vec![0.2, 0.5, 0.9, 0.0];
     //let radii = vec![
@@ -261,7 +261,7 @@ pub fn voronoi_example() {
         levels,
         centers,
         fractions,
-        Path::new("output/voronoi-non-disk-300top"),
+        Path::new("output/tmp/voronoi-non-disk-300top"),
     );
 }
 
@@ -269,9 +269,9 @@ pub fn voronoi_example_small() {
     let levels = 4;
     let centers = vec![
         Uniform::new(10.0, 10.1),
-        Uniform::new(2.0, 30.0),
-        Uniform::new(2.0, 60.0),
-        Uniform::new(2.0, 30.0),
+        Uniform::new(2.0, 40.0),
+        Uniform::new(2.0, 70.0),
+        Uniform::new(2.0, 40.0),
     ];
     let fractions = vec![1.0, 0.95, 0.9, 0.7];
     let poly = polygon![
@@ -287,6 +287,6 @@ pub fn voronoi_example_small() {
         levels,
         centers,
         fractions,
-        Path::new("output/voronoi-non-disk-10top"),
+        Path::new("output/tmp/voronoi-non-disk-10top"),
     );
 }

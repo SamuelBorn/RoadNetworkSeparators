@@ -16,7 +16,8 @@ use library::{read_binary_vec, read_text_vec, read_to_usize_vec, write_binary_ve
 use separator::Mode::*;
 
 fn main() {
-    let g = Graph::from_file(Path::new("output/voronoi-non-disk-300top")).unwrap();
-    let ord = library::read_to_usize_vec(Path::new("output/ord_voronoi-non-disk-300top.bin"));
-    compute_separator_sizes_from_order(&g, &ord, Path::new("output/sep_voronoi-non-disk-300top.txt"));
+    //let g = Graph::from_file(Path::new("output/voronoi-non-disk-300top")).unwrap();
+    //let ord = library::read_to_usize_vec(Path::new("output/ord_voronoi-non-disk-300top.bin"));
+    //compute_separator_sizes_from_order(&g, &ord, Path::new("output/sep_voronoi-non-disk-300top.txt"));
+    voronoi_example();
 }
