@@ -20,6 +20,7 @@ pub mod tree;
 pub mod unit_disk;
 pub mod voronoi;
 pub mod nested_grid;
+pub mod highway;
 
 // representation of bidirectional graph
 // all algorithms assume that if a,b is in the graph, then b,a is also in the graph
@@ -46,7 +47,7 @@ impl Graph {
 
     pub fn from_edge_list(edges: Vec<(usize, usize)>) -> Self {
         let max_idx = edges
-            .iter()
+            .par_iter()
             .map(|(a, b)| usize::max(*a, *b))
             .max()
             .unwrap_or(0);
