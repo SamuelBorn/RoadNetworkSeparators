@@ -101,7 +101,7 @@ impl GeometricGraph {
         self.graph.add_node()
     }
 
-    pub fn distance(&self, u: usize, v: usize) -> f64 {
+    pub fn euclidean_distance(&self, u: usize, v: usize) -> f64 {
         Euclidean::distance(self.get_position(u), self.get_position(v))
     }
 
@@ -111,7 +111,7 @@ impl GeometricGraph {
             self.graph
                 .get_edges()
                 .par_iter()
-                .map(|(u, v)| self.distance(*u, *v).to_string())
+                .map(|(u, v)| self.euclidean_distance(*u, *v).to_string())
                 .collect::<Vec<_>>()
                 .join("\n"),
         );
@@ -143,7 +143,16 @@ impl GeometricGraph {
         self.graph
             .get_edges()
             .into_par_iter()
-            .map(|(u, v)| ((u, v), self.distance(u, v)))
+            .map(|(u, v)| ((u, v), self.euclidean_distance(u, v)))
+            .collect()
+    }
+
+    pub fn get_edge_lengths_directed(&self) -> HashMap<(usize, usize), f64> {
+        self.graph
+            .get_edges()
+            .into_par_iter()
+            .filter(|(u, v)| u < v)
+            .map(|(u, v)| ((u, v), self.euclidean_distance(u, v)))
             .collect()
     }
 
