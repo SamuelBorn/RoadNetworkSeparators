@@ -8,6 +8,7 @@ use rayon::iter::ParallelIterator;
 use rstar::PointDistance;
 
 use std::borrow::Borrow;
+use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::fs;
 use std::io;
@@ -146,38 +147,47 @@ impl GeometricGraph {
             .collect()
     }
 
-    pub fn connected_with_prune_distance(&self, u: usize, v: usize, prune_distance: f64, edge_lengths: &HashMap<(usize, usize), f64>) -> bool {
-        let mut visited = HashSet::new();
+    pub fn connected_with_prune_distance(
+        &self,
+        u: usize,
+        v: usize,
+        prune_distance: f64,
+        edge_lengths: &HashMap<(usize, usize), f64>,
+    ) -> bool {
+        let mut distances = HashMap::new();
         let mut heap = BinaryHeap::new();
-        heap.push((OrderedFloat(0.0), u));
+        distances.insert(u, 0.0);
+        heap.push(Reverse((OrderedFloat(0.0), u))); // (distance, vertex)
 
-        while let Some((OrderedFloat(distance), node)) = heap.pop() {
-            if distance > prune_distance {
+        while let Some(Reverse((OrderedFloat(dist), current))) = heap.pop() {
+            if dist >= prune_distance {
                 return false;
             }
 
-            if node == v {
-                return true;
+            if current == v {
+                return dist <= prune_distance;
             }
 
-            if visited.contains(&node) {
+            let current_best = *distances.get(&current).unwrap();
+            if dist > current_best || dist >= prune_distance {
                 continue;
             }
 
-            visited.insert(node);
+            for &neighbor in self.graph.get_neighbors(current) {
+                let weight = *edge_lengths.get(&(current, neighbor)).unwrap();
+                let new_dist = dist + weight;
 
-            for &neighbor in self.graph.get_neighbors(node) {
-                if visited.contains(&neighbor) {
-                    continue;
+                // Only process if the new distance is better and less than prune_distance
+                if new_dist < *distances.get(&neighbor).unwrap_or(&f64::INFINITY)
+                    && new_dist <= prune_distance
+                {
+                    distances.insert(neighbor, new_dist);
+                    heap.push(Reverse((OrderedFloat(new_dist), neighbor)));
                 }
-
-                let new_distance = distance + edge_lengths[&(node, neighbor)];
-                heap.push((OrderedFloat(new_distance), neighbor));
             }
-
         }
 
-        return false;
+        false
     }
 }
 
@@ -191,8 +201,7 @@ mod test {
     fn approx_connected() {
         let g = example::example_c4();
         let edge_lengths = g.get_edge_lengths();
-        assert!(!g.connected_with_prune_distance(0, 2, 1.0, &edge_lengths));
-        assert!(g.connected_with_prune_distance(0, 2, 2.0, &edge_lengths));
+        assert!(!g.connected_with_prune_distance(0, 2, 1.4, &edge_lengths));
+        assert!(g.connected_with_prune_distance(0, 2, 2.00001, &edge_lengths));
     }
-
 }
