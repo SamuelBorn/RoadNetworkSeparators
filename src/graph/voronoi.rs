@@ -13,13 +13,13 @@ use voronoice::{BoundingBox, Voronoi, VoronoiBuilder};
 
 use super::{geometric_graph::GeometricGraph, Graph};
 
-const SCALE_FACTOR: f64 = 1e8;
+const SCALE: f64 = 1e8;
 const EPS: f64 = 1e-8;
 
 fn quantize(coord: geo::Coord<f64>) -> (usize, usize) {
     (
-        (coord.x * SCALE_FACTOR) as usize,
-        (coord.y * SCALE_FACTOR) as usize,
+        (coord.x * SCALE) as usize,
+        (coord.y * SCALE) as usize,
     )
 }
 
@@ -148,7 +148,7 @@ fn build_graph(mut edges: Vec<((usize, usize), (usize, usize))>) -> GeometricGra
 
     let pos = pos
         .iter()
-        .map(|(x, y)| Point::new(*x as f64 / SCALE_FACTOR, *y as f64 / SCALE_FACTOR))
+        .map(|(x, y)| Point::new(*x as f64 / SCALE, *y as f64 / SCALE))
         .collect();
 
     let mut g = GeometricGraph::new(graph, pos);
