@@ -210,6 +210,14 @@ impl Graph {
             .collect()
     }
 
+    pub fn get_directed_edges(&self) -> Vec<(usize, usize)> {
+        self.get_edges()
+            .par_iter()
+            .filter(|&(i, j)| i < j)
+            .cloned()
+            .collect()
+    }
+
     pub fn get_random_neighbor(&self, u: usize) -> Option<&usize> {
         let mut rng = rand::thread_rng();
         self.get_neighbors(u).iter().choose(&mut rng)
