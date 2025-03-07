@@ -84,31 +84,25 @@ pub fn build_highway_network(n: usize) -> GeometricGraph {
 
     for t in (0..n) {
         dbg!(t);
-        //let vt = pick_random_point_in_square(s, s_height);
         let vt = random_points[t];
-        for i in (0..levels).rev() {
-            let dist = c[i]
-                .par_iter()
-                .map(|&w| Euclidean::distance(w, vt))
-                .collect::<Vec<_>>();
-            if dist.iter().all(|d| d > &pows[i]) {
-                c[i].push(vt);
-                dist.iter()
-                    .enumerate()
-                    .filter(|(_, &d)| d <= k * pows[i])
-                    .for_each(|(w_idx, _)| e.push((c[i][w_idx], vt)));
-            }
 
-            if i < levels - 1 {
-                let w = c[i + 1]
-                    .iter()
-                    .min_by(|&&x, &&y| x.distance_2(&vt).total_cmp(&y.distance_2(&vt)))
-                    .unwrap();
+        for i in (0..=levels).rev() {
+            if i == levels
+                || c[i]
+                    .par_iter()
+                    .any(|&p| Euclidean::distance(p, vt) <= pows[i])
+            {
+                for j in (0..i) {
+                    c[j].iter().for_each(|&p| {
+                        if Euclidean::distance(p, vt) <= k * pows[j] {
+                            e.push((p, vt));
+                        }
+                    });
 
-                if Euclidean::distance(vt, *w) > EPS {
-                    e.push((*w, vt));
+                    c[j].push(vt);
                 }
             }
+            continue;
         }
     }
 
