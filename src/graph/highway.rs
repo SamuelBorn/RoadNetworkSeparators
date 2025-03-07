@@ -77,7 +77,7 @@ pub fn build_highway_network(n: usize) -> GeometricGraph {
 
     let mut c_spatial: Vec<RTree<Point>> = vec![RTree::new(); levels];
     let mut c = vec![vec![]; levels];
-    let mut e = Vec::with_capacity(n*3);
+    let mut e = Vec::with_capacity(n * 3);
 
     let random_points = pick_random_points_city_like(s, s_height, n);
     let pows = (1..=levels)
@@ -93,11 +93,17 @@ pub fn build_highway_network(n: usize) -> GeometricGraph {
                 nearest.is_some() && Euclidean::distance(vt, *nearest.unwrap()) <= pows[i]
             } {
                 for j in (0..i) {
-                    for &w in c[j].iter() {
-                        if Euclidean::distance(vt, w) <= k * pows[j] {
-                            e.push((vt, w));
-                        }
-                    }
+                    //for &w in c[j].iter() {
+                    //    if Euclidean::distance(vt, w) <= k * pows[j] {
+                    //        e.push((vt, w));
+                    //    }
+                    //}
+                    e.extend(
+                        c[j].par_iter()
+                            .filter(|&&w| Euclidean::distance(vt, w) < k * pows[j])
+                            .map(|&w| (vt, w))
+                            .collect::<Vec<_>>(),
+                    );
 
                     c_spatial[j].insert(vt);
                     c[j].push(vt);
