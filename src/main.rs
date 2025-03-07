@@ -17,12 +17,12 @@ use library::{read_binary_vec, read_text_vec, read_to_usize_vec, write_binary_ve
 use separator::Mode::*;
 
 fn main() {
-    //let g = Graph::from_file(Path::new("output/voronoi-non-disk-300top")).unwrap();
-    //let ord = library::read_to_usize_vec(Path::new("output/ord_voronoi_15m.bin"));
-    //compute_separator_sizes_from_order(&g, &ord, Path::new("output/sep_voronoi_15m.txt"));
+    let g = Graph::from_file(Path::new("output/highway_500k")).unwrap();
+    let ord = library::read_to_usize_vec(Path::new("output/ord_highway_500k.bin"));
+    compute_separator_sizes_from_order(&g, &ord, Path::new("output/sep_highway_500k.txt"));
 
-    let g = build_highway_network(500_000);
-    g.graph.info();
-    g.save(Path::new("output/highway_500k"));
-    g.graph.queue_separator(Eco, Some(Path::new("output/sep_highway_500k.txt")));
+    //let g = build_highway_network(500_000);
+    //g.graph.info();
+    //g.save(Path::new("output/highway_500k"));
+    //g.graph.queue_separator(Eco, Some(Path::new("output/sep_highway_500k.txt")));
 }
