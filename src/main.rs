@@ -21,7 +21,7 @@ fn main() {
     //let ord = library::read_to_usize_vec(Path::new("output/ord_voronoi-non-disk-300top.bin"));
     //compute_separator_sizes_from_order(&g, &ord, Path::new("output/sep_voronoi-non-disk-300top.txt"));
 
-    let g = build_highway_network(2usize.pow(12));
+    let g = build_highway_network(10_000);
     g.graph.info();
     g.save(Path::new("output/highway"));
 }

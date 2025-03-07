@@ -8,6 +8,7 @@ use rayon::{
     slice::ParallelSliceMut,
 };
 use rstar::PointDistance;
+use rstar::RTree;
 
 use super::{geometric_graph::GeometricGraph, Graph};
 
@@ -74,6 +75,7 @@ pub fn build_highway_network(n: usize) -> GeometricGraph {
     let d = 2_usize.pow(levels as u32);
     let k = 2.0_f64.sqrt();
 
+    let mut c_spatial: Vec<RTree<Point>> = vec![RTree::new(); levels];
     let mut c = vec![vec![]; levels];
     let mut e = vec![];
 
@@ -84,29 +86,27 @@ pub fn build_highway_network(n: usize) -> GeometricGraph {
 
     for t in (0..n) {
         dbg!(t);
-        //let vt = pick_random_point_in_square(s, s_height);
         let vt = random_points[t];
         for i in (0..levels).rev() {
-            let dist = c[i]
-                .par_iter()
-                .map(|&w| Euclidean::distance(w, vt))
-                .collect::<Vec<_>>();
-            if dist.iter().all(|d| d > &pows[i]) {
+            let nearest = c_spatial[i].nearest_neighbor(&vt);
+
+            if nearest.is_none() || Euclidean::distance(vt, *nearest.unwrap()) > pows[i] {
+                for &w in c[i].iter() {
+                    if Euclidean::distance(vt, w) <= k * pows[i] {
+                        e.push((vt, w));
+                    }
+                }
+
+                c_spatial[i].insert(vt);
                 c[i].push(vt);
-                dist.iter()
-                    .enumerate()
-                    .filter(|(_, &d)| d <= k * pows[i])
-                    .for_each(|(w_idx, _)| e.push((c[i][w_idx], vt)));
             }
 
             if i < levels - 1 {
-                let w = c[i + 1]
-                    .iter()
-                    .min_by(|&&x, &&y| x.distance_2(&vt).total_cmp(&y.distance_2(&vt)))
-                    .unwrap();
-
-                if Euclidean::distance(vt, *w) > EPS {
-                    e.push((*w, vt));
+                let Some(nearest) = c_spatial[i + 1].nearest_neighbor(&vt) else {
+                    continue;
+                };
+                if nearest.distance_2(&vt) > EPS {
+                    e.push((vt, *nearest));
                 }
             }
         }
