@@ -87,27 +87,28 @@ pub fn build_highway_network(n: usize) -> GeometricGraph {
     for t in (0..n) {
         dbg!(t);
         let vt = random_points[t];
-        for i in (0..levels).rev() {
-            let nearest = c_spatial[i].nearest_neighbor(&vt);
+        for i in (0..=levels) {
+            if i == levels || {
+                let nearest = c_spatial[i].nearest_neighbor(&vt);
+                nearest.is_some() && Euclidean::distance(vt, *nearest.unwrap()) <= pows[i]
+            } {
+                for j in (0..i) {
+                    for &w in c[j].iter() {
+                        if Euclidean::distance(vt, w) <= k * pows[j] {
+                            e.push((vt, w));
+                        }
+                    }
 
-            if nearest.is_none() || Euclidean::distance(vt, *nearest.unwrap()) > pows[i] {
-                for &w in c[i].iter() {
-                    if Euclidean::distance(vt, w) <= k * pows[i] {
-                        e.push((vt, w));
+                    c_spatial[j].insert(vt);
+                    c[j].push(vt);
+                }
+
+                if i < levels {
+                    if let Some(nearest) = c_spatial[i].nearest_neighbor(&vt) {
+                        e.push((vt, *nearest));
                     }
                 }
-
-                c_spatial[i].insert(vt);
-                c[i].push(vt);
-            }
-
-            if i < levels - 1 {
-                let Some(nearest) = c_spatial[i + 1].nearest_neighbor(&vt) else {
-                    continue;
-                };
-                if nearest.distance_2(&vt) > EPS {
-                    e.push((vt, *nearest));
-                }
+                break;
             }
         }
     }
