@@ -7,7 +7,7 @@ pub mod separator;
 use std::fs;
 use std::path::Path;
 
-use cch::{chordalize_and_tree, compute_separator_sizes_from_order, get_directed_graph, get_subtree_sizes};
+use cch::{chordalize_and_tree, compute_separator_sizes_from_order, get_subtree_sizes};
 use graph::delaunay::{length_restricted_delaunay, random_delaunay};
 use graph::geometric_graph::GeometricGraph;
 use graph::highway::build_highway_network;
@@ -21,7 +21,8 @@ fn main() {
     //let ord = library::read_to_usize_vec(Path::new("output/ord_voronoi-non-disk-300top.bin"));
     //compute_separator_sizes_from_order(&g, &ord, Path::new("output/sep_voronoi-non-disk-300top.txt"));
 
-    let g = build_highway_network(10_000);
+    let g = build_highway_network(500_000);
     g.graph.info();
     g.save(Path::new("output/highway"));
+    g.graph.queue_separator(Eco, Some(Path::new("output/sep_voronoi_15m.txt")));
 }

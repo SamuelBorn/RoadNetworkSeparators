@@ -77,7 +77,7 @@ pub fn build_highway_network(n: usize) -> GeometricGraph {
 
     let mut c_spatial: Vec<RTree<Point>> = vec![RTree::new(); levels];
     let mut c = vec![vec![]; levels];
-    let mut e = vec![];
+    let mut e = Vec::with_capacity(n*3);
 
     let random_points = pick_random_points_city_like(s, s_height, n);
     let pows = (1..=levels)
