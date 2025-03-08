@@ -1,4 +1,6 @@
 use geo::algorithm::line_intersection::{line_intersection, LineIntersection};
+use crate::library;
+use crate::separator::Mode::*;
 use geo::{Coord, Intersects, Line, Point};
 use hashbrown::HashMap;
 use rayon::iter::IntoParallelRefIterator;
@@ -6,7 +8,9 @@ use rayon::prelude::*;
 use rstar::{PointDistance, RTree, RTreeObject, AABB};
 use std::collections::HashSet;
 use std::mem;
+use std::path::Path;
 
+use super::{example, Graph};
 use super::geometric_graph::GeometricGraph;
 
 const EPS: f64 = 1e-8;
@@ -104,12 +108,12 @@ pub fn planarize(g: &mut GeometricGraph) {
             .filter(|&&candidate| current < candidate)
             .for_each(|&candidate| {
                 if let Some(LineIntersection::SinglePoint { intersection, .. }) =
-                    line_intersection(current.line, candidate.line)
+                line_intersection(current.line, candidate.line)
                 {
                     if intersection.distance_2(&current.line.start) > 1e-8
-                        && intersection.distance_2(&current.line.end) > 1e-8
-                        && intersection.distance_2(&candidate.line.start) > 1e-8
-                        && intersection.distance_2(&candidate.line.end) > 1e-8
+                    && intersection.distance_2(&current.line.end) > 1e-8
+                    && intersection.distance_2(&candidate.line.start) > 1e-8
+                    && intersection.distance_2(&candidate.line.end) > 1e-8
                     {
                         let id = *intersection_to_coord
                             .entry((current, candidate))
@@ -131,6 +135,29 @@ pub fn planarize(g: &mut GeometricGraph) {
     for (edge, mut intersections) in edge_to_intersections {
         replace_with_intersections(g, &edge, &mut intersections);
     }
+}
+
+pub fn extend_karlsruhe_separator() {
+    let g = example::karlsruhe();
+    let sep = g.get_separator_wrapper(Eco);
+    library::write_text_vec(
+        &sep.iter().collect::<Vec<_>>(),
+        Path::new("output/karlsruhe_top_level_sep.txt"),
+    );
+    let mut g_planar = Graph::from_file(Path::new("output/karlsruhe_planar")).unwrap();
+    let subgraphs = g_planar.get_subgraphs(&sep);
+    subgraphs
+        .iter()
+        .for_each(|s| println!("{}", s.get_num_nodes()));
+
+    for n in sep {
+        g_planar.clear_vertex_edges(n);
+    }
+    let sep = g_planar.get_separator_wrapper(Strong);
+    library::write_text_vec(
+        &sep.iter().collect::<Vec<_>>(),
+        Path::new("output/karlsruhe_top_level_sep_planar_additional.txt"),
+    );
 }
 
 #[cfg(test)]

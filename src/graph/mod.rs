@@ -244,6 +244,13 @@ impl Graph {
         self.data.resize(n, HashSet::new());
     }
 
+    pub fn clear_vertex_edges(&mut self, u: usize) {
+        for v in self.get_neighbors(u).clone() {
+            self.data[v].remove(&u);
+        }
+        self.data[u].clear();
+    }
+
     // returns index of new node
     pub fn add_node(&mut self) -> usize {
         self.data.push(HashSet::new());
