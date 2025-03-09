@@ -16,7 +16,6 @@ use library::{read_binary_vec, read_text_vec, read_to_usize_vec, write_binary_ve
 use separator::Mode::*;
 
 fn main() {
-    let mut g = Graph::from_file(Path::new("./output/germany_planar/")).unwrap();
-    let mut ord = read_to_usize_vec(Path::new("./output/ord_germany_planar.bin"));
-    compute_separator_sizes_from_order(&g, &ord, Path::new("./output/sep_germany_planar.txt"));
+    let mut g = example::karlsruhe();
+    g.parallel_separator(Fast, None);
 }

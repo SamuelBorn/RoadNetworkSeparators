@@ -1,4 +1,6 @@
 use hashbrown::{HashMap, HashSet};
+use rayon::iter::IntoParallelIterator;
+use rayon::prelude::*;
 use std::collections::VecDeque;
 use std::io::Write;
 use std::path::Path;
@@ -146,6 +148,24 @@ impl Graph {
                 subgraphs[i].recurse_separator(mode, file);
                 break;
             }
+        }
+    }
+
+    pub fn parallel_separator(&self, mode: Mode, file: Option<&Path>) {
+        let mut layer = vec![self.clone()];
+
+        while !layer.is_empty() {
+            layer = layer
+                .into_par_iter()
+                .flat_map(|g| {
+                    let separator = g.get_separator_wrapper(mode);
+                    println!("{} {}", g.get_num_nodes(), separator.len());
+                    g.get_subgraphs(&separator)
+                        .into_iter()
+                        .filter(|g| g.get_num_nodes() > 100)
+                        .collect::<Vec<_>>()
+                })
+                .collect()
         }
     }
 

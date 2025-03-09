@@ -130,6 +130,8 @@ pub fn optional_append_to_file(file: Option<&Path>, content: &str) {
     }
 }
 
+pub fn optional_sep_to_file(file: Option<&Path>, content: &str
+
 #[cfg(test)]
 mod tests {
     use super::*;
