@@ -1,30 +1,44 @@
 import argparse
-import os
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
-from scipy.stats import linregress
+from scipy.stats import binned_statistic
+
+markers = ["x", "^", "o", "+"]
+colors = ["#009682", "#df9b1b", "#4664aa", "#a3107c"]
 
 
-def get_values(filename):
-    return zip(*[map(float, line.split()) for line in open(filename)])
+def get_max_x(args):
+    max_x = 0
+    for file in args.files:
+        x_values, _ = get_values(file, args)
+        max_x = max(max_x, max(x_values))
+    return max_x
 
 
-def bin_data(x, y, num_bins):
-    data = np.column_stack((x, y))
-    bins = np.linspace(np.min(x), np.max(x) + 1, num_bins + 1)
-    bin_indices = np.digitize(x, bins) - 1
-    binned_means = []
-    for i in range(num_bins):
-        mask = bin_indices == i
-        if np.any(mask):
-            mean_values = data[mask].mean(axis=0)
-            # mean_values = np.median(data[mask], axis=0)
-            binned_means.append(mean_values)
+def get_values(filename, args):
+    data = [tuple(map(float, line.split())) for line in open(filename)]
+    if args.outliers:
+        data = [x for x in data if x[1] < 1e6]
+    x, y = zip(*data)
+    return x, y
 
-    binned_means = np.array(binned_means)
-    return binned_means[:, 0], binned_means[:, 1]
+
+def bin_data(x, y, args):
+    if args.loglog:
+        bin_edges = np.logspace(0, np.log10(max(x)), num=args.bins)
+        means, bin_edges, _ = binned_statistic(x, y, statistic="mean", bins=bin_edges)
+        bin_centers = np.sqrt(bin_edges[:-1] * bin_edges[1:])
+    else:
+        bin_edges = np.linspace(0, max(x), num=args.bins)
+        means, bin_edges, _ = binned_statistic(x, y, statistic="mean", bins=bin_edges)
+        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+
+    valid = ~np.isnan(means)
+    bin_centers = bin_centers[valid]
+    means = means[valid]
+    return bin_centers, means
 
 
 def scatter(x_values, y_values, label, color, marker, alpha=1):
@@ -38,137 +52,59 @@ def scatter(x_values, y_values, label, color, marker, alpha=1):
     )
 
 
-def plot_heatmap(x_values, y_values, bins=50):
-    # scale log log
-    x_values = np.log10(x_values)
-    y_values = np.log10(y_values)
-    x_min, x_max = 0, max(x_values)
-    y_min, y_max = 0, max(y_values)
-
-    heatmap, xlabels, ylabels = np.histogram2d(
-        x_values, y_values, bins=bins, range=[[x_min, x_max], [y_min, y_max]]
-    )
-    heatmap = np.power(heatmap, 0.01)
-    mask = heatmap == 0
-    sns.heatmap(
-        heatmap.T,
-        cmap="Blues",
-        xticklabels=list(np.round(xlabels, 2)),
-        yticklabels=list(np.round(ylabels, 2)),
-        square=True,
-        mask=mask.T,
-    )
-    plt.gca().invert_yaxis()
-
-
-def find_max_x(files):
-    max_x = 0
-    for filename in files:
-        x_values, _ = get_values(filename)
-        max_x = max(max_x, max(x_values))
-    return max_x
-
-
-def plot_function(fn, max_x, label, color="black", alpha=0.2, linestyle="-"):
-    # x = np.logspace(0, np.log10(max_x), 500)
-    x = np.linspace(0, max_x, 500)
+def plot_function(fn, max_x, label, linestyle):
+    x = np.logspace(0, np.log10(max_x), num=500)
     y = fn(x)
-    plt.plot(x, y, label=label, color=color, alpha=alpha, linestyle=linestyle)
+    plt.plot(x, y, label=label, color="black", alpha=0.2, linestyle=linestyle)
 
 
 def visualize(args):
     plt.figure(figsize=(8, 6))
-    plt.title(args.title)
-    plt.xlabel(args.x_label)
-    plt.ylabel(args.y_label)
 
     if args.loglog:
-        plt.xscale("log")
-        plt.yscale("log")
+        plt.xscale("log", base=2)
+        plt.yscale("log", base=2)
 
-    max_x = np.log2(min(find_max_x(args.files), 10_000_000))
+    max_x = get_max_x(args)
     if args.sqrt:
-        plot_function(np.sqrt, max_x, "$\sqrt{x}$")
+        plot_function(np.sqrt, max_x, r"$\sqrt{x}$", linestyle=":")
     if args.cbrt:
-        plot_function(np.cbrt, max_x, "$\sqrt[3]{x}$", linestyle="-.")
-
-    markers = ["^", "v", "x", "+"]
-    colors = ["#009682", "#df9b1b", "#4664aa", "#a3107c"]
+        plot_function(np.cbrt, max_x, r"$\sqrt[3]{x}$", linestyle="-.")
 
     for i, filename in enumerate(args.files):
-        label = os.path.splitext(os.path.basename(filename))[0]
-        x_values, y_values = get_values(filename)
-        x_values, y_values = zip(
-            *[(x, y) for x, y in zip(x_values, y_values) if x < 10_000_000]
-        )
-        plt.plot([0, np.log2(max(x_values))], [0, np.log2(max(np.sqrt(x_values)))], color="orange", alpha=0.2)
-        plt.plot([0, np.log2(max(x_values))], [0, np.log2(max(np.cbrt(x_values)))], color="blue", alpha=0.2)
-        x_values = np.log2(x_values)
-        y_values = np.log2(y_values)
-
+        label = filename.stem
+        x_values, y_values = get_values(filename, args)
         if args.bins:
-            x_values, y_values = bin_data(x_values, y_values, args.bins)
-            # fit line
-            slope, intercept, r_value, p_value, std_err = linregress(x_values, y_values)
-            print(f"Fitted Line: y = {slope:.4f}x + {intercept:.4f}")
-            print(f"R² Score: {r_value:.4f} (closer to 1 is better)")
-            print(f"P-value: {p_value:.4e} (for slope, closer to 0 is better)")
-            print(f"Standard Error: {std_err:.4f}\n")
+            label += " (binned)"
+            x_values, y_values = bin_data(x_values, y_values, args)
+        scatter(x_values, y_values, label, colors[i], markers[i])
 
-        if args.heatmap:
-            plot_heatmap(x_values, y_values)
-            break
-        else:
-            scatter(x_values, y_values, label, colors[i], markers[i])
-
-    plt.grid(True, linestyle="--", alpha=0.6)
+    plt.grid(True, linestyle="--", alpha=0.2)
+    plt.xlabel(args.x_label)
+    plt.ylabel(args.y_label)
     plt.legend()
-    plt.savefig(args.output, format="png" if args.png else "pdf")
+    plt.savefig(args.output, format=args.type, dpi=600)
     plt.show()
 
 
-def parse_args():
+def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--title")
-    parser.add_argument("--output")
-    parser.add_argument("--x-label", default="Number of nodes")
-    parser.add_argument("--y-label", default="Size of separator")
+    parser.add_argument("--output", type=str)
+    parser.add_argument("--x-label", type=str, default="Number of nodes")
+    parser.add_argument("--y-label", type=str, default="Size of separator")
     parser.add_argument("--loglog", action="store_true")
     parser.add_argument("--cbrt", action="store_true")
     parser.add_argument("--sqrt", action="store_true")
-    parser.add_argument("--heatmap", action="store_true")
-    parser.add_argument("--png", action="store_true")
+    parser.add_argument("--type", type=str, default="pdf")
     parser.add_argument("--bins", type=int)
-    parser.add_argument("files", nargs="*")
+    parser.add_argument("--outliers", type=bool, default=False)
+    parser.add_argument("files", type=Path, nargs="+")
 
     args = parser.parse_args()
 
-    if not args.title:
-        file_name_without_extension, _ = os.path.splitext(
-            os.path.basename(args.files[0])
-        )
-        args.title = file_name_without_extension
-
-    if args.bins:
-        args.title += "-binned"
-
     if not args.output:
-        args.output = f"output/{args.title}"
+        args.output = Path("output") / f"{args.files[0].stem}.{args.type}"
 
-    if args.png:
-        args.output += ".png"
-    else:
-        args.output += ".pdf"
-
-    if args.loglog:
-        args.x_label = args.x_label + " (log scale)"
-        args.y_label = args.y_label + " (log scale)"
-
-    return args
-
-
-def main():
-    args = parse_args()
     visualize(args)
 
 
