@@ -2,7 +2,7 @@
 name = "rust_rewrite"
 version = "0.1.0"
 edition = "2021"
-build = "build.rs"
+build = "scripts/build.rs"
 
 [lints.rust]
 unused = "allow"
