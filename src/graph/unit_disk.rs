@@ -62,9 +62,7 @@ pub fn generate_unit_disk_graph_with_avg_degree(
 
     let goal_num_edges = (avg_degree * g.get_num_nodes() as f64 / 2.0) as usize;
 
-    for i in goal_num_edges..num_edges {
-        g.remove_random_edge_stay_connected_approx(30);
-    }
+    g.remove_random_edges(num_edges - goal_num_edges);
 
     g.get_largest_subgraph()
 }

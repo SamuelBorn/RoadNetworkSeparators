@@ -34,13 +34,8 @@ pub fn generate_grid_with_avg_degree(side_length: usize, avg_degree: f64) -> Gra
     let mut g = generate_grid(side_length);
     let num_edges = g.get_num_edges();
     let mut rng = rand::thread_rng();
-
     let goal_num_edges = (avg_degree * g.get_num_nodes() as f64 / 2.0) as usize;
-
-    for i in goal_num_edges..num_edges {
-        g.remove_random_edge();
-    }
-
+    g.remove_random_edges(num_edges - goal_num_edges);
     g.get_largest_subgraph()
 }
 

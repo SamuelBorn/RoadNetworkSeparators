@@ -1,12 +1,14 @@
 use hashbrown::{HashMap, HashSet};
 use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;
+use rand::thread_rng;
 use rand::Rng;
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelBridge;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::*;
 use std::hash::Hash;
+use std::sync::Mutex;
 use std::thread;
 use std::{collections::BTreeSet, fs, io, path::Path};
 
@@ -15,12 +17,12 @@ pub mod delaunay;
 pub mod example;
 pub mod geometric_graph;
 pub mod grid;
+pub mod highway;
+pub mod nested_grid;
 pub mod planar;
 pub mod tree;
 pub mod unit_disk;
 pub mod voronoi;
-pub mod nested_grid;
-pub mod highway;
 
 // representation of bidirectional graph
 // all algorithms assume that if a,b is in the graph, then b,a is also in the graph
@@ -52,11 +54,22 @@ impl Graph {
             .max()
             .unwrap_or(0);
 
-        let mut g = Graph::with_node_count(max_idx + 1);
-        for (u, v) in edges {
-            g.add_edge(u, v);
+        let mut data = (0..max_idx + 1)
+            .into_par_iter()
+            .map(|_| Mutex::new(HashSet::new()))
+            .collect::<Vec<_>>();
+
+        edges.par_iter().for_each(|(u, v)| {
+            data[*u].lock().unwrap().insert(*v);
+            data[*v].lock().unwrap().insert(*u);
+        });
+
+        Graph {
+            data: data
+                .into_iter()
+                .map(|mutex| mutex.into_inner().unwrap())
+                .collect(),
         }
-        g
     }
 
     pub fn from_edge_list_directed(edges: Vec<(usize, usize)>) -> Self {
@@ -167,9 +180,20 @@ impl Graph {
     }
 
     pub fn remove_random_edge(&mut self) -> (usize, usize) {
+        println!(
+            "WARNING: deprecated function remove_random_edge\n use remove_reandom_edges instead"
+        );
         let (u, v) = self.get_random_edge();
         self.remove_edge(u, v);
         (u, v)
+    }
+
+    pub fn remove_random_edges(&mut self, num_edges: usize) {
+        let mut edges = self.get_edges();
+        edges.shuffle(&mut thread_rng());
+        edges.truncate(edges.len() - num_edges);
+        let g = Graph::from_edge_list(edges);
+        self.data = g.data;
     }
 
     pub fn remove_random_edge_stay_connected_approx(

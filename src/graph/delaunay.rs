@@ -62,11 +62,8 @@ pub fn degree_restricted_delaunay(
     let mut g = length_restricted_delaunay(n, aabb, max_dist);
     let num_edges = g.graph.get_num_edges();
     let wanted_edges = (g.graph.get_num_nodes() as f64 * avg_deg / 2.0) as usize;
-
-    for i in wanted_edges..num_edges {
-        g.graph.remove_random_edge();
-    }
-
+    let edges_to_delete = num_edges - wanted_edges;
+    g.graph.remove_random_edges(edges_to_delete);
     g
 }
 
