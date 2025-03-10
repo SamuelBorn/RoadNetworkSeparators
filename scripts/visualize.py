@@ -19,8 +19,8 @@ def get_max_x(args):
 
 def get_values(filename, args):
     data = [tuple(map(float, line.split())) for line in open(filename)]
-    if args.outliers:
-        data = [x for x in data if x[1] < 1e6]
+    if not args.keep_outliers:
+        data = [x for x in data if x[0] < 10_000_000]
     x, y = zip(*data)
     return x, y
 
@@ -95,9 +95,9 @@ def main():
     parser.add_argument("--loglog", action="store_true")
     parser.add_argument("--cbrt", action="store_true")
     parser.add_argument("--sqrt", action="store_true")
+    parser.add_argument("--keep-outliers", action="store_true")
     parser.add_argument("--type", type=str, default="pdf")
     parser.add_argument("--bins", type=int)
-    parser.add_argument("--outliers", type=bool, default=False)
     parser.add_argument("files", type=Path, nargs="+")
 
     args = parser.parse_args()
