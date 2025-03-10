@@ -75,7 +75,6 @@ def visualize(args):
         label = filename.stem
         x_values, y_values = get_values(filename, args)
         if args.bins:
-            label += " (binned)"
             x_values, y_values = bin_data(x_values, y_values, args)
         scatter(x_values, y_values, label, colors[i], markers[i])
 
@@ -101,6 +100,9 @@ def main():
     parser.add_argument("files", type=Path, nargs="+")
 
     args = parser.parse_args()
+
+    if args.bins:
+        args.x_label = f"{args.x_label} (binned)"
 
     if not args.output:
         args.output = Path("output") / f"{args.files[0].stem}.{args.type}"

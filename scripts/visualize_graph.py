@@ -51,12 +51,12 @@ def visualize(args: argparse.Namespace) -> None:
     vertex_size = g.new_vertex_property("double")
     for v in g.vertices():
         vertex_color[v] = [0, 0, 0, 1]
-        vertex_size[v] = 4
+        vertex_size[v] = 2
     if args.highlight_nodes:
         for file, color in zip(args.highlight_nodes, highlight_colors):
             highlight_indices: list[int] = read_node_list(Path(file))
             for idx in highlight_indices:
-                vertex_size[idx] = 64
+                vertex_size[idx] = 32
                 if vertex_color[idx] != [0, 0, 0, 1]:
                     vertex_color[idx] = [0, 0, 0, 1]
                 else:
@@ -79,7 +79,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path)
     parser.add_argument("--highlight-nodes", type=Path, nargs="*")
     parser.add_argument("--auto-layout", action="store_true")
-    parser.add_argument("--size", type=int, default=2**13)
+    parser.add_argument("--size", type=int, default=2**11)
     args: argparse.Namespace = parser.parse_args()
 
     if not args.output:
