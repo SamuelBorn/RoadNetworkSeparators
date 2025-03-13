@@ -36,7 +36,7 @@ pub fn generate_grid_with_avg_degree(side_length: usize, avg_degree: f64) -> Gra
     let mut rng = rand::thread_rng();
     let goal_num_edges = (avg_degree * g.get_num_nodes() as f64 / 2.0) as usize;
     g.remove_random_edges(num_edges - goal_num_edges);
-    g.get_largest_subgraph()
+    g.largest_connected_component()
 }
 
 pub fn save_separator_distribution(

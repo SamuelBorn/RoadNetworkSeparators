@@ -48,7 +48,7 @@ pub fn generate_unit_disk_graph(n: usize, area_size: Option<f64>) -> Graph {
         }
     }
 
-    g.get_largest_subgraph()
+    g.largest_connected_component()
 }
 
 pub fn generate_unit_disk_graph_with_avg_degree(
@@ -64,7 +64,7 @@ pub fn generate_unit_disk_graph_with_avg_degree(
 
     g.remove_random_edges(num_edges - goal_num_edges);
 
-    g.get_largest_subgraph()
+    g.largest_connected_component()
 }
 
 #[cfg(test)]

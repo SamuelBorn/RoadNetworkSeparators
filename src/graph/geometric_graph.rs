@@ -73,7 +73,7 @@ impl GeometricGraph {
     }
 
     pub fn save(&self, dir: &Path) -> io::Result<()> {
-        self.graph.to_file(dir)?;
+        self.graph.save(dir)?;
         library::write_binary_vec(
             &self
                 .positions

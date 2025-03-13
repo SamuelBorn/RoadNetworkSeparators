@@ -135,7 +135,7 @@ impl Graph {
         Ok(g)
     }
 
-    pub fn to_file(&self, dir: &Path) -> io::Result<()> {
+    pub fn save(&self, dir: &Path) -> io::Result<()> {
         fs::create_dir_all(dir)?;
         let (xadj, adjncy) = self.get_adjacency_array();
         library::write_binary_vec(&xadj, &dir.join("first_out"))?;
@@ -190,7 +190,7 @@ impl Graph {
     }
 
     pub fn remove_random_edges(&mut self, num_edges: usize) {
-        let mut edges = self.get_edges();
+        let mut edges = self.get_directed_edges();
         edges.shuffle(&mut thread_rng());
         edges.truncate(edges.len() - num_edges);
         let g = Graph::from_edge_list(edges);
@@ -379,7 +379,7 @@ impl Graph {
         distances
     }
 
-    pub fn get_largest_subgraph(&self) -> Graph {
+    pub fn largest_connected_component(&self) -> Graph {
         let separator = HashSet::new();
         let subgraphs = self.get_subgraphs(&separator);
 
