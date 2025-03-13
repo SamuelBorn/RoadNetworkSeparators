@@ -16,7 +16,7 @@ use library::{read_binary_vec, read_text_vec, read_to_usize_vec, write_binary_ve
 use separator::Mode::*;
 
 fn main() {
-    let mut g = example::germany();
-    let mut ord = library::read_to_usize_vec(Path::new("output/ord_germany.bin"));
-    compute_separator_sizes_from_order(&g, &ord, Path::new("output/sep_sizes_germany.txt"));
+    let mut g = Graph::from_file(Path::new("output/sparse_grid")).unwrap();
+    let mut ord = library::read_to_usize_vec(Path::new("output/ord_sparse_grid.bin"));
+    compute_separator_sizes_from_order(&g, &ord, Path::new("output/sep_sparse_grid.txt"));
 }
