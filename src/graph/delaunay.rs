@@ -16,9 +16,8 @@ pub fn triangulation(positions: &[Point]) -> DelaunayTriangulation<Point2<f32>> 
     .unwrap()
 }
 
-pub fn random_delaunay(n: usize, aabb: Rect) -> GeometricGraph {
-    let positions = geometric_graph::random_points(n, aabb);
-    let triangulation = triangulation(&positions);
+pub fn delaunay(positions: &[Point]) -> GeometricGraph {
+    let triangulation = triangulation(positions);
 
     let g = Graph::from_edge_list(
         triangulation
@@ -30,7 +29,12 @@ pub fn random_delaunay(n: usize, aabb: Rect) -> GeometricGraph {
             .collect(),
     );
 
-    GeometricGraph::new(g, positions)
+    GeometricGraph::new(g, positions.to_vec())
+}
+
+pub fn random_delaunay(n: usize, aabb: Rect) -> GeometricGraph {
+    let positions = geometric_graph::random_points(n, aabb);
+    delaunay(&positions)
 }
 
 // karlsruhe: 0.01

@@ -3,6 +3,7 @@ pub mod graph;
 pub mod library;
 pub mod local;
 pub mod separator;
+pub mod kruskal;
 
 use std::fs;
 use std::path::Path;
