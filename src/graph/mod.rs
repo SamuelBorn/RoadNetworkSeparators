@@ -19,11 +19,11 @@ pub mod geometric_graph;
 pub mod grid;
 pub mod highway;
 pub mod nested_grid;
+pub mod nested_sparse;
 pub mod planar;
 pub mod tree;
 pub mod unit_disk;
 pub mod voronoi;
-pub mod nested_sparse;
 
 // representation of bidirectional graph
 // all algorithms assume that if a,b is in the graph, then b,a is also in the graph
@@ -61,8 +61,12 @@ impl Graph {
             .collect::<Vec<_>>();
 
         edges.par_iter().for_each(|(u, v)| {
-            data[*u].lock().unwrap().insert(*v);
-            data[*v].lock().unwrap().insert(*u);
+            {
+                data[*u].lock().unwrap().insert(*v);
+            }
+            {
+                data[*v].lock().unwrap().insert(*u);
+            }
         });
 
         Graph {
