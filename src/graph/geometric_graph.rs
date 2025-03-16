@@ -5,6 +5,7 @@ use rayon::iter::IndexedParallelIterator;
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
+use rayon::slice::ParallelSliceMut;
 use rstar::PointDistance;
 
 use std::borrow::Borrow;
@@ -70,6 +71,63 @@ impl GeometricGraph {
             .map(|(&lat, &lon)| Point::new(lat, lon))
             .collect();
         Ok(GeometricGraph::new(g, positions))
+    }
+
+    pub fn from_edges_usize(edges: Vec<((usize, usize), (usize, usize))>) -> GeometricGraph {
+        let mut points = edges
+            .par_iter()
+            .flat_map(|&(p1, p2)| vec![p1, p2])
+            .collect::<Vec<_>>();
+        points.par_sort_unstable();
+        points.dedup();
+        let mut geo_points = points
+            .par_iter()
+            .map(|&(x, y)| geo::Point::new(x as f64, y as f64))
+            .collect();
+        let mut point_to_idx = points
+            .par_iter()
+            .enumerate()
+            .map(|(i, &p)| (p, i))
+            .collect::<HashMap<_, _>>();
+
+        let mut edges_idx = edges
+            .par_iter()
+            .map(|(p1, p2)| {
+                (
+                    *point_to_idx.get(p1).unwrap(),
+                    *point_to_idx.get(p2).unwrap(),
+                )
+            })
+            .collect();
+
+        let g = Graph::from_edge_list(edges_idx);
+        GeometricGraph::new(g, geo_points)
+    }
+
+    pub fn from_edges_point(edges: Vec<(Point, Point)>, quantize_scale: f64) -> GeometricGraph {
+        let edges = edges
+            .par_iter()
+            .map(|&(p1, p2)| {
+                (
+                    (
+                        (quantize_scale * p1.x()) as usize,
+                        (quantize_scale * p1.y()) as usize,
+                    ),
+                    (
+                        (quantize_scale * p2.x()) as usize,
+                        (quantize_scale * p2.y()) as usize,
+                    ),
+                )
+            })
+            .collect();
+
+        let mut g = GeometricGraph::from_edges_usize(edges);
+        g.positions = g
+            .positions
+            .par_iter()
+            .map(|p| Point::new(p.x() / quantize_scale, p.y() / quantize_scale))
+            .collect();
+        g
     }
 
     pub fn save(&self, dir: &Path) -> io::Result<()> {
