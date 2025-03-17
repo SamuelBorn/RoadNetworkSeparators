@@ -1,8 +1,4 @@
-use std::{
-    cmp::max,
-    f64::consts::PI,
-    ops::{Mul, Sub},
-};
+use std::{cmp::max, f64::consts::PI};
 
 use geo::{ConvexHull, MultiPoint, Point, Polygon};
 use hashbrown::HashSet;
@@ -13,6 +9,8 @@ use rand_distr::{Distribution, Exp, Normal, Uniform};
 use rayon::prelude::*;
 use rstar::PointDistance;
 
+use crate::graph::geometric_graph::quantize;
+
 use super::delaunay::delaunay;
 
 struct Subgraph {
@@ -20,16 +18,6 @@ struct Subgraph {
     node_count: usize,
     edges: Vec<(Point, Point)>,
     hull: Polygon,
-}
-
-const QUANT_SCALE: f64 = 1e8;
-
-fn quantize(p: &geo::Point) -> (u64, u64) {
-    ((p.x() * QUANT_SCALE) as u64, (p.y() * QUANT_SCALE) as u64)
-}
-
-fn inv_quantize((x, y): (u64, u64)) -> Point {
-    Point::new(x as f64 / QUANT_SCALE, y as f64 / QUANT_SCALE)
 }
 
 fn generate_random_blobs(n: usize, width: f64, height: f64) -> Vec<Subgraph> {
@@ -58,11 +46,10 @@ fn generate_random_blobs(n: usize, width: f64, height: f64) -> Vec<Subgraph> {
                 })
                 .collect::<Vec<_>>();
 
-
             Subgraph {
                 center: p,
                 node_count: points.len(),
-                edges: super::delaunay::delaunay(&points).get_edges_points(),
+                edges: super::delaunay::convex_delaunay(&points).get_edges_points(),
                 hull: MultiPoint(points.clone()).convex_hull(),
             }
         })
@@ -76,6 +63,28 @@ fn hull(p1: &Polygon, p2: &Polygon) -> Polygon {
     MultiPoint::new(all).convex_hull()
 }
 
+fn filter_hull(p: &Polygon, quant_hull_points: &HashSet<(i64, i64)>) -> Vec<Point> {
+    p.exterior().lines().for_each(|line| {
+        let start_on_hull = quant_hull_points.contains(&quantize(&line.start.into()));
+        let end_on_hull = quant_hull_points.contains(&quantize(&line.end.into()));
+
+        match (start_on_hull, end_on_hull) {
+            (false, false) => {
+                center.push(line.start.into());
+            }
+            (false, true) => {
+                center.push(line.start.into());
+            }
+            (true, false) => {
+                border1 = line.start.into();
+            }
+            (true, true) => {}
+        }
+    })
+
+    unimplemented!();
+}
+
 fn bridge(s1: &Subgraph, s2: &Subgraph) -> (Polygon, Vec<(Point, Point)>) {
     let hull = hull(&s1.hull, &s2.hull);
     let quant_hull_points = hull
@@ -83,9 +92,6 @@ fn bridge(s1: &Subgraph, s2: &Subgraph) -> (Polygon, Vec<(Point, Point)>) {
         .points()
         .map(|p| quantize(&p))
         .collect::<HashSet<_>>();
-
-    let p1 = s1.hull.exterior().points();
-    let p2 = s2.hull.exterior().points();
 
     unimplemented!();
 }

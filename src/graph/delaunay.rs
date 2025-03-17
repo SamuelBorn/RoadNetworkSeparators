@@ -1,8 +1,8 @@
-use geo::{Point, Rect};
+use geo::{ConvexHull, MultiPoint, Point, Rect};
 use spade::{DelaunayTriangulation, InsertionError, Point2, Triangulation};
 
 use super::{
-    geometric_graph::{self, GeometricGraph},
+    geometric_graph::{self, approx_dedup_edges, GeometricGraph},
     Graph,
 };
 
@@ -30,6 +30,20 @@ pub fn delaunay(positions: &[Point]) -> GeometricGraph {
     );
 
     GeometricGraph::new(g, positions.to_vec())
+}
+
+pub fn convex_delaunay(positions: &[Point]) -> GeometricGraph {
+    let mut edges = delaunay(&positions).get_edges_points();
+    let mut points = MultiPoint(positions.to_vec());
+    let mut hull = points
+        .convex_hull()
+        .exterior()
+        .lines()
+        .map(|line| (line.start_point(), line.end_point()))
+        .collect::<Vec<_>>();
+    edges.append(&mut hull);
+    approx_dedup_edges(&mut edges);
+    GeometricGraph::from_edges_point(edges)
 }
 
 pub fn random_delaunay(n: usize, aabb: Rect) -> GeometricGraph {

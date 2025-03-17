@@ -26,6 +26,38 @@ pub struct GeometricGraph {
     pub positions: Vec<Point>,
 }
 
+const QUANTIZE_SCALE: f64 = 1e12;
+
+pub fn quantize(p: &geo::Point) -> (i64, i64) {
+    (
+        (p.x() * QUANTIZE_SCALE).round() as i64,
+        (p.y() * QUANTIZE_SCALE).round() as i64,
+    )
+}
+
+pub fn inv_quantize((x, y): (i64, i64)) -> Point {
+    Point::new(x as f64 / QUANTIZE_SCALE, y as f64 / QUANTIZE_SCALE)
+}
+
+pub fn approx_dedup_points(points: &mut Vec<Point>) {
+    points.sort_unstable_by(|a, b| quantize(a).cmp(&quantize(b)));
+    points.dedup_by(|a, b| quantize(a) == quantize(b));
+}
+
+pub fn approx_dedup_edges(edges: &mut Vec<(Point, Point)>) {
+    edges.sort_unstable_by(|(a1, a2), (b1, b2)| {
+        let a = quantize(a1).cmp(&quantize(a2));
+        if a == std::cmp::Ordering::Equal {
+            quantize(b1).cmp(&quantize(b2))
+        } else {
+            a
+        }
+    });
+    edges.dedup_by(|(a1, a2), (b1, b2)| {
+        quantize(a1) == quantize(b1) && quantize(a2) == quantize(b2)
+    });
+}
+
 pub fn karlsruhe_bounding_rect() -> Rect {
     let min_point = Point::new(48.3, 8.0);
     let max_point = Point::new(49.2, 9.0);
@@ -112,28 +144,23 @@ impl GeometricGraph {
         GeometricGraph::new(g, geo_points)
     }
 
-    pub fn from_edges_point(edges: Vec<(Point, Point)>, quantize_scale: f64) -> GeometricGraph {
+    pub fn from_edges_point(edges: Vec<(Point, Point)>) -> GeometricGraph {
         let edges = edges
             .par_iter()
-            .map(|&(p1, p2)| {
+            .map(|(p1, p2)| {
+                let (q1, q2) = (quantize(p1), quantize(p2));
                 (
-                    (
-                        (quantize_scale * p1.x()) as usize,
-                        (quantize_scale * p1.y()) as usize,
-                    ),
-                    (
-                        (quantize_scale * p2.x()) as usize,
-                        (quantize_scale * p2.y()) as usize,
-                    ),
+                    (q1.0 as usize, q1.1 as usize),
+                    (q2.0 as usize, q2.1 as usize),
                 )
             })
-            .collect();
+            .collect::<Vec<_>>();
 
         let mut g = GeometricGraph::from_edges_usize(edges);
         g.positions = g
             .positions
             .par_iter()
-            .map(|p| Point::new(p.x() / quantize_scale, p.y() / quantize_scale))
+            .map(|p| Point::new(p.x() / QUANTIZE_SCALE, p.y() / QUANTIZE_SCALE))
             .collect();
         g
     }
