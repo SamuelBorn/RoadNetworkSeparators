@@ -73,6 +73,14 @@ impl GeometricGraph {
         Ok(GeometricGraph::new(g, positions))
     }
 
+    pub fn get_edges_points(&self) -> Vec<(Point, Point)> {
+        self.graph
+            .get_edges()
+            .par_iter()
+            .map(|(u, v)| (self.get_position(*u), self.get_position(*v)))
+            .collect()
+    }
+
     pub fn from_edges_usize(edges: Vec<((usize, usize), (usize, usize))>) -> GeometricGraph {
         let mut points = edges
             .par_iter()
