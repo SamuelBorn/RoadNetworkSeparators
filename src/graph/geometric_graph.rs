@@ -113,7 +113,7 @@ impl GeometricGraph {
             .collect()
     }
 
-    pub fn from_edges_usize(edges: Vec<((usize, usize), (usize, usize))>) -> GeometricGraph {
+    pub fn from_edges_usize(edges: &[((usize, usize), (usize, usize))]) -> GeometricGraph {
         let mut points = edges
             .par_iter()
             .flat_map(|&(p1, p2)| vec![p1, p2])
@@ -144,7 +144,7 @@ impl GeometricGraph {
         GeometricGraph::new(g, geo_points)
     }
 
-    pub fn from_edges_point(edges: Vec<(Point, Point)>) -> GeometricGraph {
+    pub fn from_edges_point(edges: &[(Point, Point)]) -> GeometricGraph {
         let edges = edges
             .par_iter()
             .map(|(p1, p2)| {
@@ -156,7 +156,7 @@ impl GeometricGraph {
             })
             .collect::<Vec<_>>();
 
-        let mut g = GeometricGraph::from_edges_usize(edges);
+        let mut g = GeometricGraph::from_edges_usize(&edges);
         g.positions = g
             .positions
             .par_iter()

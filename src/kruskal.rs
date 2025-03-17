@@ -44,7 +44,7 @@ mod tests {
 
     #[test]
     fn test_get_mst() {
-        let g = GeometricGraph::from_edges_usize(vec![
+        let g = GeometricGraph::from_edges_usize(&vec![
             ((0, 0), (0, 1)),
             ((0, 0), (2, 0)),
             ((0, 1), (2, 3)),

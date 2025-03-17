@@ -43,7 +43,7 @@ pub fn convex_delaunay(positions: &[Point]) -> GeometricGraph {
         .collect::<Vec<_>>();
     edges.append(&mut hull);
     approx_dedup_edges(&mut edges);
-    GeometricGraph::from_edges_point(edges)
+    GeometricGraph::from_edges_point(&edges)
 }
 
 pub fn random_delaunay(n: usize, aabb: Rect) -> GeometricGraph {
