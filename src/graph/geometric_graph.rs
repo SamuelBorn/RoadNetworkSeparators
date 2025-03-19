@@ -64,18 +64,6 @@ pub fn karlsruhe_bounding_rect() -> Rect {
     Rect::new(min_point, max_point)
 }
 
-pub fn random_point(aabb: Rect) -> Point {
-    let mut rng = rand::thread_rng();
-    Point::new(
-        rng.gen_range(aabb.min().x..aabb.max().x),
-        rng.gen_range(aabb.min().y..aabb.max().y),
-    )
-}
-
-pub fn random_points(n: usize, aabb: Rect) -> Vec<Point> {
-    (0..n).map(|_| random_point(aabb)).collect()
-}
-
 impl GeometricGraph {
     pub fn new(graph: Graph, positions: Vec<Point>) -> GeometricGraph {
         assert_eq!(graph.get_num_nodes(), positions.len());

@@ -146,7 +146,7 @@ where
     Point::new(center.x() + dx, center.y() + dy)
 }
 
-fn random_points_in_circle<R>(center: Point<f64>, radius: R, num_points: usize) -> Vec<Point<f64>>
+pub fn random_points_in_circle<R>(center: Point<f64>, radius: R, num_points: usize) -> Vec<Point<f64>>
 where
     R: Into<f64> + Copy,
 {

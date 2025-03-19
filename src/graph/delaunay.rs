@@ -1,5 +1,8 @@
 use geo::{ConvexHull, MultiPoint, Point, Rect};
+use itertools::Position;
 use spade::{DelaunayTriangulation, InsertionError, Point2, Triangulation};
+
+use crate::library;
 
 use super::{
     geometric_graph::{self, approx_dedup_edges, GeometricGraph},
@@ -32,28 +35,14 @@ pub fn delaunay(positions: &[Point]) -> GeometricGraph {
     GeometricGraph::new(g, positions.to_vec())
 }
 
-pub fn convex_delaunay(positions: &[Point]) -> GeometricGraph {
-    let mut edges = delaunay(&positions).get_edges_points();
-    let mut points = MultiPoint(positions.to_vec());
-    let mut hull = points
-        .convex_hull()
-        .exterior()
-        .lines()
-        .map(|line| (line.start_point(), line.end_point()))
-        .collect::<Vec<_>>();
-    edges.append(&mut hull);
-    approx_dedup_edges(&mut edges);
-    GeometricGraph::from_edges_point(&edges)
-}
-
 pub fn random_delaunay(n: usize, aabb: Rect) -> GeometricGraph {
-    let positions = geometric_graph::random_points(n, aabb);
+    let positions = library::random_points_in_rect(aabb, n);
     delaunay(&positions)
 }
 
 // karlsruhe: 0.01
 pub fn length_restricted_delaunay(n: usize, aabb: Rect, max_dist: f32) -> GeometricGraph {
-    let positions = geometric_graph::random_points(n, aabb);
+    let positions = library::random_points_in_rect(aabb, n);
     let triangulation = triangulation(&positions);
 
     let mut g = Graph::from_edge_list(
