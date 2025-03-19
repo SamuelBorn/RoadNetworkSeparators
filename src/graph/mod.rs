@@ -26,6 +26,7 @@ pub mod unit_disk;
 pub mod voronoi;
 pub mod cbrt_bridged;
 pub mod cbrt_grid;
+pub mod cbrt_maximal;
 pub mod circle_centers;
 
 // representation of bidirectional graph
