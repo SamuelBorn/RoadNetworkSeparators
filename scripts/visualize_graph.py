@@ -51,7 +51,7 @@ def visualize(args: argparse.Namespace) -> None:
     vertex_size = g.new_vertex_property("double")
     for v in g.vertices():
         vertex_color[v] = [0, 0, 0, 1]
-        vertex_size[v] = 2
+        vertex_size[v] = 3
     if args.highlight_nodes:
         for file, color in zip(args.highlight_nodes, highlight_colors):
             highlight_indices: list[int] = read_node_list(Path(file))
