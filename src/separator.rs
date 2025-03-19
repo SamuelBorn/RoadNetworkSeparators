@@ -1,4 +1,5 @@
 use hashbrown::{HashMap, HashSet};
+use ordered_float::Pow;
 use rayon::iter::IntoParallelIterator;
 use rayon::prelude::*;
 use std::collections::VecDeque;
@@ -136,7 +137,12 @@ impl Graph {
         let separator = self.get_separator_wrapper(mode);
         let subgraphs = self.get_subgraphs(&separator);
 
-        println!("{} {}", self.get_num_nodes(), separator.len());
+        println!(
+            "{} {} ({})",
+            self.get_num_nodes(),
+            separator.len(),
+            (self.get_num_nodes() as f64).pow(1.0 / 3.0) as i32
+        );
 
         library::optional_append_to_file(
             file,
@@ -159,7 +165,12 @@ impl Graph {
                 .into_par_iter()
                 .flat_map(|g| {
                     let separator = g.get_separator_wrapper(mode);
-                    println!("{} {}", g.get_num_nodes(), separator.len());
+                    println!(
+                        "{} {} ({})",
+                        self.get_num_nodes(),
+                        separator.len(),
+                        (self.get_num_nodes() as f64).pow(1.0 / 3.0) as i32
+                    );
                     g.get_subgraphs(&separator)
                         .into_iter()
                         .filter(|g| g.get_num_nodes() > 100)

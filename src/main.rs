@@ -17,6 +17,7 @@ use library::{read_binary_vec, read_text_vec, read_to_usize_vec, write_binary_ve
 use separator::Mode::*;
 
 fn main() {
-    let mut g = Graph::from_file(Path::new("./output/cbrt_bridged/")).unwrap();
-    g.parallel_separator(Fast, None);
+    let g = Graph::from_file(Path::new("./output/circle_center_100k/")).unwrap();
+    let ord = read_to_usize_vec(Path::new("./output/ord_circle_center.bin"));
+    let sep = compute_separator_sizes_from_order(&g, &ord, Path::new("./output/sep_circle_center.txt"));
 }

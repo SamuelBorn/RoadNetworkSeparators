@@ -35,6 +35,18 @@ pub fn delaunay(positions: &[Point]) -> GeometricGraph {
     GeometricGraph::new(g, positions.to_vec())
 }
 
+pub fn delaunay_edges(positions: &[Point]) -> Vec<(Point, Point)> {
+    let triangulation = triangulation(positions);
+
+    triangulation
+        .undirected_edges()
+        .map(|edge| {
+            let [a, b] = edge.vertices();
+            (positions[a.index()], positions[b.index()])
+        })
+        .collect()
+}
+
 pub fn random_delaunay(n: usize, aabb: Rect) -> GeometricGraph {
     let positions = library::random_points_in_rect(aabb, n);
     delaunay(&positions)
