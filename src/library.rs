@@ -1,9 +1,12 @@
+use rand_distr::uniform::SampleUniform;
+use rand_distr::Normal;
 use std::fs::{self, File};
 use std::io::{self, Read, Write};
 use std::path::Path;
 use std::str::FromStr;
 
-use geo::Point;
+use geo::{Point, Rect};
+use rand::Rng;
 
 pub fn read_to_usize_vec(file: &Path) -> Vec<usize> {
     let mut file = File::open(file).unwrap();
@@ -128,6 +131,90 @@ pub fn optional_append_to_file(file: Option<&Path>, content: &str) {
     if let Some(file) = file {
         append_to_file(file, content);
     }
+}
+
+fn random_point_in_circle<R>(center: Point<f64>, radius: R) -> Point<f64>
+where
+    R: Into<f64>,
+{
+    let mut rng = rand::thread_rng();
+    let theta = rng.gen::<f64>() * 2.0 * std::f64::consts::PI;
+    let u = rng.gen::<f64>();
+    let r = radius.into() * u.sqrt();
+    let dx = r * theta.cos();
+    let dy = r * theta.sin();
+    Point::new(center.x() + dx, center.y() + dy)
+}
+
+fn random_points_in_circle<R>(center: Point<f64>, radius: R, num_points: usize) -> Vec<Point<f64>>
+where
+    R: Into<f64> + Copy,
+{
+    (0..num_points)
+        .map(|_| random_point_in_circle(center, radius))
+        .collect()
+}
+
+pub fn random_point_in_rect(rect: Rect<f64>) -> Point<f64> {
+    let mut rng = rand::thread_rng();
+    let x = rng.gen_range(rect.min().x..rect.max().x);
+    let y = rng.gen_range(rect.min().y..rect.max().y);
+    Point::new(x, y)
+}
+
+pub fn random_points_in_rect(rect: Rect<f64>, num_points: usize) -> Vec<Point<f64>> {
+    (0..num_points)
+        .map(|_| random_point_in_rect(rect))
+        .collect()
+}
+
+pub fn random_point_normal_dist<R>(center: Point<f64>, std_dev: R) -> Point<f64>
+where
+    R: Into<f64>,
+{
+    let mut rng = rand::thread_rng();
+    let std_dev_f64 = std_dev.into();
+    let normal_x = Normal::new(center.x(), std_dev_f64).unwrap();
+    let normal_y = Normal::new(center.y(), std_dev_f64).unwrap();
+    let x = rng.sample(normal_x);
+    let y = rng.sample(normal_y);
+    Point::new(x, y)
+}
+
+pub fn random_points_normal_dist<R>(
+    center: Point<f64>,
+    std_dev: R,
+    num_points: usize,
+) -> Vec<Point<f64>>
+where
+    R: Into<f64> + Copy,
+{
+    (0..num_points)
+        .map(|_| random_point_normal_dist(center, std_dev))
+        .collect()
+}
+
+pub fn random_point_in_rect_tuple<T>(bottom_left: (T, T), top_right: (T, T)) -> (T, T)
+where
+    T: PartialOrd + SampleUniform,
+{
+    let mut rng = rand::thread_rng();
+    let x = rng.gen_range(bottom_left.0..top_right.0);
+    let y = rng.gen_range(bottom_left.1..top_right.1);
+    (x, y)
+}
+
+pub fn random_points_in_rect_tuple<T>(
+    bottom_left: (T, T),
+    top_right: (T, T),
+    num_points: usize,
+) -> Vec<(T, T)>
+where
+    T: PartialOrd + SampleUniform + Copy,
+{
+    (0..num_points)
+        .map(|_| random_point_in_rect_tuple(bottom_left, top_right))
+        .collect()
 }
 
 #[cfg(test)]
