@@ -60,43 +60,55 @@ fn hull(p1: &Polygon, p2: &Polygon) -> Polygon {
     let mut all = Vec::new();
     all.extend(p1.exterior().points());
     all.extend(p2.exterior().points());
-    MultiPoint::new(all).convex_hull()
+    MultiPoint::new(all).concave_hull(2.0)
 }
 
 fn scale(p: &Point, scale: f64) -> Point {
     Point::new(p.x() * scale, p.y() * scale)
 }
 
-fn bridge(s1: &Subgraph, s2: &Subgraph) -> Vec<(Point, Point)> {
-    let dir_s1_to_s2 = s2.center - s1.center;
-    let s1_exterior = s1.hull.exterior().points().collect::<Vec<_>>();
-    let s1_facing_exterior = s1_exterior
-        .into_par_iter()
-        .filter(|&p| {
-            let line = Line::new(p + scale(&dir_s1_to_s2, 1e-10), p + dir_s1_to_s2);
-            !line.intersects(&s1.hull)
-        })
-        .collect::<Vec<_>>();
+fn find_connectable_points(poly1: &Polygon<f64>, poly2: &Polygon<f64>) -> Vec<(Point, Point)> {
+    let exterior1 = poly1.exterior();
+    let exterior2 = poly2.exterior();
+    let points1 = &exterior1.0[..exterior1.0.len() - 1]; 
+    let points2 = &exterior2.0[..exterior2.0.len() - 1];
+    let mut result = Vec::new();
 
-    let dir_s2_to_s1 = s1.center - s2.center;
-    let s2_exterior = s2.hull.exterior().points().collect::<Vec<_>>();
-    let s2_facing_exterior = s2_exterior
-        .into_par_iter()
-        .filter(|&p| {
-            let line = Line::new(p + scale(&dir_s2_to_s1, 1e-10), p + dir_s2_to_s1);
-            !line.intersects(&s2.hull)
-        })
-        .collect::<Vec<_>>();
+    for &p1 in points1 {
+        for &p2 in points2 {
+            let segment = Line::new(p1, p2);
 
-    let cbrt = ((s1.node_count + s2.node_count) as f64).powf(1.0 / 3.0) as usize;
-    let s1_anchors = s1_facing_exterior.choose_multiple(&mut thread_rng(), cbrt);
-    let s2_anchors = s2_facing_exterior.choose_multiple(&mut thread_rng(), cbrt);
+            // Check intersection with poly1
+            let intersects_poly1 = poly1.exterior().lines().any(|edge| {
+                let edge_line = Line::new(edge.start, edge.end);
+                segment.intersects(&edge_line) && 
+                // Allow intersection only at p1
+                !(segment.start == edge.start || segment.start == edge.end)
+            }) || poly1.interiors().iter().any(|ring| ring.intersects(&segment));
 
-    let mut bridges = Vec::new();
-    for (p1, p2) in s1_anchors.zip(s2_anchors) {
-        bridges.push((*p1, *p2));
+            // Check intersection with poly2
+            let intersects_poly2 = poly2.exterior().lines().any(|edge| {
+                let edge_line = Line::new(edge.start, edge.end);
+                segment.intersects(&edge_line) && 
+                // Allow intersection only at p2
+                !(segment.end == edge.start || segment.end == edge.end)
+            }) || poly2.interiors().iter().any(|ring| ring.intersects(&segment));
+
+            // If no invalid intersections, add the pair
+            if !intersects_poly1 && !intersects_poly2 {
+                result.push((p1.into(), p2.into()));
+            }
+        }
     }
-    bridges
+
+    result
+}
+
+
+fn bridge(s1: &Subgraph, s2: &Subgraph) -> Vec<(Point, Point)> {
+    let cbrt = 2 * ((s1.node_count + s2.node_count) as f64).powf(1.0 / 3.0) as usize;
+    let bridges = find_connectable_points(&s1.hull, &s2.hull);
+    bridges.choose_multiple(&mut thread_rng(), cbrt).cloned().collect()
 }
 
 pub fn build_cbrt_bridged(n: usize, width: f64, height: f64) -> GeometricGraph {
@@ -149,7 +161,7 @@ mod tests {
 
     #[test]
     fn test_bridged() {
-        let g = build_cbrt_bridged(1000, 1000.0, 1000.0);
+        let g = build_cbrt_bridged(50, 200.0, 200.0);
         g.graph.info();
         g.save(Path::new("output/cbrt_bridged"));
     }
