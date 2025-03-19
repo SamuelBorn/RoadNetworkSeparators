@@ -27,7 +27,7 @@ fn combine_graph(g1: &mut Graph, mut g2: Graph) {
     g1.data.append(&mut offset_data);
 }
 
-fn generate_cbrt_maximal(n: usize) -> Graph {
+pub fn generate_cbrt_maximal(n: usize) -> Graph {
     if n <= 1 {
         return Graph::with_node_count(1);
     }

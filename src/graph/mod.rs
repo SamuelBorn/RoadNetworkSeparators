@@ -426,6 +426,16 @@ impl Graph {
         diameter
     }
 
+    // deletes random edges to match avg degree, and picks the largest connected component
+    pub fn enforce_average_degree_connected(&mut self, target_degree: f64) {
+        let mut edges = self.get_directed_edges();
+        edges.shuffle(&mut thread_rng());
+        edges.truncate((self.get_num_nodes() as f64 * target_degree) as usize / 2);
+        let g = Graph::from_edge_list(edges);
+        let g = g.largest_connected_component();
+        self.data = g.data;
+    }
+
     pub fn print(&self) {
         for (i, neighbors) in self.data.iter().enumerate() {
             println!("{}: {:?}", i, neighbors);

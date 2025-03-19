@@ -6,6 +6,19 @@ use crate::graph::Graph;
 
 use super::geometric_graph::GeometricGraph;
 
+const DEGREE_DISTRIBUTION_GER: [f64; 10] = [
+    0.0,
+    0.21926495500273885,
+    0.14653504242688228,
+    0.5506052026552709,
+    0.08178824037766508,
+    0.0016999235485956178,
+    0.00009951534464091634,
+    0.00000642594721066999,
+    0.0000005210227468110803,
+    0.00000017367424893702675,
+];
+
 pub fn example1() -> GeometricGraph {
     let g = Graph::from_edge_list(vec![
         (0, 1),
