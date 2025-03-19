@@ -13,6 +13,10 @@ use std::thread;
 use std::{collections::BTreeSet, fs, io, path::Path};
 
 use crate::{library, separator};
+pub mod cbrt_bridged;
+pub mod cbrt_grid;
+pub mod cbrt_maximal;
+pub mod circle_centers;
 pub mod delaunay;
 pub mod example;
 pub mod geometric_graph;
@@ -24,10 +28,6 @@ pub mod planar;
 pub mod tree;
 pub mod unit_disk;
 pub mod voronoi;
-pub mod cbrt_bridged;
-pub mod cbrt_grid;
-pub mod cbrt_maximal;
-pub mod circle_centers;
 
 // representation of bidirectional graph
 // all algorithms assume that if a,b is in the graph, then b,a is also in the graph
@@ -304,6 +304,16 @@ impl Graph {
 
     pub fn get_average_degree(&self) -> f64 {
         self.data.iter().map(|v| v.len()).sum::<usize>() as f64 / self.get_num_nodes() as f64
+    }
+
+    pub fn degree_distribution(&self) -> Vec<f64> {
+        let max_degree = self.data.par_iter().map(|v| v.len()).max().unwrap();
+        let mut distribution = vec![0; max_degree + 1];
+        for set in self.data.iter() {
+            distribution[set.len()] += 1;
+        }
+        let sum = distribution.iter().sum::<usize>() as f64;
+        distribution.iter().map(|&d| d as f64 / sum).collect()
     }
 
     pub fn get_neighbors(&self, u: usize) -> &HashSet<usize> {

@@ -15,9 +15,12 @@ use graph::voronoi::{voronoi_example, voronoi_example_small};
 use graph::{delaunay, example, grid, nested_grid, Graph};
 use library::{read_binary_vec, read_text_vec, read_to_usize_vec, write_binary_vec};
 use separator::Mode::*;
+use example::*;
 
 fn main() {
-    let g = Graph::from_file(Path::new("./output/circle_center_100k/")).unwrap();
-    let ord = read_to_usize_vec(Path::new("./output/ord_circle_center.bin"));
-    let sep = compute_separator_sizes_from_order(&g, &ord, Path::new("./output/sep_circle_center.txt"));
+    let g = germany();
+    let dd = g.degree_distribution();
+    for ele in dd.iter().enumerate() {
+        println!("{} {}", ele.0, ele.1);
+    }
 }
