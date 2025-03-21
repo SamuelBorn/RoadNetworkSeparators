@@ -6,7 +6,7 @@ use crate::graph::Graph;
 
 use super::geometric_graph::GeometricGraph;
 
-const DEGREE_DISTRIBUTION_GER: [f64; 10] = [
+pub const DEGREE_DISTRIBUTION_GER: [f64; 10] = [
     0.0,
     0.21926495500273885,
     0.14653504242688228,

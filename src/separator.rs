@@ -167,9 +167,13 @@ impl Graph {
                     let separator = g.get_separator_wrapper(mode);
                     println!(
                         "{} {} ({})",
-                        self.get_num_nodes(),
+                        g.get_num_nodes(),
                         separator.len(),
-                        (self.get_num_nodes() as f64).pow(1.0 / 3.0) as i32
+                        (g.get_num_nodes() as f64).pow(1.0 / 3.0) as i32
+                    );
+                    library::optional_append_to_file(
+                        file,
+                        &format!("{} {}\n", g.get_num_nodes(), separator.len()),
                     );
                     g.get_subgraphs(&separator)
                         .into_iter()

@@ -1,4 +1,4 @@
-use hashbrown::HashMap;
+use hashbrown::{HashMap, HashSet};
 use rand::seq::SliceRandom;
 
 // RandomSet is a data structure that supports insert, delete, and choose_random operations in O(1) time.
@@ -18,6 +18,20 @@ where
             vec: Vec::new(),
             map: HashMap::new(),
         }
+    }
+
+    pub fn from_set(set: &HashSet<T>) -> Self {
+        let vec: Vec<T> = set.iter().cloned().collect();
+        let map: HashMap<T, usize> = vec
+            .iter()
+            .enumerate()
+            .map(|(i, x)| (x.clone(), i))
+            .collect();
+        RandomSet { vec, map }
+    }
+    
+    pub fn to_set(&self) -> HashSet<T> {
+        self.vec.iter().cloned().collect()
     }
 
     pub fn insert(&mut self, x: T) {

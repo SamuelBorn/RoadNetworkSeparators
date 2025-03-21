@@ -1,3 +1,4 @@
+use crate::random_set::RandomSet;
 use hashbrown::{HashMap, HashSet};
 use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;
@@ -8,8 +9,9 @@ use rayon::iter::ParallelBridge;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::*;
 use std::hash::Hash;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::thread;
+use std::vec;
 use std::{collections::BTreeSet, fs, io, path::Path};
 
 use crate::{library, separator};
@@ -426,6 +428,10 @@ impl Graph {
         diameter
     }
 
+    pub fn get_degree(&self, u: usize) -> usize {
+        self.get_neighbors(u).len()
+    }
+
     // deletes random edges to match avg degree, and picks the largest connected component
     pub fn enforce_average_degree_connected(&mut self, target_degree: f64) {
         let mut edges = self.get_directed_edges();
@@ -434,6 +440,59 @@ impl Graph {
         let g = Graph::from_edge_list(edges);
         let g = g.largest_connected_component();
         self.data = g.data;
+    }
+
+    pub fn approx_degrees(&mut self, target_dist: &[f64]) {
+        let mut g = self
+            .data
+            .iter()
+            .map(|set| RandomSet::from_set(set))
+            .collect::<Vec<_>>();
+        let target_node_degrees = target_dist
+            .into_iter()
+            .map(|&d| (d * self.get_num_nodes() as f64) as usize)
+            .collect::<Vec<_>>();
+
+        let mut nodes_with_degree = vec![RandomSet::new(); self.degree_distribution().len()];
+        for i in 0..g.len() {
+            nodes_with_degree[g[i].len()].insert(i);
+        }
+
+        let mut current = nodes_with_degree.len() - 1;
+        while current > 1 {
+            let Some(&v) = nodes_with_degree[current].choose_random() else {
+                current -= 1;
+                continue;
+            };
+            let Some(&u) = g[v].choose_random() else {
+                continue;
+            };
+
+            // move node and neigbor one degree down
+            nodes_with_degree[current].remove(&v);
+            nodes_with_degree[current - 1].insert(v);
+            nodes_with_degree[g[u].len()].remove(&u);
+            nodes_with_degree[g[u].len() - 1].insert(u);
+
+            // update graph
+            g[v].remove(&u);
+            g[u].remove(&v);
+
+            let compensation_factor = 1.2;
+            if nodes_with_degree[current].len() as f64
+                <= compensation_factor
+                    * target_node_degrees.get(current).copied().unwrap_or(0) as f64
+            {
+                dbg!(current);
+                current -= 1;
+            }
+        }
+
+        // transform back to graph
+        self.data = g.into_iter().map(|set| set.to_set()).collect::<Vec<_>>();
+
+        let g_connected = self.largest_connected_component();
+        self.data = g_connected.data;
     }
 
     pub fn print(&self) {
