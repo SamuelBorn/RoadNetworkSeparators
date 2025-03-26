@@ -309,12 +309,14 @@ impl GeometricGraph {
     }
 
     pub fn distance_overview(&self, n: usize) -> Vec<f64> {
-        let mut res = Vec::with_capacity(n);
-        for _ in 0..n {
-            let i = rand::thread_rng().gen_range(0..self.graph.get_num_nodes());
-            let j = rand::thread_rng().gen_range(0..self.graph.get_num_nodes());
-            res.push(self.dijsktra(i, j));
-        }
+        let mut res = (0..n)
+            .into_par_iter()
+            .map(|_| {
+                let i = rand::thread_rng().gen_range(0..self.graph.get_num_nodes());
+                let j = rand::thread_rng().gen_range(0..self.graph.get_num_nodes());
+                self.dijsktra(i, j)
+            })
+            .collect::<Vec<_>>();
         let max = *res
             .iter()
             .max_by(|a, b| a.partial_cmp(b).unwrap())

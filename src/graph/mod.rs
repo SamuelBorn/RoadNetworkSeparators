@@ -426,6 +426,24 @@ impl Graph {
         usize::MAX
     }
 
+    pub fn hop_overview(&self, n: usize) -> Vec<f64> {
+        let mut res = (0..n)
+            .into_par_iter()
+            .map(|i| {
+                println!("{} / {}", i, n);
+                let i = rand::thread_rng().gen_range(0..self.get_num_nodes());
+                let j = rand::thread_rng().gen_range(0..self.get_num_nodes());
+                self.dijkstra(i, j) as f64
+            })
+            .collect::<Vec<_>>();
+        let max = *res
+            .iter()
+            .max_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap_or(&1.0);
+        res.iter_mut().for_each(|x| *x /= max);
+        res
+    }
+
     pub fn largest_connected_component(&self) -> Graph {
         let separator = HashSet::new();
         let subgraphs = self.get_subgraphs(&separator);

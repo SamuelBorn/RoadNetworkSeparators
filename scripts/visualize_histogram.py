@@ -1,27 +1,26 @@
 import argparse
 import os
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 
 
 def visualize(args):
-    plt.figure(figsize=(10, 6))
-    plt.title(args.title)
+    plt.figure(figsize=(8, 6))
     plt.xlabel(args.x_label)
     plt.ylabel(args.y_label)
-    plt.grid(True, alpha=0.6, linestyle="--")
-    plt.yscale("log")
+    plt.grid(True, alpha=0.2, linestyle="--")
 
-    for path in args.files:
-        values = read_file(path)
-        plot_histogram(values)
+    if args.log_x:
+        plt.xscale("log")
+    if args.log_y:
+        plt.yscale("log")
 
-    plt.savefig(args.output, format="pdf")
+    values = read_file(args.file)
+    plt.hist(values, bins=args.bins, alpha=1, color="#009682")
+
+    plt.savefig(args.output, format="png", dpi=600)
     plt.show()
-
-
-def plot_histogram(values, bins=30):
-    plt.hist(values, bins=bins, alpha=0.5, edgecolor="black")
 
 
 def read_file(file_path):
@@ -31,22 +30,18 @@ def read_file(file_path):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--title")
     parser.add_argument("--output")
+    parser.add_argument("--bins", type=int, default=30)
+    parser.add_argument("--log-x", action="store_true")
+    parser.add_argument("--log-y", action="store_true")
     parser.add_argument("--x-label", default="Value")
     parser.add_argument("--y-label", default="Frequency")
-    parser.add_argument("files", nargs="*")
+    parser.add_argument("file", type=Path)
 
     args = parser.parse_args()
 
-    if not args.title:
-        file_name_without_extension, _ = os.path.splitext(
-            os.path.basename(args.files[0])
-        )
-        args.title = file_name_without_extension
-
     if not args.output:
-        args.output = f"output/{args.title}.pdf"
+        args.output = f"output/histogram/{args.file.stem}.png"
 
     return args
 
