@@ -8,6 +8,8 @@ use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelBridge;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::*;
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
 use std::hash::Hash;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -397,6 +399,31 @@ impl Graph {
         }
 
         distances
+    }
+
+    pub fn dijkstra(&self, start: usize, end: usize) -> usize {
+        let n = self.data.len();
+        let mut distances = vec![usize::MAX; n];
+        distances[start] = 0;
+        let mut pq = BinaryHeap::new();
+        pq.push((Reverse(0), start));
+
+        while let Some((Reverse(hops), u)) = pq.pop() {
+            if u == end {
+                return hops;
+            }
+            if hops > distances[u] {
+                continue;
+            }
+            for &v in &self.data[u] {
+                let new_hops = hops + 1;
+                if new_hops < distances[v] {
+                    distances[v] = new_hops;
+                    pq.push((Reverse(new_hops), v));
+                }
+            }
+        }
+        usize::MAX
     }
 
     pub fn largest_connected_component(&self) -> Graph {

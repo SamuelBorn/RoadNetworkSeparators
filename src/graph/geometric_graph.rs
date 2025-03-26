@@ -281,11 +281,46 @@ impl GeometricGraph {
     }
 
     pub fn dijsktra(&self, start: usize, end: usize) -> f64 {
-        
+        let n = self.graph.data.len();
+        let mut distances = vec![f64::INFINITY; n];
+        distances[start] = 0.0;
+        let mut pq = BinaryHeap::new();
+        pq.push((OrderedFloat(0.0), start));
+
+        while let Some((OrderedFloat(dist), u)) = pq.pop() {
+            if u == end {
+                return dist;
+            }
+            if dist > distances[u] {
+                continue;
+            }
+            for &v in &self.graph.data[u] {
+                let weight = self.euclidean_distance(u, v);
+                let new_dist = dist + weight;
+
+                if new_dist < distances[v] {
+                    distances[v] = new_dist;
+                    pq.push((OrderedFloat(new_dist), v));
+                }
+            }
+        }
+
+        f64::INFINITY
     }
 
-    pub fn distance_overview(&self) -> Vec<f64> {
-        unimplemented!()
+    pub fn distance_overview(&self, n: usize) -> Vec<f64> {
+        let mut res = Vec::with_capacity(n);
+        for _ in 0..n {
+            let i = rand::thread_rng().gen_range(0..self.graph.get_num_nodes());
+            let j = rand::thread_rng().gen_range(0..self.graph.get_num_nodes());
+            res.push(self.dijsktra(i, j));
+        }
+        let max = *res
+            .iter()
+            .max_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap_or(&1.0);
+        res.iter_mut().for_each(|x| *x /= max);
+        res
     }
 }
 
