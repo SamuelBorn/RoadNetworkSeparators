@@ -3,16 +3,19 @@ use ordered_float::Pow;
 use rayon::iter::IntoParallelIterator;
 use rayon::prelude::*;
 use std::collections::VecDeque;
+use std::env;
 use std::io::Write;
 use std::path::Path;
+use std::process::Command;
 use std::{fs, ptr};
 
 use chrono::format;
 use itertools::{Combinations, Itertools};
 
+use crate::graph::geometric_graph::GeometricGraph;
 use crate::graph::Graph;
 use crate::library::optional_append_to_file;
-use crate::{graph, library, separator};
+use crate::{cch, graph, library, separator};
 
 #[link(name = "kahip")]
 extern "C" {
@@ -228,6 +231,37 @@ fn get_graph(g_map: &HashMap<usize, Vec<usize>>) -> Graph {
     }
 
     Graph::new(data)
+}
+
+impl GeometricGraph {
+    pub fn inertial_flowcutter(&self, name: &str) {
+        let g_path = Path::new("./output/graphs").join(name);
+        self.save(&g_path);
+        let ord = get_ord(&g_path, Some(name));
+        cch::compute_separator_sizes_from_order(
+            &self.graph,
+            &ord,
+            &Path::new("./output/sep").join(name),
+        );
+    }
+}
+
+pub fn get_ord(graph: &Path, ord_name: Option<&str>) -> Vec<usize> {
+    let ord_file = match ord_name {
+        Some(name) => Path::new("./output/ord").canonicalize().unwrap().join(name),
+        None => Path::new("output/ord").canonicalize().unwrap().join("tmp"),
+    };
+
+    Command::new("python3")
+        .arg("inertialflowcutter_order.py")
+        .arg(graph.canonicalize().unwrap().join(""))
+        .arg(&ord_file)
+        .current_dir("../InertialFlowCutter")
+        .spawn()
+        .expect("Failed to execute inertialflowcutter_order.py")
+        .wait();
+
+    library::read_to_usize_vec(&ord_file)
 }
 
 #[cfg(test)]

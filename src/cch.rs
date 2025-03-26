@@ -1,6 +1,8 @@
 use hashbrown::{HashMap, HashSet};
 use std::{
-    collections::{BTreeSet, VecDeque}, fs, path::Path
+    collections::{BTreeSet, VecDeque},
+    fs,
+    path::Path,
 };
 
 use crate::{graph::Graph, library, separator};
@@ -72,7 +74,12 @@ pub fn get_subtree_sizes(tree: &Graph, root: usize) -> Vec<usize> {
     sizes
 }
 
-pub fn traverse_separator_tree(tree: &Graph, root: usize, subtree_sizes: &[usize], out_file: &Path) {
+pub fn traverse_separator_tree(
+    tree: &Graph,
+    root: usize,
+    subtree_sizes: &[usize],
+    out_file: &Path,
+) {
     let mut queue = vec![(root, 1)];
 
     let mut res = String::new();
@@ -96,7 +103,11 @@ pub fn traverse_separator_tree(tree: &Graph, root: usize, subtree_sizes: &[usize
                 for child in large_children {
                     queue.push((*child, 1));
                 }
-                res += &format!("{} {}\n", subtree_sizes[node] + separator_size, separator_size);
+                res += &format!(
+                    "{} {}\n",
+                    subtree_sizes[node] + separator_size,
+                    separator_size
+                );
             }
         }
     }
