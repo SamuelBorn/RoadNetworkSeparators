@@ -161,7 +161,7 @@ fn build_graph(mut edges: Vec<((usize, usize), (usize, usize))>) -> GeometricGra
 pub fn prune_graph(g: &mut GeometricGraph, spanning_parameter: f64) {
     let mut uf: UnionFind<usize> = UnionFind::new(g.graph.get_num_nodes() + 1);
     let edge_lengths = g.get_edge_lengths();
-    let directed_edge_lengths = g.get_edge_lengths_directed(); // only half of the edges
+    let directed_edge_lengths = g.get_edge_lengths_unidirectional(); // only half of the edges
     let mut sorted = directed_edge_lengths.iter().collect::<Vec<_>>();
     sorted.par_sort_by(|(_, l1), (_, l2)| l1.partial_cmp(l2).unwrap());
 

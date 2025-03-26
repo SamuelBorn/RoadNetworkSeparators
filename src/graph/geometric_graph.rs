@@ -186,7 +186,7 @@ impl GeometricGraph {
         Euclidean::distance(self.get_position(u), self.get_position(v))
     }
 
-    pub fn save_distance_overview(&self, file: &Path) {
+    pub fn save_edge_length_overview(&self, file: &Path) {
         fs::write(
             file,
             self.graph
@@ -228,7 +228,7 @@ impl GeometricGraph {
             .collect()
     }
 
-    pub fn get_edge_lengths_directed(&self) -> HashMap<(usize, usize), f64> {
+    pub fn get_edge_lengths_unidirectional(&self) -> HashMap<(usize, usize), f64> {
         self.graph
             .get_edges()
             .into_par_iter()
@@ -278,6 +278,14 @@ impl GeometricGraph {
         }
 
         false
+    }
+
+    pub fn dijsktra(&self, start: usize, end: usize) -> f64 {
+        
+    }
+
+    pub fn distance_overview(&self) -> Vec<f64> {
+        unimplemented!()
     }
 }
 
