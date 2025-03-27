@@ -426,6 +426,46 @@ impl Graph {
         usize::MAX
     }
 
+    pub fn dijkstra_multi(&self, start: usize, ends: HashSet<usize>) -> Vec<usize> {
+        let n = self.data.len();
+        let mut distances = vec![usize::MAX; n];
+        let mut result = vec![usize::MAX; ends.len()];
+        let mut end_indices: Vec<usize> = ends.into_iter().collect(); // Convert HashSet to Vec for indexing
+        let mut found_count = 0;
+
+        distances[start] = 0;
+        let mut pq = BinaryHeap::new();
+        pq.push((Reverse(0), start));
+
+        while let Some((Reverse(hops), u)) = pq.pop() {
+            // Check if this is one of our target ends
+            if let Some(pos) = end_indices.iter().position(|&x| x == u) {
+                if result[pos] == usize::MAX {
+                    // Only update if we haven't found it yet
+                    result[pos] = hops;
+                    found_count += 1;
+                    if found_count == end_indices.len() {
+                        return result;
+                    }
+                }
+            }
+
+            if hops > distances[u] {
+                continue;
+            }
+
+            for &v in &self.data[u] {
+                let new_hops = hops + 1;
+                if new_hops < distances[v] {
+                    distances[v] = new_hops;
+                    pq.push((Reverse(new_hops), v));
+                }
+            }
+        }
+
+        result // Return vector with distances (some may still be MAX if unreachable)
+    }
+
     pub fn hop_overview(&self, n: usize) -> Vec<f64> {
         let mut res = (0..n)
             .into_par_iter()
@@ -544,5 +584,21 @@ impl Graph {
         for (i, neighbors) in self.data.iter().enumerate() {
             println!("{}: {:?}", i, neighbors);
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::graph::example;
+
+    #[test]
+    fn simple_dijsktra_multi() {
+        let g = example::example_c4().graph;
+        let u = 0;
+        let ends = vec![1, 2].into_iter().collect();
+        let result = g.dijkstra_multi(u, ends);
+        assert_eq!(result.len(), 2);
+        assert!(result.contains(&1));
+        assert!(result.contains(&2));
     }
 }
