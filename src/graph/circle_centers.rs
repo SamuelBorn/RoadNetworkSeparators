@@ -14,8 +14,8 @@ pub fn generate_circle_center_graph(
     points_per_level: &[usize],
     city_percentage: &[f64],
     radii: &[f64],
-    center: Point,
 ) -> GeometricGraph {
+    let center = Point::new(100000.0, 100000.0);
     let edges = generate_circle_center_graph_rec(points_per_level, city_percentage, radii, center);
     let mut g = GeometricGraph::from_edges_point(&edges);
     planarize(&mut g);
@@ -55,6 +55,14 @@ fn generate_circle_center_graph_rec(
     edges
 }
 
+pub fn example1() -> GeometricGraph {
+    let points_per_level = vec![200, 50, 10];
+    let city_percentage = vec![0.4, 0.4, 0.2];
+    let radii = vec![4000.0, 600.0, 50.0];
+
+    generate_circle_center_graph(&points_per_level, &city_percentage, &radii)
+}
+
 #[cfg(test)]
 mod test {
     use std::path::Path;
@@ -70,7 +78,6 @@ mod test {
             &points_per_level,
             &city_percentage,
             &radii,
-            center,
         );
         g.graph.info();
         g.save(Path::new("output/circle_center"));

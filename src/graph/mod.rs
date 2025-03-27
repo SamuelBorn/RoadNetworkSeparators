@@ -466,22 +466,27 @@ impl Graph {
         result // Return vector with distances (some may still be MAX if unreachable)
     }
 
-    pub fn hop_overview(&self, n: usize) -> Vec<f64> {
-        let mut res = (0..n)
+    pub fn hop_overview(&self, n: usize) -> Vec<usize> {
+        let n = n.isqrt();
+
+        (0..n)
             .into_par_iter()
-            .map(|i| {
+            .flat_map(|i| {
                 println!("{} / {}", i, n);
-                let i = rand::thread_rng().gen_range(0..self.get_num_nodes());
-                let j = rand::thread_rng().gen_range(0..self.get_num_nodes());
-                self.dijkstra(i, j) as f64
+                let rng = &mut rand::thread_rng();
+                let u = rng.gen_range(0..self.get_num_nodes());
+                let ends = (0..n)
+                    .map(|_| rng.gen_range(0..self.get_num_nodes()))
+                    .collect();
+                self.dijkstra_multi(i, ends)
             })
-            .collect::<Vec<_>>();
-        let max = *res
-            .iter()
-            .max_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap_or(&1.0);
-        res.iter_mut().for_each(|x| *x /= max);
-        res
+            .collect::<Vec<_>>()
+    }
+
+    pub fn normalized_hop_overview(&self, n: usize) -> Vec<usize> {
+        let res = self.hop_overview(n);
+        let max = *res.iter().max().unwrap_or(&1) as f64;
+        res.iter().map(|&d| (d as f64 / max) as usize).collect()
     }
 
     pub fn largest_connected_component(&self) -> Graph {
