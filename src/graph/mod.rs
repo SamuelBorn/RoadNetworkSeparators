@@ -20,7 +20,7 @@ use crate::{library, separator};
 pub mod cbrt_bridged;
 pub mod cbrt_grid;
 pub mod cbrt_maximal;
-pub mod circle_centers;
+pub mod hierachical_disks;
 pub mod delaunay;
 pub mod example;
 pub mod geometric_graph;

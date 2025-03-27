@@ -72,7 +72,6 @@ mod test {
         let points_per_level = vec![200, 50, 10];
         let city_percentage = vec![0.4, 0.4, 0.2];
         let radii = vec![4000.0, 600.0, 50.0];
-        let center = geo::Point::new(10000.0, 10000.0);
 
         let g = super::generate_circle_center_graph(
             &points_per_level,
