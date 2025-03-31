@@ -1,6 +1,6 @@
-use geo::algorithm::line_intersection::{line_intersection, LineIntersection};
 use crate::library;
 use crate::separator::Mode::*;
+use geo::algorithm::line_intersection::{line_intersection, LineIntersection};
 use geo::{Coord, Intersects, Line, Point};
 use hashbrown::HashMap;
 use rayon::iter::IntoParallelRefIterator;
@@ -10,8 +10,8 @@ use std::collections::HashSet;
 use std::mem;
 use std::path::Path;
 
-use super::{example, Graph};
 use super::geometric_graph::GeometricGraph;
+use super::{example, Graph};
 
 const EPS: f64 = 1e-8;
 
@@ -91,46 +91,50 @@ pub fn planarize(g: &mut GeometricGraph) {
         })
         .collect::<Vec<_>>();
 
-    let tree = RTree::bulk_load(edges.clone());
-
     // maps interscetion to new node id
     let mut intersection_to_coord: HashMap<(Edge, Edge), usize> = HashMap::new();
     // maps edges to all new nodes that are created due to intersections on this edge
     let mut edge_to_intersections: HashMap<Edge, Vec<usize>> = HashMap::new();
 
-    println!("edges: {}", edges.len());
-    edges.iter().enumerate().for_each(|(status, &current)| {
-        if status % 1000 == 0 {
-            println!("status: {}", status);
-        }
+    {
+        let tree = RTree::bulk_load(edges.clone());
 
-        tree.locate_in_envelope_intersecting(&current.line.envelope())
-            .filter(|&&candidate| current < candidate)
-            .for_each(|&candidate| {
-                if let Some(LineIntersection::SinglePoint { intersection, .. }) =
-                line_intersection(current.line, candidate.line)
-                {
-                    if intersection.distance_2(&current.line.start) > 1e-8
-                    && intersection.distance_2(&current.line.end) > 1e-8
-                    && intersection.distance_2(&candidate.line.start) > 1e-8
-                    && intersection.distance_2(&candidate.line.end) > 1e-8
+        println!("edges: {}", edges.len());
+        edges.iter().enumerate().for_each(|(status, &current)| {
+            if status % 10000 == 0 {
+                println!("status: {}", status);
+            }
+
+            tree.locate_in_envelope_intersecting(&current.line.envelope())
+                .filter(|&&candidate| current < candidate)
+                .for_each(|&candidate| {
+                    if let Some(LineIntersection::SinglePoint { intersection, .. }) =
+                        line_intersection(current.line, candidate.line)
                     {
-                        let id = *intersection_to_coord
-                            .entry((current, candidate))
-                            .or_insert_with(|| g.add_position_with_new_node(intersection.into()));
-                        let entry = edge_to_intersections
-                            .entry(current)
-                            .or_insert(Vec::new())
-                            .push(id);
-                        let entry = edge_to_intersections
-                            .entry(candidate)
-                            .or_insert(Vec::new())
-                            .push(id);
+                        if intersection.distance_2(&current.line.start) > 1e-8
+                            && intersection.distance_2(&current.line.end) > 1e-8
+                            && intersection.distance_2(&candidate.line.start) > 1e-8
+                            && intersection.distance_2(&candidate.line.end) > 1e-8
+                        {
+                            let id = *intersection_to_coord
+                                .entry((current, candidate))
+                                .or_insert_with(|| {
+                                    g.add_position_with_new_node(intersection.into())
+                                });
+                            let entry = edge_to_intersections
+                                .entry(current)
+                                .or_insert(Vec::new())
+                                .push(id);
+                            let entry = edge_to_intersections
+                                .entry(candidate)
+                                .or_insert(Vec::new())
+                                .push(id);
+                        }
                     }
-                }
-            })
-    });
-    println!("intersections: {}", intersection_to_coord.len());
+                })
+        });
+        println!("intersections: {}", intersection_to_coord.len());
+    }
 
     for (edge, mut intersections) in edge_to_intersections {
         replace_with_intersections(g, &edge, &mut intersections);

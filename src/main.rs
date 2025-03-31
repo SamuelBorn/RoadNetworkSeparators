@@ -18,13 +18,23 @@ use separator::{get_ord, Mode::*};
 use std::path::Path;
 
 fn main() {
-    //let points_per_level = vec![200, 50, 10];
     //let city_percentage = vec![1.0, 0.4, 0.4, 0.4];
-    //let radii = vec![400.0, 600.0, 50.0];
-    //
-    //let g = hierachical_disks::generate_circle_center_graph_v2(
-    //    &points_per_level,
-    //    &city_percentage,
-    //    &radii,
-    //);
+    //let radii = vec![1500.0, 400.0, 60.0, 10.0];
+    //let points_per_level = vec![1000, 270, 50, 10];
+    let city_percentage = vec![1.0, 0.5, 0.5, 0.5];
+    let radii = vec![120.0, 20.0, 5.0, 1.0];
+    let points_per_level = vec![50, 50, 50, 50];
+
+    let g = hierachical_disks::generate_circle_center_graph_v2(
+        &points_per_level,
+        &city_percentage,
+        &radii,
+    );
+    g.visualize("tmp");
+    g.graph.info();
+    println!(
+        "{} ({})",
+        g.graph.get_separator_size(Fast),
+        (g.graph.get_num_nodes() as f32).powf(0.33)
+    )
 }

@@ -83,7 +83,6 @@ pub fn generate_circle_center_graph_v2(
     }
 
     let mut g = GeometricGraph::from_edges_point(&edges);
-    g.graph.info();
     planarize(&mut g);
     g
 }
@@ -108,11 +107,11 @@ mod test {
 
     #[test]
     fn length_overview() {
-        let points = library::random_points_in_circle(Point::new(1e4, 1e4), 7.0, 50);
+        let points = library::random_points_in_circle(Point::new(100_000.0, 100_000.0), 100.0, 10000);
         let edges = delaunay::dynamic_length_restriced_delaunay(&points, 0.95);
         //let edges = delaunay::delaunay_edges(&points);
         let g = GeometricGraph::from_edges_point(&edges);
-        g.save_edge_length_overview(Path::new("output/disks_length_overview"));
+        g.save_edge_length_overview(Path::new("output/disks_length_overview.txt"));
     }
 
     #[test]

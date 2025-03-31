@@ -14,6 +14,7 @@ use std::collections::BinaryHeap;
 use std::fs;
 use std::io;
 use std::path::Path;
+use std::process::Command;
 
 use crate::library;
 use crate::Graph;
@@ -323,6 +324,16 @@ impl GeometricGraph {
             .unwrap_or(&1.0);
         res.iter_mut().for_each(|x| *x /= max);
         res
+    }
+
+    pub fn visualize(&self, name: &str) {
+        let g_path = format!("./output/graphs/{}", name);
+        self.save(Path::new(&g_path));
+
+        Command::new("python3")
+            .arg("scripts/visualize_graph.py")
+            .arg(g_path)
+            .spawn();
     }
 }
 
