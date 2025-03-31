@@ -36,6 +36,8 @@ def visualize(args: argparse.Namespace) -> None:
     else:
         latitude: list[float] = read_binary_vec(args.dirname / "latitude", "f")
         longitude: list[float] = read_binary_vec(args.dirname / "longitude", "f")
+        latitude = [-1 * x for x in latitude]
+        # longitude = [-1 * x for x in longitude]
         assert len(latitude) == len(longitude) == len(g.get_vertices())
         pos = g.new_vertex_property("vector<double>")
         for v in g.vertices():
@@ -51,7 +53,7 @@ def visualize(args: argparse.Namespace) -> None:
     vertex_size = g.new_vertex_property("double")
     for v in g.vertices():
         vertex_color[v] = [0, 0, 0, 1]
-        vertex_size[v] = 3
+        vertex_size[v] = 0
     if args.highlight_nodes:
         for file, color in zip(args.highlight_nodes, highlight_colors):
             highlight_indices: list[int] = read_node_list(Path(file))

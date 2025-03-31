@@ -18,7 +18,7 @@ pub fn generate_circle_center_graph(
     let center = Point::new(100000.0, 100000.0);
     let edges = generate_circle_center_graph_rec(points_per_level, city_percentage, radii, center);
     let mut g = GeometricGraph::from_edges_point(&edges);
-    planarize(&mut g);
+    //planarize(&mut g);
     g
 }
 
@@ -55,31 +55,78 @@ fn generate_circle_center_graph_rec(
     edges
 }
 
-pub fn example1() -> GeometricGraph {
-    let points_per_level = vec![200, 50, 10];
-    let city_percentage = vec![0.4, 0.4, 0.2];
-    let radii = vec![4000.0, 600.0, 50.0];
+pub fn generate_circle_center_graph_v2(
+    points_per_level: &[usize],
+    city_percentage: &[f64],
+    radii: &[f64],
+) -> GeometricGraph {
+    let rng = &mut thread_rng();
+    let mut centers = vec![Point::new(100000.0, 100000.0)];
+    let mut edges = vec![];
+    assert!(city_percentage[0] == 1.0);
 
-    generate_circle_center_graph(&points_per_level, &city_percentage, &radii)
+    for i in 0..points_per_level.len() {
+        let chosen = centers
+            .choose_multiple(rng, (city_percentage[i] * centers.len() as f64) as usize)
+            .cloned()
+            .collect::<Vec<_>>();
+
+        chosen.into_iter().for_each(|center| {
+            let mut points =
+                library::random_points_in_circle(center, radii[i], points_per_level[i]);
+            points.push(center);
+            edges.append(&mut delaunay::dynamic_length_restriced_delaunay(
+                &points, 0.95,
+            ));
+            centers.append(&mut points);
+        });
+    }
+
+    let mut g = GeometricGraph::from_edges_point(&edges);
+    g.graph.info();
+    planarize(&mut g);
+    g
+}
+
+pub fn example1() -> GeometricGraph {
+    //let points_per_level = vec![200, 50, 10];
+    //let city_percentage = vec![0.4, 0.4, 0.0];
+    //let radii = vec![4000.0, 600.0, 50.0];
+    //
+    //generate_circle_center_graph(&points_per_level, &city_percentage, &radii)
+    todo!()
 }
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use std::path::Path;
 
-    #[test]
-    fn circle_center() {
-        let points_per_level = vec![200, 50, 10];
-        let city_percentage = vec![0.4, 0.4, 0.2];
-        let radii = vec![4000.0, 600.0, 50.0];
+    use geo::Point;
 
-        let g = super::generate_circle_center_graph(
-            &points_per_level,
-            &city_percentage,
-            &radii,
-        );
+    use crate::library;
+
+    #[test]
+    fn length_overview() {
+        let points = library::random_points_in_circle(Point::new(1e4, 1e4), 7.0, 50);
+        let edges = delaunay::dynamic_length_restriced_delaunay(&points, 0.95);
+        //let edges = delaunay::delaunay_edges(&points);
+        let g = GeometricGraph::from_edges_point(&edges);
+        g.save_edge_length_overview(Path::new("output/disks_length_overview"));
+    }
+
+    #[test]
+    fn disks() {
+        let city_percentage = vec![1.0, 0.7, 0.4, 0.1];
+        let points_per_level = vec![200, 100, 40, 10];
+        let radii = vec![350.0, 40.0, 6.0, 1.0];
+
+        let g = super::generate_circle_center_graph_v2(&points_per_level, &city_percentage, &radii);
         g.graph.info();
-        g.save(Path::new("output/circle_center"));
-        g.graph.recurse_separator(crate::separator::Mode::Eco, None);
+        g.save(Path::new("output/graphs/disks"));
+
+        //println!(""g.graph.get_separator_size(crate::separator::Mode::Fast));
+        //g.graph.recurse_separator(crate::separator::Mode::Fast, None);
+        //g.inertial_flowcutter("tmp2");
     }
 }

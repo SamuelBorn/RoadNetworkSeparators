@@ -12,7 +12,7 @@ pub fn compute_separator_sizes_from_order(graph: &Graph, order: &[usize], out_fi
     let pos = get_positions_from_order(order);
     let directed = get_directed_graph(graph, &pos);
     let tree = chordalize_and_tree(&directed, order, &pos);
-    let root = *order.last().unwrap();
+    let root = get_root_node(&tree, order);
     let subtree_sizes = get_subtree_sizes(&tree, root);
     traverse_separator_tree(&tree, root, &subtree_sizes, out_file);
 }
@@ -72,6 +72,15 @@ pub fn get_subtree_sizes(tree: &Graph, root: usize) -> Vec<usize> {
     }
 
     sizes
+}
+
+fn get_root_node(tree: &Graph, ord: &[usize]) -> usize {
+    for &node in ord.iter().rev() {
+        if tree.get_neighbors(node).len() > 0 {
+            return node;
+        }
+    }
+    unreachable!()
 }
 
 pub fn traverse_separator_tree(

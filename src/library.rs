@@ -133,7 +133,7 @@ pub fn optional_append_to_file(file: Option<&Path>, content: &str) {
     }
 }
 
-fn random_point_in_circle<R>(center: Point<f64>, radius: R) -> Point<f64>
+pub fn random_point_in_circle<R>(center: Point<f64>, radius: R) -> Point<f64>
 where
     R: Into<f64>,
 {

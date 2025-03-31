@@ -1,5 +1,6 @@
 use geo::{ConvexHull, MultiPoint, Point, Rect};
 use itertools::Position;
+use rstar::PointDistance;
 use spade::{DelaunayTriangulation, InsertionError, Point2, Triangulation};
 
 use crate::library;
@@ -50,6 +51,20 @@ pub fn delaunay_edges(positions: &[Point]) -> Vec<(Point, Point)> {
 pub fn random_delaunay(n: usize, aabb: Rect) -> GeometricGraph {
     let positions = library::random_points_in_rect(aabb, n);
     delaunay(&positions)
+}
+
+pub fn dynamic_length_restriced_delaunay(
+    positions: &[Point],
+    keep_factor: f64,
+) -> Vec<(Point, Point)> {
+    let mut edges = delaunay_edges(positions);
+    let n = (keep_factor * edges.len() as f64) as usize;
+    edges.select_nth_unstable_by(n, |a, b| {
+        a.0.distance_2(&a.1)
+            .partial_cmp(&b.0.distance_2(&b.1))
+            .unwrap()
+    });
+    edges[..n].to_vec()
 }
 
 // karlsruhe: 0.01
@@ -109,3 +124,4 @@ mod test {
         );
     }
 }
+

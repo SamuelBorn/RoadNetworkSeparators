@@ -251,6 +251,7 @@ pub fn get_ord(graph: &Path, ord_name: Option<&str>) -> Vec<usize> {
         Some(name) => Path::new("./output/ord").canonicalize().unwrap().join(name),
         None => Path::new("output/ord").canonicalize().unwrap().join("tmp"),
     };
+    println!("{:?}", ord_file);
 
     Command::new("python3")
         .arg("inertialflowcutter_order.py")
@@ -259,7 +260,8 @@ pub fn get_ord(graph: &Path, ord_name: Option<&str>) -> Vec<usize> {
         .current_dir("../InertialFlowCutter")
         .spawn()
         .expect("Failed to execute inertialflowcutter_order.py")
-        .wait();
+        .wait()
+        .unwrap();
 
     library::read_to_usize_vec(&ord_file)
 }
