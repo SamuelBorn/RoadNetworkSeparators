@@ -10,11 +10,11 @@ use super::{
     Graph,
 };
 
-pub fn triangulation(positions: &[Point]) -> DelaunayTriangulation<Point2<f32>> {
-    DelaunayTriangulation::<Point2<f32>>::bulk_load_stable(
+pub fn triangulation(positions: &[Point]) -> DelaunayTriangulation<Point2<f64>> {
+    DelaunayTriangulation::bulk_load_stable(
         positions
             .iter()
-            .map(|p| Point2::new(p.x() as f32, p.y() as f32))
+            .map(|p| Point2::new(p.x(), p.y()))
             .collect(),
     )
     .unwrap()
@@ -75,7 +75,7 @@ pub fn length_restricted_delaunay(n: usize, aabb: Rect, max_dist: f32) -> Geomet
     let mut g = Graph::from_edge_list(
         triangulation
             .undirected_edges()
-            .filter(|edge| edge.length_2() < max_dist * max_dist)
+            .filter(|edge| edge.length_2() < (max_dist * max_dist) as f64)
             .map(|edge| {
                 let [a, b] = edge.vertices();
                 (a.index(), b.index())
@@ -124,4 +124,3 @@ mod test {
         );
     }
 }
-
