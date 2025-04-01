@@ -56,12 +56,16 @@ impl RTreeObject for Edge {
 }
 
 fn custom_cmp(a: &Point, b: &Point) -> std::cmp::Ordering {
-    let x_diff = (a.x() - b.x()).abs();
-
-    if x_diff < EPS {
-        a.y().total_cmp(&b.y())
+    if a.x() < b.x() {
+        std::cmp::Ordering::Less
+    } else if a.x() > b.x() {
+        std::cmp::Ordering::Greater
+    } else if a.y() < b.y() {
+        std::cmp::Ordering::Less
+    } else if a.y() > b.y() {
+        std::cmp::Ordering::Greater
     } else {
-        a.x().total_cmp(&b.x())
+        std::cmp::Ordering::Equal
     }
 }
 
