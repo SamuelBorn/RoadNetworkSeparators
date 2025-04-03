@@ -18,4 +18,14 @@ use rayon::prelude::*;
 use separator::{get_ord, Mode::*};
 use std::path::Path;
 
-fn main() {}
+fn main() {
+    let g = example::europe();
+    let sep = g
+        .get_separator_wrapper(Eco)
+        .into_iter()
+        .collect::<Vec<_>>();
+
+    println!("{:?}", sep);
+
+    library::write_text_vec(&sep, Path::new("output/europe_top_level_sep.txt"));
+}
