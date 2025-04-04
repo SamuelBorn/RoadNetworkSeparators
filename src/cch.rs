@@ -80,7 +80,7 @@ fn get_root_node(tree: &Graph, ord: &[usize]) -> usize {
             return node;
         }
     }
-    unreachable!()
+    unreachable!("Tree does not contain any edges")
 }
 
 pub fn traverse_separator_tree(
@@ -122,6 +122,30 @@ pub fn traverse_separator_tree(
     }
 
     fs::write(out_file, res);
+}
+
+pub fn get_top_level_separator(g: &Graph, ord: &[usize]) -> Vec<usize> {
+    let pos = get_positions_from_order(ord);
+    let directed = get_directed_graph(g, &pos);
+    let tree = chordalize_and_tree(&directed, ord, &pos);
+    let mut current = get_root_node(&tree, ord);
+    let subtree_sizes = get_subtree_sizes(&tree, current);
+
+    let mut sep = vec![current];
+    loop {
+        let large_children = tree
+            .get_neighbors(current)
+            .iter()
+            .filter(|&&child| subtree_sizes[child] > subtree_sizes[current] / 20)
+            .collect::<Vec<_>>();
+
+        if large_children.len() == 1 {
+            current = *large_children[0];
+            sep.push(current);
+        } else {
+            return sep;
+        }
+    }
 }
 
 // turns an order into a position array: at index i is the position of node i

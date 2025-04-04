@@ -6,7 +6,7 @@ pub mod local;
 pub mod random_set;
 pub mod separator;
 
-use cch::compute_separator_sizes_from_order;
+use cch::{compute_separator_sizes_from_order, get_top_level_separator};
 use graph::example::{self, *};
 use graph::planar::planarize;
 use graph::{cbrt_maximal, delaunay, grid, hierachical_disks, highway, nested_grid, voronoi};
@@ -19,13 +19,8 @@ use separator::{get_ord, Mode::*};
 use std::path::Path;
 
 fn main() {
-    let g = example::europe();
-    let sep = g
-        .get_separator_wrapper(Eco)
-        .into_iter()
-        .collect::<Vec<_>>();
-
+    let g = europe();
+    let ord = ord_europe();
+    let sep = get_top_level_separator(&g, &ord);
     println!("{:?}", sep);
-
-    library::write_text_vec(&sep, Path::new("output/europe_top_level_sep.txt"));
 }
