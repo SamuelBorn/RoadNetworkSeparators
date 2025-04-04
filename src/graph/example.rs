@@ -2,7 +2,7 @@ use std::path::Path;
 
 use geo::Point;
 
-use crate::graph::Graph;
+use crate::{graph::Graph, library};
 
 use super::geometric_graph::GeometricGraph;
 
@@ -82,4 +82,16 @@ pub fn geometric_germany() -> GeometricGraph {
 
 pub fn geometric_europe() -> GeometricGraph {
     GeometricGraph::from_file(Path::new("../Graphs/europe-connected-bidirectional")).unwrap()
+}
+
+pub fn ord_karlsruhe() -> Vec<usize> {
+    library::read_to_usize_vec(Path::new("./output/ord/karlsruhe"))
+}
+
+pub fn ord_germany() -> Vec<usize> {
+    library::read_to_usize_vec(Path::new("./output/ord/germany"))
+}
+
+pub fn ord_europe() -> Vec<usize> {
+    library::read_to_usize_vec(Path::new("./output/ord/europe"))
 }
