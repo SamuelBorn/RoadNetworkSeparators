@@ -19,10 +19,6 @@ use separator::{get_ord, Mode::*};
 use std::path::Path;
 
 fn main() {
-    let mut g = geometric_europe();
-    let orig = g.graph.get_num_nodes();
-    planarize(&mut g);
-    let planar = g.graph.get_num_nodes();
-    g.save(Path::new("output/europe_planar"));
-    println!("Planarization: {} -> {}", orig, planar);
+    let mut g = GeometricGraph::from_file(Path::new("./output/europe_planar")).unwrap();
+    g.inertial_flowcutter("europe_planar");
 }
