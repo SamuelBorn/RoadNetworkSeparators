@@ -67,9 +67,9 @@ def visualize(args):
 
     max_x = get_max_x(args)
     if args.sqrt:
-        plot_function(np.sqrt, max_x, r"$\sqrt{x}$", linestyle=":")
+        plot_function(np.sqrt, max_x, r"$x^{1/2}$", linestyle=":")
     if args.cbrt:
-        plot_function(np.cbrt, max_x, r"$\sqrt[3]{x}$", linestyle="-.")
+        plot_function(np.cbrt, max_x, r"$x^{1/3}$", linestyle="-.")
 
     for i, filename in enumerate(args.files):
         label = filename.stem
@@ -88,7 +88,7 @@ def visualize(args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", type=str)
+    parser.add_argument("--name", type=str)
     parser.add_argument("--x-label", type=str, default="Number of nodes")
     parser.add_argument("--y-label", type=str, default="Size of separator")
     parser.add_argument("--loglog", action="store_true")
@@ -104,8 +104,10 @@ def main():
     if args.bins:
         args.x_label = f"{args.x_label} (binned)"
 
-    if not args.output:
+    if not args.name:
         args.output = Path("output") / f"{args.files[0].stem}.{args.type}"
+    else:
+        args.output = Path("output") / f"{args.name}.{args.type}"
 
     visualize(args)
 
