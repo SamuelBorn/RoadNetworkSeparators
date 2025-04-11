@@ -19,8 +19,10 @@ use separator::{get_ord, Mode::*};
 use std::path::Path;
 
 fn main() {
-    let g = europe();
-    let ord = ord_europe();
-    let sep = get_top_level_separator(&g, &ord);
-    println!("{:?}", sep);
+    let mut g = geometric_europe();
+    let orig = g.graph.get_num_nodes();
+    planarize(&mut g);
+    let planar = g.graph.get_num_nodes();
+    g.save(Path::new("output/europe_planar"));
+    println!("Planarization: {} -> {}", orig, planar);
 }
