@@ -20,6 +20,15 @@ use std::path::Path;
 
 fn main() {
     let mut g = geometric_karlsruhe();
+    g.inertial_flowcutter("karlsruhe");
+    let ord = read_to_usize_vec(Path::new("./output/ord/karlsruhe"));
+    let top_level = get_top_level_separator(&g.graph, &ord);
+
     planarize(&mut g);
     g.inertial_flowcutter("karlsruhe_planar");
+    let ord = read_to_usize_vec(Path::new("./output/ord/karlsruhe_planar"));
+    let top_level_planar = get_top_level_separator(&g.graph, &ord);
+
+    write_text_vec(&top_level, Path::new("output/karlsruhe_top_level_sep.txt"));
+    write_text_vec(&top_level_planar, Path::new("output/karlsruhe_top_level_sep_planar.txt"));
 }
