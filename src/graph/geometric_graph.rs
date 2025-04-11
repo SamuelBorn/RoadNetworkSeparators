@@ -21,7 +21,7 @@ use crate::Graph;
 use ordered_float::OrderedFloat;
 use rand::Rng;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GeometricGraph {
     pub graph: Graph,
     pub positions: Vec<Point>,

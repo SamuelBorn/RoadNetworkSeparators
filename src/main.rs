@@ -11,6 +11,7 @@ use graph::example::{self, *};
 use graph::planar::planarize;
 use graph::{cbrt_maximal, delaunay, grid, hierachical_disks, highway, nested_grid, voronoi};
 use graph::{geometric_graph::GeometricGraph, Graph};
+use hashbrown::HashSet;
 use library::{
     read_binary_vec, read_text_vec, read_to_usize_vec, write_binary_vec, write_text_vec,
 };
@@ -19,16 +20,20 @@ use separator::{get_ord, Mode::*};
 use std::path::Path;
 
 fn main() {
-    let mut g = geometric_karlsruhe();
-    g.inertial_flowcutter("karlsruhe");
-    let ord = read_to_usize_vec(Path::new("./output/ord/karlsruhe"));
-    let top_level = get_top_level_separator(&g.graph, &ord);
+    let mut g = geometric_germany();
 
-    planarize(&mut g);
-    g.inertial_flowcutter("karlsruhe_planar");
-    let ord = read_to_usize_vec(Path::new("./output/ord/karlsruhe_planar"));
-    let top_level_planar = get_top_level_separator(&g.graph, &ord);
+    while g.graph.get_num_nodes() > 100 {
+        let sep = g.graph.get_separator_wrapper(Eco);
 
-    write_text_vec(&top_level, Path::new("output/karlsruhe_top_level_sep.txt"));
-    write_text_vec(&top_level_planar, Path::new("output/karlsruhe_top_level_sep_planar.txt"));
+        let mut planar = g.clone();
+        planarize(&mut planar);
+        let subgraphs = planar.graph.get_subgraphs(&sep);
+        let large_subgraphs = subgraphs.iter().filter(|s| s.get_num_nodes() > 100).count();
+        println!("({},{}) {}", g.graph.get_num_nodes(), sep.len(), large_subgraphs > 1);
+
+        for n in sep {
+            g.graph.clear_vertex_edges(n);
+        }
+        g = g.largest_connected_component();
+    }
 }

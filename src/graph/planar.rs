@@ -103,11 +103,10 @@ pub fn planarize(g: &mut GeometricGraph) {
     {
         let tree = RTree::bulk_load(edges.clone());
 
-        println!("edges: {}", edges.len());
         edges.iter().enumerate().for_each(|(status, &current)| {
-            if status % 10000 == 0 {
-                println!("status: {}", status);
-            }
+            //if status % 10000 == 0 {
+            //    println!("status: {}", status);
+            //}
 
             tree.locate_in_envelope_intersecting(&current.line.envelope())
                 .filter(|&&candidate| current < candidate)
@@ -137,7 +136,7 @@ pub fn planarize(g: &mut GeometricGraph) {
                     }
                 })
         });
-        println!("intersections: {}", intersection_to_coord.len());
+        //println!("intersections: {}", intersection_to_coord.len());
     }
 
     for (edge, mut intersections) in edge_to_intersections {
