@@ -73,6 +73,8 @@ def visualize(args):
 
     for i, filename in enumerate(args.files):
         label = filename.stem
+        if args.bins:
+            label = f"{label} (binned average)"
         x_values, y_values = get_values(filename, args)
         if args.bins:
             x_values, y_values = bin_data(x_values, y_values, args)
@@ -100,9 +102,6 @@ def main():
     parser.add_argument("files", type=Path, nargs="+")
 
     args = parser.parse_args()
-
-    if args.bins:
-        args.x_label = f"{args.x_label} (binned)"
 
     if not args.name:
         args.output = Path("output") / f"{args.files[0].stem}.{args.type}"

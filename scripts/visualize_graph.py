@@ -20,8 +20,8 @@ def read_binary_vec(filename: Path, format_char: str) -> list[int | float]:
 
 
 def visualize(args: argparse.Namespace) -> None:
-    first_out = read_binary_vec(args.dirname / "first_out", "i")
-    head = read_binary_vec(args.dirname / "head", "i")
+    first_out = read_binary_vec(args.graphdir / "first_out", "i")
+    head = read_binary_vec(args.graphdir / "head", "i")
     g: Graph = Graph()
     g.set_directed(False)
     g.add_vertex(len(first_out) - 1)
@@ -34,8 +34,8 @@ def visualize(args: argparse.Namespace) -> None:
     if args.auto_layout:
         pos = sfdp_layout(g)
     else:
-        latitude: list[float] = read_binary_vec(args.dirname / "latitude", "f")
-        longitude: list[float] = read_binary_vec(args.dirname / "longitude", "f")
+        latitude: list[float] = read_binary_vec(args.graphdir / "latitude", "f")
+        longitude: list[float] = read_binary_vec(args.graphdir / "longitude", "f")
         latitude = [-1 * x for x in latitude]
         # longitude = [-1 * x for x in longitude]
         assert len(latitude) == len(longitude) == len(g.get_vertices())
@@ -58,7 +58,7 @@ def visualize(args: argparse.Namespace) -> None:
         for file, color in zip(args.highlight_nodes, highlight_colors):
             highlight_indices: list[int] = read_node_list(Path(file))
             for idx in highlight_indices:
-                vertex_size[idx] = 128
+                vertex_size[idx] = args.size / 50
                 if vertex_color[idx] != [0, 0, 0, 1]:
                     vertex_color[idx] = [0, 0, 0, 1]
                 else:
@@ -77,15 +77,15 @@ def visualize(args: argparse.Namespace) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("dirname", type=Path)
+    parser.add_argument("graphdir", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--highlight-nodes", type=Path, nargs="*")
     parser.add_argument("--auto-layout", action="store_true")
-    parser.add_argument("--size", type=int, default=2**13)
+    parser.add_argument("--size", type=int, default=2**12)
     args: argparse.Namespace = parser.parse_args()
 
     if not args.output:
-        args.output = Path("output") / args.dirname.name
+        args.output = Path("output") / args.graphdir.name
     args.output = args.output.with_suffix(".png")
 
     visualize(args)
