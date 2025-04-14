@@ -22,17 +22,16 @@ use separator::{get_ord, print_binned_statistic, Mode::*};
 use std::path::Path;
 
 fn main() {
-    let city_percentage = vec![1.0, 0.01, 0.5, 0.5];
-    let points_per_level = vec![1000, 100, 20, 20];
-    let radii = vec![1000., 50., 30., 3.];
+    let city_percentage = vec![1.0, 0.03, 0.3, 0.6];
+    let points_per_level = vec![1000, 100, 50, 20];
+    let radii = vec![1000., 50., 30., 4.];
     let g = hierachical_delaunay::generate_hierachical_delaunay(
         &city_percentage,
         &points_per_level,
         &radii,
     );
-    g.save(Path::new("./output/graphs/hierachical_delaunay/"));
-
-    let g = geometric_karlsruhe();
+    //g.visualize("hierachical_delaunay");
+    //g.graph.recurse_separator(Fast, None);
     let s = g.inertial_flowcutter("tmp");
     print_binned_statistic(s, 10);
 }
