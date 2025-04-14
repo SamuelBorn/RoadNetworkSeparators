@@ -246,8 +246,17 @@ impl GeometricGraph {
     }
 }
 
-pub fn print_binned_statistic(data: Vec<(usize, usize)>, num_bins: usize) {
-    let maxn = data.iter().map(|x| x.0).max().unwrap();
+pub fn print_binned_statistic(mut data: Vec<(usize, usize)>, num_bins: usize) {
+    let data = data
+        .par_iter()
+        .map(|x| ((x.0 as f64).log2(), (x.1 as f64).log2()))
+        .collect::<Vec<_>>();
+
+    let maxn = data
+        .iter()
+        .map(|x| x.0)
+        .max_by(|x, y| x.total_cmp(y))
+        .unwrap();
     let mut bins = vec![vec![]; num_bins + 1];
 
     for (n, s) in data {
@@ -256,10 +265,13 @@ pub fn print_binned_statistic(data: Vec<(usize, usize)>, num_bins: usize) {
     }
 
     for bin in bins {
-        let avg_n = bin.iter().map(|x| x.0).sum::<usize>() as f64 / bin.len() as f64;
-        let avg_s = bin.iter().map(|x| x.1).sum::<usize>() as f64 / bin.len() as f64;
-        let cbrt = 0.37 * avg_n.powf(0.37);
-        println!("{:.2}: Separator {:.2}, Cbrt {:.2}", avg_n, avg_s, cbrt,);
+        if bin.is_empty() {
+            continue;
+        }
+        let avg_n = bin.iter().map(|x| x.0).sum::<f64>() / bin.len() as f64;
+        let avg_s = bin.iter().map(|x| x.1).sum::<f64>() / bin.len() as f64;
+        let cbrt = 0.37 * avg_n - 1.55;
+        println!("{:>5.2}: {:.2} ({:.2})", avg_n, avg_s, cbrt);
     }
 }
 
