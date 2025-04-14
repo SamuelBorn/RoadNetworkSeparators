@@ -7,14 +7,18 @@ use std::{
 
 use crate::{graph::Graph, library, separator};
 
-pub fn compute_separator_sizes_from_order(graph: &Graph, order: &[usize], out_file: &Path) {
+pub fn compute_separator_sizes_from_order(
+    graph: &Graph,
+    order: &[usize],
+    out_file: &Path,
+) -> Vec<(usize, usize)> {
     assert_eq!(graph.get_num_nodes(), order.len());
     let pos = get_positions_from_order(order);
     let directed = get_directed_graph(graph, &pos);
     let tree = chordalize_and_tree(&directed, order, &pos);
     let root = get_root_node(&tree, order);
     let subtree_sizes = get_subtree_sizes(&tree, root);
-    traverse_separator_tree(&tree, root, &subtree_sizes, out_file);
+    traverse_separator_tree(&tree, root, &subtree_sizes, out_file)
 }
 
 pub fn chordalize_and_tree(directed_graph: &Graph, order: &[usize], pos: &[usize]) -> Graph {
@@ -88,10 +92,11 @@ pub fn traverse_separator_tree(
     root: usize,
     subtree_sizes: &[usize],
     out_file: &Path,
-) {
+) -> Vec<(usize, usize)> {
     let mut queue = vec![(root, 1)];
 
     let mut res = String::new();
+    let mut res_vec = vec![];
 
     while let Some((node, separator_size)) = queue.pop() {
         let cutoff_size = 10.max((0.1 * subtree_sizes[node] as f64) as usize);
@@ -117,11 +122,13 @@ pub fn traverse_separator_tree(
                     subtree_sizes[node] + separator_size,
                     separator_size
                 );
+                res_vec.push((subtree_sizes[node] + separator_size, separator_size));
             }
         }
     }
 
     fs::write(out_file, res);
+    res_vec
 }
 
 pub fn get_top_level_separator(g: &Graph, ord: &[usize]) -> Vec<usize> {

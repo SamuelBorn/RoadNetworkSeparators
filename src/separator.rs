@@ -1,7 +1,7 @@
 use hashbrown::{HashMap, HashSet};
 use ordered_float::Pow;
 use rayon::iter::IntoParallelIterator;
-use rayon::prelude::*;
+use rayon::{prelude::*, vec};
 use std::collections::VecDeque;
 use std::env;
 use std::io::Write;
@@ -234,7 +234,7 @@ fn get_graph(g_map: &HashMap<usize, Vec<usize>>) -> Graph {
 }
 
 impl GeometricGraph {
-    pub fn inertial_flowcutter(&self, name: &str) {
+    pub fn inertial_flowcutter(&self, name: &str) -> Vec<(usize, usize)> {
         let g_path = Path::new("./output/graphs").join(name);
         self.save(&g_path);
         let ord = get_ord(&g_path, Some(name));
@@ -242,7 +242,24 @@ impl GeometricGraph {
             &self.graph,
             &ord,
             &Path::new("./output/sep").join(name),
-        );
+        )
+    }
+}
+
+pub fn print_binned_statistic(data: Vec<(usize, usize)>, num_bins: usize) {
+    let maxn = data.iter().map(|x| x.0).max().unwrap();
+    let mut bins = vec![vec![]; num_bins + 1];
+
+    for (n, s) in data {
+        let bin = (num_bins as f64 * n as f64 / maxn as f64).floor() as usize;
+        bins[bin].push((n, s));
+    }
+
+    for bin in bins {
+        let avg_n = bin.iter().map(|x| x.0).sum::<usize>() as f64 / bin.len() as f64;
+        let avg_s = bin.iter().map(|x| x.1).sum::<usize>() as f64 / bin.len() as f64;
+        let cbrt = 0.37 * avg_n.powf(0.37);
+        println!("{:.2}: Separator {:.2}, Cbrt {:.2}", avg_n, avg_s, cbrt,);
     }
 }
 
