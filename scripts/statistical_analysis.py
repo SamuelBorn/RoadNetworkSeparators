@@ -3,38 +3,26 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
-from scipy.stats import linregress
+from scipy.stats import binned_statistic, linregress
 from sklearn.metrics import r2_score
 
 
 def load_data(file: Path):
     data = np.loadtxt(file)
     np.sort(data, axis=0)
+    # data = data[(data[:, 0] > 0) & (data[:, 0] < 10_000_000)]
+    data = data[(data[:, 0] > 2**8) & (data[:, 0] < 2**18)]
     return data[:, 0], data[:, 1]
 
 
-def sliding_window(x, y, window_size):
-    x_mean = []
-    y_mean = []
-    for i in range(len(x)):
-        x_mean.append(np.mean(x[i : i + window_size]))
-        y_mean.append(np.mean(y[i : i + window_size]))
-    return x_mean, y_mean
-
-
 def bin_data(x, y, num_bins):
-    data = np.column_stack((x, y))
-    bins = np.linspace(np.min(x), np.max(x) + 1, num_bins + 1)
-    bin_indices = np.digitize(x, bins) - 1
-    binned_means = []
-    for i in range(num_bins):
-        mask = bin_indices == i
-        if np.any(mask):
-            mean_values = data[mask].mean(axis=0)
-            binned_means.append(mean_values)
-
-    binned_means = np.array(binned_means)
-    return binned_means[:, 0], binned_means[:, 1]
+    bin_edges = np.linspace(0, max(x), num=num_bins)
+    means, bin_edges, _ = binned_statistic(x, y, statistic="mean", bins=bin_edges)
+    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+    valid = ~np.isnan(means)
+    bin_centers = bin_centers[valid]
+    means = means[valid]
+    return bin_centers, means
 
 
 def sqrt_model(x, a, b):
@@ -62,15 +50,22 @@ def poly_model_no_intercept(x, a, b):
 
 
 def apply_log_log_transformation(x, y):
-    return np.log(x), np.log(y)
+    return np.log2(x), np.log2(y)
+
+
+def apply_cbrt_transformation(x, y):
+    return x, np.power(y, 3)
+
+
+def apply_sqrt_transformation(x, y):
+    return x, np.power(y, 2)
 
 
 def fit_line(x, y):
     slope, intercept, r_value, p_value, std_err = linregress(x, y)
     print(f"Fitted Line: y = {slope:.4f}x + {intercept:.4f}")
     print(f"R² Score: {r_value:.4f} (closer to 1 is better)")
-    print(f"P-value: {p_value:.4e} (for slope, closer to 0 is better)")
-    print(f"Standard Error: {std_err:.4f}\n")
+    print(f"P-value: {p_value} (for slope, closer to 0 is better)")
 
 
 def fit_curve(x, y):
@@ -101,46 +96,29 @@ def fit_curve(x, y):
 
 
 def analyze_data(x, y):
-    print("\n\nLog-Log Transformation")
+    print("\nLog-Log Transformation")
     fit_line(*apply_log_log_transformation(x, y))
 
-    print("\n\nNormal Fit")
+    print("\nNormal Fit")
     fit_curve(x, y)
 
-    print("\n\nAdjusted pow 3")
-    fit_line(x, np.power(y, 3))
-
-    print("\n\nAdjusted pow 2")
-    fit_line(x, np.power(y, 2))
+    # print("\nAdjusted pow 3")
+    # fit_line(x, np.power(y, 3))
+    #
+    # print("\nAdjusted pow 2")
+    # fit_line(x, np.power(y, 2))
 
 
 def main():
-    # x, y = load_data(Path("output/sep_karlsruhe_ifc.txt"))
-    # analyze_data(x, y)
-    #
-    # print("\n\nBinned")
-    # x, y = bin_data(x, y, 50)
-    # analyze_data(x, y)
-    #
-    # print("\n\nGermany")
-    x, y = load_data(Path("output/sep_germany_ifc.txt"))
-    x = np.log(x)
-    y = np.log(y)
-    x, y = bin_data(x, y, 100)
-    plt.scatter(x, y)
-    
-    # plot cbrt function
-    x = [0, max(x)]
-    y = [1/3*i for i in x]
-    plt.plot(x, y, color='red')
+    x, y = load_data(Path("./output/sep/Europe"))
+    analyze_data(x, y)
 
-    # plot sqrt function
-    x = [0, max(x)]
-    y = [1/2*i for i in x]
-    plt.plot(x, y, color='green')
+    x, y = apply_log_log_transformation(x, y)
+    x, y = bin_data(x, y, 30)
+    fit_line(x, y)
 
-    plt.show()
-    # analyze_data(x, y)
+
+
 
 
 if __name__ == "__main__":

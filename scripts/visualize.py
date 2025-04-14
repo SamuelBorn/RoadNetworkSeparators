@@ -52,10 +52,10 @@ def scatter(x_values, y_values, label, color, marker, alpha=1):
     )
 
 
-def plot_function(fn, max_x, label, linestyle):
+def plot_function(fn, max_x, label, linestyle, color="black", alpha=0.2):
     x = np.logspace(0, np.log10(max_x), num=500)
     y = fn(x)
-    plt.plot(x, y, label=label, color="black", alpha=0.2, linestyle=linestyle)
+    plt.plot(x, y, label=label, color=color, alpha=alpha, linestyle=linestyle)
 
 
 def visualize(args):
@@ -70,6 +70,8 @@ def visualize(args):
         plot_function(np.sqrt, max_x, r"$x^{1/2}$", linestyle=":")
     if args.cbrt:
         plot_function(np.cbrt, max_x, r"$x^{1/3}$", linestyle="-.")
+
+    plot_function(lambda x: 0.3411 * x**0.3702, max_x, r"$0.3411 \cdot x^{0.3702}$", linestyle="-", color="red", alpha=0.7)
 
     for i, filename in enumerate(args.files):
         label = filename.stem
