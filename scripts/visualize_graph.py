@@ -3,6 +3,7 @@ import struct
 from pathlib import Path
 
 from graph_tool.all import Graph, graph_draw, sfdp_layout
+import graph_tool
 
 
 def read_node_list(filename: Path) -> list[int]:
@@ -81,7 +82,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path)
     parser.add_argument("--highlight-nodes", type=Path, nargs="*")
     parser.add_argument("--auto-layout", action="store_true")
-    parser.add_argument("--size", type=int, default=2**12)
+    parser.add_argument("--size", type=int, default=2**10)
     args: argparse.Namespace = parser.parse_args()
 
     if not args.output:

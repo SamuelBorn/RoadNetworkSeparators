@@ -1,6 +1,6 @@
 use super::geometric_graph::GeometricGraph;
 use crate::{
-    graph::{delaunay, geometric_graph::approx_dedup_points},
+    graph::{delaunay, geometric_graph::approx_dedup_points, voronoi::prune_graph},
     library,
 };
 use geo::Point;
@@ -30,6 +30,9 @@ pub fn generate_hierachical_delaunay(
         }
     }
 
+    //let mut g = delaunay::delaunay(&points);
+    //prune_graph(&mut g, 4.0);
+    //g
     delaunay::delaunay(&points)
 }
 
@@ -39,7 +42,7 @@ mod test {
 
     #[test]
     fn simple_generate_hierachical_delaunay() {
-        let city_percentage = vec![1.0, 0.1, 0.6, 0.5];
+        let city_percentage = vec![1.0, 0.3, 0.6, 0.5];
         let points_per_level = vec![70, 30, 30, 30];
         let radii = vec![750., 200., 30., 3.];
         let g = generate_hierachical_delaunay(&city_percentage, &points_per_level, &radii);

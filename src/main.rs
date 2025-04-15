@@ -9,6 +9,7 @@ pub mod separator;
 use cch::{compute_separator_sizes_from_order, get_top_level_separator};
 use graph::example::{self, *};
 use graph::planar::planarize;
+use graph::voronoi::prune_graph;
 use graph::{
     cbrt_maximal, delaunay, grid, hierachical_delaunay, hierachical_disks, highway, nested_grid,
     voronoi,
@@ -18,20 +19,25 @@ use hashbrown::HashSet;
 use library::{
     read_binary_vec, read_text_vec, read_to_usize_vec, write_binary_vec, write_text_vec,
 };
+use ordered_float::Pow;
 use separator::{get_ord, print_binned_statistic, Mode::*};
 use std::path::Path;
 
 fn main() {
-    let city_percentage = vec![1.0, 0.03, 0.3, 0.6];
-    let points_per_level = vec![1000, 100, 50, 20];
-    let radii = vec![1000., 50., 30., 4.];
-    let g = hierachical_delaunay::generate_hierachical_delaunay(
+    let city_percentage = vec![1.0,  0.01, 0.3];
+    let points_per_level = vec![1000, 200, 50];
+    let radii = vec![1000., 100., 20.];
+    let mut g = hierachical_delaunay::generate_hierachical_delaunay(
         &city_percentage,
         &points_per_level,
         &radii,
     );
-    //g.visualize("hierachical_delaunay");
-    //g.graph.recurse_separator(Fast, None);
-    let s = g.inertial_flowcutter("tmp");
-    print_binned_statistic(s, 10);
+    prune_graph(&mut g, 2.0);
+    
+    g.visualize("hierachical_delaunay");
+    g.graph.recurse_separator(Fast, None);
+
+
+    //let s = g.inertial_flowcutter("tmp");
+    //print_binned_statistic(s, 10);
 }

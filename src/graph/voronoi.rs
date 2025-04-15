@@ -163,10 +163,13 @@ pub fn prune_graph(g: &mut GeometricGraph, spanning_parameter: f64) {
     let edge_lengths = g.get_edge_lengths();
     let directed_edge_lengths = g.get_edge_lengths_unidirectional(); // only half of the edges
     let mut sorted = directed_edge_lengths.iter().collect::<Vec<_>>();
+    let size = sorted.len();
     sorted.par_sort_by(|(_, l1), (_, l2)| l1.partial_cmp(l2).unwrap());
 
     for (i, ((u, v), length)) in sorted.into_iter().enumerate() {
-        println!("{}", i);
+        if i % 1000 == 0 {
+            println!("{} / {}", i, size);
+        }
         g.graph.remove_edge(*u, *v);
         if uf.find(*u) != uf.find(*v)
             || !g.connected_with_prune_distance(*u, *v, length * spanning_parameter, &edge_lengths)
