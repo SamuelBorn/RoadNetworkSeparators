@@ -9,13 +9,13 @@ use rayon::slice::ParallelSliceMut;
 use rstar::PointDistance;
 
 use std::borrow::Borrow;
-use std::thread;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::fs;
 use std::io;
 use std::path::Path;
 use std::process::Command;
+use std::thread;
 
 use crate::library;
 use crate::Graph;

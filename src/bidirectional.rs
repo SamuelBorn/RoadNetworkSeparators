@@ -40,14 +40,14 @@ enum Direction {
 }
 
 fn dijkstra_worker(
-    graph: Arc<GeometricGraph>,
+    graph: &GeometricGraph,
     start_node: usize,
-    direction: Direction,
+    _direction: Direction,
     max_length: f64,
     path_found: Arc<AtomicBool>,
     distances: Arc<DashMap<usize, f64>>,
     other_distances: Arc<DashMap<usize, f64>>,
-    weights: Arc<HashMap<(usize, usize), f64>>,
+    weights: &HashMap<(usize, usize), f64>,
 ) {
     let mut local_distances: HashMap<usize, f64> = HashMap::new();
     let mut pq = BinaryHeap::<FloatState>::new();
@@ -59,33 +59,40 @@ fn dijkstra_worker(
         position: start_node,
     });
 
+    if let Some(dist_other_ref) = other_distances.get(&start_node) {
+        if *dist_other_ref <= max_length {
+            path_found.store(true, AtomicOrdering::Release);
+            return;
+        }
+    }
+
     while let Some(FloatState { cost, position: u }) = pq.pop() {
         if path_found.load(AtomicOrdering::Acquire) {
             return;
         }
-
-        if cost >= max_length {
+        if cost > max_length {
             continue;
         }
-
         if cost > *local_distances.get(&u).unwrap_or(&f64::INFINITY) {
             continue;
         }
 
         if let Some(dist_other_ref) = other_distances.get(&u) {
             let current_total_path = cost + *dist_other_ref;
-            if current_total_path < max_length {
+            if current_total_path <= max_length {
                 path_found.store(true, AtomicOrdering::Release);
                 return;
             }
         }
 
         for &v in graph.graph.get_neighbors(u) {
-            let weight = *weights.get(&(u, v)).unwrap();
             if path_found.load(AtomicOrdering::Acquire) {
                 return;
             }
-
+            let weight = match weights.get(&(u, v)) {
+                Some(w) => *w,
+                None => continue,
+            };
             let new_cost = cost + weight;
 
             if new_cost >= max_length {
@@ -94,74 +101,80 @@ fn dijkstra_worker(
 
             if new_cost < *local_distances.get(&v).unwrap_or(&f64::INFINITY) {
                 local_distances.insert(v, new_cost);
+                distances.insert(v, new_cost);
                 pq.push(FloatState {
                     cost: new_cost,
                     position: v,
                 });
-                distances.insert(v, new_cost);
+
+                if let Some(dist_other_ref) = other_distances.get(&v) {
+                    let current_total_path = new_cost + *dist_other_ref;
+                    if current_total_path <= max_length {
+                        path_found.store(true, AtomicOrdering::Release);
+                        return;
+                    }
+                }
             }
         }
     }
 }
 
-pub fn check_path_exists_max_length(
-    graph: Arc<GeometricGraph>,
-    start: usize,
-    end: usize,
-    max_length: f64,
-) -> bool {
-    if max_length <= 0.0 {
-        return false;
+impl GeometricGraph {
+    // Warning: This function performs worse than the single-threaded version for short queries.
+    pub fn bidirectional_multithreaded_dijsktra(
+        &self,
+        start: usize,
+        end: usize,
+        max_length: f64,
+        weights: &HashMap<(usize, usize), f64>,
+    ) -> bool {
+        if max_length < 0.0 {
+            return false;
+        }
+        if start == end {
+            return true;
+        }
+
+        let forward_distances = Arc::new(DashMap::new());
+        let backward_distances = Arc::new(DashMap::new());
+        let path_found = Arc::new(AtomicBool::new(false));
+
+        thread::scope(|s| {
+            let path_found_f = Arc::clone(&path_found);
+            let dist_f = Arc::clone(&forward_distances);
+            let dist_b_f = Arc::clone(&backward_distances);
+
+            s.spawn(move || {
+                dijkstra_worker(
+                    self,
+                    start,
+                    Direction::Forward,
+                    max_length,
+                    path_found_f,
+                    dist_f,
+                    dist_b_f,
+                    &weights,
+                )
+            });
+
+            let path_found_b = Arc::clone(&path_found);
+            let dist_b = Arc::clone(&backward_distances);
+            let dist_f_b = Arc::clone(&forward_distances);
+
+            s.spawn(move || {
+                dijkstra_worker(
+                    self,
+                    end,
+                    Direction::Backward,
+                    max_length,
+                    path_found_b,
+                    dist_b,
+                    dist_f_b,
+                    &weights,
+                )
+            });
+        });
+
+        path_found.load(AtomicOrdering::Relaxed)
     }
-    if start == end {
-        return true;
-    }
-
-    let weights = Arc::new(graph.get_edge_lengths());
-    let forward_distances: Arc<DashMap<usize, f64>> = Arc::new(DashMap::new());
-    let backward_distances: Arc<DashMap<usize, f64>> = Arc::new(DashMap::new());
-    let path_found: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
-
-    let graph_f = Arc::clone(&graph);
-    let path_found_f = Arc::clone(&path_found);
-    let dist_f = Arc::clone(&forward_distances);
-    let dist_b_f = Arc::clone(&backward_distances);
-    let weights_f = Arc::clone(&weights);
-
-    let forward_handle = thread::spawn(move || {
-        dijkstra_worker(
-            graph_f,
-            start,
-            Direction::Forward,
-            max_length,
-            path_found_f,
-            dist_f,
-            dist_b_f,
-            weights_f,
-        )
-    });
-
-    let graph_b = Arc::clone(&graph);
-    let path_found_b = Arc::clone(&path_found);
-    let dist_b = Arc::clone(&backward_distances);
-    let dist_f_b = Arc::clone(&forward_distances);
-    let weights_b = Arc::clone(&weights);
-
-    let backward_handle = thread::spawn(move || {
-        dijkstra_worker(
-            graph_b,
-            end,
-            Direction::Backward,
-            max_length,
-            path_found_b,
-            dist_b,
-            dist_f_b,
-            weights_b,
-        )
-    });
-
-    forward_handle.join().expect("Forward thread panicked");
-    backward_handle.join().expect("Backward thread panicked");
-
-    path_found.load(AtomicOrdering::Relaxed)
 }

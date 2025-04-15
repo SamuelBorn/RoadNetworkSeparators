@@ -26,14 +26,14 @@ use std::path::Path;
 use std::sync::Arc;
 
 fn main() {
-    //let city_percentage = vec![1.0, 0.001, 0.01, 0.3];
-    //let points_per_level = vec![10000, 1000, 200, 50];
-    //let radii = vec![5000., 1000., 100., 20.];
-    //let mut g = hierachical_delaunay::generate_hierachical_delaunay(
-    //    &city_percentage,
-    //    &points_per_level,
-    //    &radii,
-    //);
+    let city_percentage = vec![1.0, 0.001, 0.01, 0.3];
+    let points_per_level = vec![1000, 1000, 200, 50];
+    let radii = vec![5000., 1000., 100., 20.];
+    let mut g = hierachical_delaunay::generate_hierachical_delaunay(
+        &city_percentage,
+        &points_per_level,
+        &radii,
+    );
     prune_graph(&mut g, 2.0);
     //
     //g.visualize("hierachical_delaunay");
@@ -42,9 +42,4 @@ fn main() {
 
     //let s = g.inertial_flowcutter("tmp");
     //print_binned_statistic(s, 10);
-
-    let g = example_c4();
-    let arc_g = Arc::new(g);
-    let x = bidirectional::check_path_exists_max_length(arc_g, 0, 2, 2.0);
-    println!("Path exists: {}", x);
 }
