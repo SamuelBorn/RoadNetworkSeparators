@@ -9,6 +9,7 @@ use rayon::slice::ParallelSliceMut;
 use rstar::PointDistance;
 
 use std::borrow::Borrow;
+use std::thread;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::fs;

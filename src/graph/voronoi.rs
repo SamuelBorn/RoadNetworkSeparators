@@ -8,8 +8,10 @@ use rand::Rng;
 use rand_distr::{Distribution, Exp, Uniform};
 use rayon::{iter::Positions, prelude::*};
 use rstar::PointDistance;
-use std::{f64, path::Path};
+use std::{f64, path::Path, sync::Arc};
 use voronoice::{BoundingBox, Voronoi, VoronoiBuilder};
+
+use crate::bidirectional;
 
 use super::{geometric_graph::GeometricGraph, Graph};
 
@@ -17,10 +19,7 @@ const SCALE: f64 = 1e8;
 const EPS: f64 = 1e-8;
 
 fn quantize(coord: geo::Coord<f64>) -> (usize, usize) {
-    (
-        (coord.x * SCALE) as usize,
-        (coord.y * SCALE) as usize,
-    )
+    ((coord.x * SCALE) as usize, (coord.y * SCALE) as usize)
 }
 
 fn get_bounding_box(poly: &Polygon) -> BoundingBox {
@@ -158,26 +157,39 @@ fn build_graph(mut edges: Vec<((usize, usize), (usize, usize))>) -> GeometricGra
 // compute a sparse graph spanner of the graph computed in phase one. Given a graph G a graph spanner H of G with stretch t is
 // a subgraph of G such that for each pair of vertices u, v in G we have distH (u, v) ≤ t · distG (u, v).
 // Paper used t = 4
-pub fn prune_graph(g: &mut GeometricGraph, spanning_parameter: f64) {
+pub fn prune_graph(mut g: GeometricGraph, spanning_parameter: f64) -> GeometricGraph {
     let mut uf: UnionFind<usize> = UnionFind::new(g.graph.get_num_nodes() + 1);
     let edge_lengths = g.get_edge_lengths();
     let directed_edge_lengths = g.get_edge_lengths_unidirectional(); // only half of the edges
     let mut sorted = directed_edge_lengths.iter().collect::<Vec<_>>();
     let size = sorted.len();
     sorted.par_sort_by(|(_, l1), (_, l2)| l1.partial_cmp(l2).unwrap());
-
+    
     for (i, ((u, v), length)) in sorted.into_iter().enumerate() {
         if i % 1000 == 0 {
             println!("{} / {}", i, size);
         }
-        g.graph.remove_edge(*u, *v);
-        if uf.find(*u) != uf.find(*v)
-            || !g.connected_with_prune_distance(*u, *v, length * spanning_parameter, &edge_lengths)
-        {
-            g.graph.add_edge(*u, *v);
+
+        if uf.find(*u) != uf.find(*v) {
+            uf.union(*u, *v);
+            continue;
         }
-        uf.union(*u, *v);
+
+
+        let g_arc = Arc::new(g);
+
+
+        //g.graph.remove_edge(*u, *v);
+        //let x = bidirectional::check_path_exists_max_length(g_arc, 0, 2, 2.0);
+        //if uf.find(*u) != uf.find(*v)
+        //    || !g.connected_with_prune_distance(*u, *v, length * spanning_parameter, &edge_lengths)
+        //{
+        //    g.graph.add_edge(*u, *v);
+        //}
+        //uf.union(*u, *v);
     }
+
+    g
 }
 
 pub fn build_voronoi_road_network(
@@ -230,7 +242,7 @@ pub fn build_voronoi_road_network(
     let mut g = g.largest_connected_component();
     g.graph.info();
     println!("Graph build");
-    prune_graph(&mut g, 3.0);
+    g = prune_graph(g, 3.0);
     g.graph.info();
     println!("Graph pruned");
     g.save(output).unwrap();
