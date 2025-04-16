@@ -110,7 +110,8 @@ def analyze_data(x, y):
 
 
 def main():
-    x, y = load_data(Path("./output/sep/Europe"))
+    # x, y = load_data(Path("./output/sep/Europe"))
+    x,y = load_data(Path("./output/sep/RandomAvgDeg2.5.txt"))
     analyze_data(x, y)
 
     x, y = apply_log_log_transformation(x, y)

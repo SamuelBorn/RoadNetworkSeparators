@@ -1,4 +1,5 @@
 import argparse
+from scipy.optimize import curve_fit
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -71,7 +72,9 @@ def visualize(args):
     if args.cbrt:
         plot_function(np.cbrt, max_x, r"$x^{1/3}$", linestyle="-.")
 
-    plot_function(lambda x: 0.3411 * x**0.3702, max_x, r"$0.3411 \cdot x^{0.3702}$", linestyle="-", color="red", alpha=0.7)
+    # plot_function(lambda x: 0.3411 * x**0.3702, max_x, r"$0.3411 \cdot x^{0.3702}$", linestyle="-", color="red", alpha=0.7)
+    # 7.54738 x^0.3737000000000000
+    # plot_function(lambda x: 3.84738 * x**0.3737, max_x, r"$3.8474 \cdot x^{0.3737}$", linestyle="-", color="black", alpha=0.7)
 
     for i, filename in enumerate(args.files):
         label = filename.stem
@@ -81,6 +84,21 @@ def visualize(args):
         if args.bins:
             x_values, y_values = bin_data(x_values, y_values, args)
         scatter(x_values, y_values, label, colors[i], markers[i])
+        if args.fit_line and i == 0:
+            assert args.loglog
+            tmp_x = np.log2(x_values)
+            tmp_y = np.log2(y_values)
+            m, _ = np.polyfit(tmp_x, tmp_y, 1)
+            p, _ = curve_fit(lambda x, a: a * np.power(x, m), x_values, y_values)
+            plot_function(
+                lambda x: p[0] * np.power(x, m),
+                max_x,
+                f"${p[0]:.4f} \cdot x^{{ {m:.4f} }}$ (fitted)",
+                linestyle=":",
+                color=colors[i],
+                alpha=0.5,
+            )
+
 
     plt.grid(True, linestyle="--", alpha=0.2)
     plt.xlabel(args.x_label)
@@ -101,6 +119,7 @@ def main():
     parser.add_argument("--keep-outliers", action="store_true")
     parser.add_argument("--type", type=str, default="pdf")
     parser.add_argument("--bins", type=int)
+    parser.add_argument("--fit-line", action="store_true")
     parser.add_argument("files", type=Path, nargs="+")
 
     args = parser.parse_args()

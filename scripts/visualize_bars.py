@@ -1,9 +1,10 @@
 import argparse
 from pathlib import Path
-
 import matplotlib.pyplot as plt
 
+
 color = "#009682"
+
 
 def visualize(args: argparse.Namespace):
     with open(args.file) as file:
