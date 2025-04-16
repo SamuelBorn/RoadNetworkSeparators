@@ -5,6 +5,23 @@ use rand::Rng;
 use crate::graph::tree;
 use crate::graph::Graph;
 
+pub fn generate_random_connected(n: usize, m: usize) -> Graph {
+    let mut g = tree::generate_random_tree(n);
+    let mut edge_count = n - 1;
+
+    while edge_count < m {
+        let u = rand::thread_rng().gen_range(0..n);
+        let v = rand::thread_rng().gen_range(0..n);
+
+        if !g.has_edge(u, v) {
+            g.add_edge(u, v);
+            edge_count += 1;
+        }
+    }
+
+    g
+}
+
 pub fn generate_local_graph(n: usize, m: usize) -> Graph {
     let mut g = tree::generate_random_tree(n);
     let mut edge_count = n - 1;
@@ -33,6 +50,8 @@ pub fn generate_local_graph(n: usize, m: usize) -> Graph {
 
 #[cfg(test)]
 mod tests {
+    use crate::graph::tree::generate_random_tree;
+
     use super::*;
 
     #[test]
@@ -46,5 +65,30 @@ mod tests {
 
         // expect 22 at highest level
         g.recurse_separator(crate::separator::Mode::Fast, None);
+    }
+
+    #[test]
+    fn test_generate_random_connected() {
+        let n = 12000;
+        let m = 15000;
+        // let g = generate_random_connected(n, m);
+        let g = generate_random_tree(n);
+
+        dbg!(g.get_diameter());
+    }
+
+    #[test]
+    fn random_spanning_tree_overview() {
+        for i in 2..21 {
+            let n = 2_usize.pow(i);
+            let g1 = generate_random_connected(n, (1.25 * n as f32) as usize);
+            let g2 = generate_random_connected(n, (1.25 * n as f32) as usize);
+            let g3 = generate_random_connected(n, (1.25 * n as f32) as usize);
+            let d1 = g1.get_diameter();
+            let d2 = g2.get_diameter();
+            let d3 = g3.get_diameter();
+            let avg = (d1 + d2 + d3) / 3;
+            println!("{} {}", n, avg);
+        }
     }
 }
