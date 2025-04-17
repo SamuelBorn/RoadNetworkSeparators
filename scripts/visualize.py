@@ -22,6 +22,7 @@ def get_values(filename, args):
     data = [tuple(map(float, line.split())) for line in open(filename)]
     if not args.keep_outliers:
         data = [x for x in data if x[0] < 10_000_000]
+    data = [x for x in data if x[0] > 2**10]
     x, y = zip(*data)
     return x, y
 
@@ -42,7 +43,7 @@ def bin_data(x, y, args):
     return bin_centers, means
 
 
-def scatter(x_values, y_values, label, color, marker, alpha=1):
+def scatter(x_values, y_values, label, color, marker, alpha=1.0):
     plt.scatter(
         x_values,
         y_values,
@@ -83,8 +84,10 @@ def visualize(args):
         x_values, y_values = get_values(filename, args)
         if args.bins:
             x_values, y_values = bin_data(x_values, y_values, args)
+
         scatter(x_values, y_values, label, colors[i], markers[i])
-        if args.fit_line and i == 0:
+         
+        if args.fit_line:
             assert args.loglog
             tmp_x = np.log2(x_values)
             tmp_y = np.log2(y_values)
