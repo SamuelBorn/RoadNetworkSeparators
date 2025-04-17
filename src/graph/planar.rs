@@ -169,7 +169,7 @@ pub fn extend_karlsruhe_separator() {
 
 #[cfg(test)]
 mod test {
-    use std::path::Path;
+    use std::{fs, path::Path};
 
     use crate::graph::{example, Graph};
 
@@ -200,5 +200,22 @@ mod test {
         planarize(&mut g);
         g.save(Path::new("output/germany_planar"));
         // germany #intersections: 101062
+    }
+
+    #[test]
+    fn load_random_boltzman_planar() {
+        let entries = fs::read_dir(
+            "/home/born/Nextcloud/ws2425/Master/Code/dependencies/BoltzmannPlanarGraphs/out",
+        )
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .collect::<Vec<_>>();
+
+        entries.par_iter().for_each(|entry| {
+            let mut g = Graph::from_edge_list_file(entry).unwrap();
+            g.make_undirected();
+            let g = g.largest_connected_component();
+            println!("{} {}", g.get_num_nodes(), g.get_separator_size(Eco));
+        });
     }
 }

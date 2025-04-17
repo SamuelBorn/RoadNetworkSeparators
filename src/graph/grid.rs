@@ -1,9 +1,10 @@
+use geo::Point;
 use hashbrown::{HashMap, HashSet};
 
-use std::fs;
 use std::io::Write;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
+use std::{fs, vec};
 use threadpool::ThreadPool;
 
 use crate::graph::Graph;
@@ -11,6 +12,7 @@ use bimap::BiMap;
 use rand::seq::SliceRandom;
 use rand::Rng;
 
+use super::geometric_graph::GeometricGraph;
 
 pub fn generate_grid(side_length: usize) -> Graph {
     let mut g = Graph::with_node_count(side_length * side_length);
@@ -28,6 +30,24 @@ pub fn generate_grid(side_length: usize) -> Graph {
     }
 
     g
+}
+
+pub fn generate_grid_with_avg_degree_geometric(n: usize, deg: f64) -> GeometricGraph {
+    let side_length = (n as f64).sqrt() as usize;
+    let g = generate_grid(side_length);
+
+    let mut points = vec![Point::new(0.0, 0.0); side_length * side_length];
+    for i in 0..side_length {
+        for j in 0..side_length {
+            points[i * side_length + j] = Point::new((i as f64), (j as f64));
+        }
+    }
+
+    let mut g = GeometricGraph::new(g, points);
+    let goal_num_edges = (deg * g.graph.get_num_nodes() as f64 / 2.0) as usize;
+    let num_edges_to_remove = g.graph.get_num_edges() - goal_num_edges;
+    g.graph.remove_random_edges(num_edges_to_remove);
+    g.largest_connected_component()
 }
 
 pub fn generate_grid_with_avg_degree(side_length: usize, avg_degree: f64) -> Graph {
@@ -113,7 +133,6 @@ pub fn save_separator_distribution_multithreaded(
 mod tests {
     use crate::separator::Mode::*;
     use hashbrown::{HashMap, HashSet};
-
 
     use super::*;
 

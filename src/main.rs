@@ -8,6 +8,7 @@ pub mod random_set;
 pub mod separator;
 
 use cch::{compute_separator_sizes_from_order, get_top_level_separator};
+use geo::Point;
 use graph::example::{self, *};
 use graph::planar::planarize;
 use graph::tree::generate_random_tree;
@@ -23,11 +24,21 @@ use library::{
 };
 use local::generate_random_connected;
 use ordered_float::Pow;
+use rayon::prelude::*;
 use separator::{get_ord, print_binned_statistic, Mode::*};
+use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 
 fn main() {
+    let g = grid::generate_grid_with_avg_degree_geometric(1_000_000, 2.5);
+    g.inertial_flowcutter("grid");
+
+    let p = library::random_points_in_circle(Point::new(10000.0, 10000.0), 1000, 1_000_000);
+    let g = delaunay::delauny_avg_degree(&p, 2.5);
+    g.inertial_flowcutter("delaunay");
+
+    return;
     let city_percentage = vec![1.0, 0.001, 0.01, 0.3];
     let points_per_level = vec![1000, 1000, 200, 50];
     let radii = vec![5000., 1000., 100., 20.];

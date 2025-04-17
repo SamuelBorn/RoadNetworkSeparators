@@ -20,8 +20,8 @@ def get_max_x(args):
 
 def get_values(filename, args):
     data = [tuple(map(float, line.split())) for line in open(filename)]
-    if not args.keep_outliers:
-        data = [x for x in data if x[0] < 10_000_000]
+    # if not args.keep_outliers:
+    #     data = [x for x in data if x[0] < 10_000_000]
     data = [x for x in data if x[0] > 2**10]
     x, y = zip(*data)
     return x, y

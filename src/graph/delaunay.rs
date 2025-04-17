@@ -101,6 +101,19 @@ pub fn degree_restricted_delaunay(
     g
 }
 
+pub fn delauny_avg_degree(
+    points: &[Point],
+    avg_deg: f64,
+) -> GeometricGraph {
+    let mut e = dynamic_length_restriced_delaunay(points, 0.99);
+    let mut g = GeometricGraph::from_edges_point(&e);
+    let m = g.graph.get_num_edges();
+    let wanted_edges = (g.graph.get_num_nodes() as f64 * avg_deg / 2.0) as usize;
+    let edges_to_delete = m - wanted_edges;
+    g.graph.remove_random_edges(edges_to_delete);
+    g.largest_connected_component()
+}
+
 #[cfg(test)]
 mod test {
     use std::path::Path;
