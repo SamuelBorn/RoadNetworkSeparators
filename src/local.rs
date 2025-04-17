@@ -58,6 +58,7 @@ pub fn generate_local_graph(n: usize, m: usize) -> Graph {
 pub fn generate_local_points(n: usize, m: usize) -> GeometricGraph {
     let points = library::random_points_in_circle(Point::new(1000.0, 1000.), 100.0, n);
     let mut g = get_mst_points(&points);
+    dbg!("MST built");
     let max_edge_length = *g
         .get_edge_lengths()
         .iter()
@@ -68,6 +69,7 @@ pub fn generate_local_points(n: usize, m: usize) -> GeometricGraph {
     let rng = &mut rand::thread_rng();
 
     while edge_count < m {
+        println!("edge count {}", edge_count);
         let u = rng.gen_range(0..n);
         let v = rng.gen_range(0..n);
         if u == v || g.graph.has_edge(u, v) {
