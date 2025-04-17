@@ -4,13 +4,18 @@ use geo::Point;
 use ordered_float::OrderedFloat;
 use rand::distributions::Distribution;
 use rand::distributions::WeightedIndex;
+use rand::seq::SliceRandom;
 use rand::Rng;
+use rstar::primitives::GeomWithData;
+use rstar::RTree;
 
 use crate::graph::geometric_graph::GeometricGraph;
 use crate::graph::tree;
 use crate::graph::Graph;
 use crate::kruskal::get_mst_points;
 use crate::library;
+
+type IndexedPoint = GeomWithData<Point, usize>;
 
 pub fn generate_random_connected(n: usize, m: usize) -> Graph {
     let mut g = tree::generate_random_tree(n);
@@ -57,8 +62,13 @@ pub fn generate_local_graph(n: usize, m: usize) -> Graph {
 
 pub fn generate_local_points(n: usize, m: usize) -> GeometricGraph {
     let points = library::random_points_in_circle(Point::new(1000.0, 1000.), 100.0, n);
+    let rtree_data = points
+        .iter()
+        .enumerate()
+        .map(|(i, &p)| IndexedPoint::new(p, i))
+        .collect();
+    let rtree = RTree::bulk_load(rtree_data);
     let mut g = get_mst_points(&points);
-    dbg!("MST built");
     let max_edge_length = *g
         .get_edge_lengths()
         .iter()
@@ -71,14 +81,12 @@ pub fn generate_local_points(n: usize, m: usize) -> GeometricGraph {
     while edge_count < m {
         println!("edge count {}", edge_count);
         let u = rng.gen_range(0..n);
-        let v = rng.gen_range(0..n);
-        if u == v || g.graph.has_edge(u, v) {
-            continue;
-        }
+        let v_options = rtree
+            .locate_within_distance(points[u], max_edge_length * max_edge_length)
+            .collect::<Vec<_>>();
+        let v = v_options.choose(rng).unwrap().data;
 
-        let dist = Euclidean::distance(points[u], points[v]);
-
-        if dist < max_edge_length {
+        if u != v {
             g.graph.add_edge(u, v);
             edge_count += 1;
         }
