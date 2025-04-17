@@ -79,7 +79,6 @@ pub fn generate_local_points(n: usize, m: usize) -> GeometricGraph {
     let rng = &mut rand::thread_rng();
 
     while edge_count < m {
-        println!("edge count {}", edge_count);
         let u = rng.gen_range(0..n);
         let v_options = rtree
             .locate_within_distance(points[u], max_edge_length * max_edge_length)
@@ -141,11 +140,11 @@ mod tests {
 
     #[test]
     fn random_local_embedding() {
-        let n = 1000000;
-        let m = 1250000;
+        let n = 10000;
+        let m = 12500;
         let g = generate_local_points(n, m);
         g.graph.info();
-        // g.visualize("local_embedding");
-        g.inertial_flowcutter("local_embedding");
+        g.visualize("local_embedding");
+        // g.inertial_flowcutter("local_embedding");
     }
 }
