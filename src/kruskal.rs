@@ -31,8 +31,8 @@ impl GeometricGraph {
     }
 }
 
-pub fn get_mst_points(points: Vec<Point>) -> GeometricGraph {
-    let g = crate::graph::delaunay::delaunay(&points);
+pub fn get_mst_points(points: &[Point]) -> GeometricGraph {
+    let g = crate::graph::delaunay::delaunay(points);
     g.get_mst()
 }
 
@@ -63,7 +63,7 @@ mod tests {
             Point::new(2.0, 0.0),
             Point::new(2.0, 3.0),
         ];
-        let mst = get_mst_points(points);
+        let mst = get_mst_points(&points);
         mst.save(Path::new("./output/tmp/kruskal_test")).unwrap();
         assert_eq!(mst.graph.get_num_nodes(), 4);
         assert_eq!(mst.graph.get_num_edges(), 3);
@@ -79,8 +79,8 @@ mod tests {
                     rand::random::<f64>() * bounds,
                 )
             })
-            .collect();
-        let mst = get_mst_points(points);
+            .collect::<Vec<_>>();
+        let mst = get_mst_points(&points);
         mst.save(Path::new("./output/tmp/kruskal_random")).unwrap();
     }
 
@@ -100,8 +100,8 @@ mod tests {
                                 rand::random::<f64>() * bounds,
                             )
                         })
-                        .collect();
-                    let mst = get_mst_points(points);
+                        .collect::<Vec<_>>();
+                    let mst = get_mst_points(&points);
                     mst.graph.get_diameter()
                 })
                 .sum::<usize>() as f64
@@ -121,8 +121,8 @@ mod tests {
                     rand::random::<f64>() * bounds,
                 )
             })
-            .collect();
-        let mst = get_mst_points(points);
+            .collect::<Vec<_>>();
+        let mst = get_mst_points(&points);
         mst.save(Path::new("./output/tmp/kruskal_100k")).unwrap();
     }
 }

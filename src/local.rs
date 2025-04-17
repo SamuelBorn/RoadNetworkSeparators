@@ -1,9 +1,16 @@
+use geo::Distance;
+use geo::Euclidean;
+use geo::Point;
+use ordered_float::OrderedFloat;
 use rand::distributions::Distribution;
 use rand::distributions::WeightedIndex;
 use rand::Rng;
 
+use crate::graph::geometric_graph::GeometricGraph;
 use crate::graph::tree;
 use crate::graph::Graph;
+use crate::kruskal::get_mst_points;
+use crate::library;
 
 pub fn generate_random_connected(n: usize, m: usize) -> Graph {
     let mut g = tree::generate_random_tree(n);
@@ -41,6 +48,36 @@ pub fn generate_local_graph(n: usize, m: usize) -> Graph {
 
         if !g.has_edge(u, v) {
             g.add_edge(u, v);
+            edge_count += 1;
+        }
+    }
+
+    g
+}
+
+pub fn generate_local_points(n: usize, m: usize) -> GeometricGraph {
+    let points = library::random_points_in_circle(Point::new(1000.0, 1000.), 100.0, n);
+    let mut g = get_mst_points(&points);
+    let max_edge_length = *g
+        .get_edge_lengths()
+        .iter()
+        .map(|(a, b)| OrderedFloat(*b))
+        .max()
+        .unwrap();
+    let mut edge_count = n - 1;
+    let rng = &mut rand::thread_rng();
+
+    while edge_count < m {
+        let u = rng.gen_range(0..n);
+        let v = rng.gen_range(0..n);
+        if u == v || g.graph.has_edge(u, v) {
+            continue;
+        }
+
+        let dist = Euclidean::distance(points[u], points[v]);
+
+        if dist < max_edge_length {
+            g.graph.add_edge(u, v);
             edge_count += 1;
         }
     }
@@ -90,5 +127,15 @@ mod tests {
             let avg = (d1 + d2 + d3) / 3;
             println!("{} {}", n, avg);
         }
+    }
+
+    #[test]
+    fn random_local_embedding() {
+        let n = 1000000;
+        let m = 1250000;
+        let g = generate_local_points(n, m);
+        g.graph.info();
+        // g.visualize("local_embedding");
+        g.inertial_flowcutter("local_embedding");
     }
 }
