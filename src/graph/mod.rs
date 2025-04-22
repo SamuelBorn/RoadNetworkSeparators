@@ -597,6 +597,8 @@ impl Graph {
 mod test {
     use crate::graph::example;
 
+    use super::example::{europe, karlsruhe};
+
     #[test]
     fn simple_dijsktra_multi() {
         let g = example::example_c4().graph;
@@ -606,5 +608,23 @@ mod test {
         assert_eq!(result.len(), 2);
         assert!(result.contains(&1));
         assert!(result.contains(&2));
+    }
+
+    #[test]
+    fn diameter_overview() {
+        let cut_off = 100;
+        let mut g = europe();
+        println!("{} {}", g.get_num_nodes(), g.get_diameter());
+
+        while g.get_num_nodes() > cut_off {
+            let sep = g.get_separator_wrapper(crate::separator::Mode::Eco);
+            let sub = g.get_subgraphs(&sep);
+            sub.iter()
+                .filter(|g| g.get_num_nodes() > cut_off)
+                .for_each(|g| {
+                    println!("{} {}", g.get_num_nodes(), g.get_diameter());
+                });
+            g = sub.into_iter().max_by_key(|g| g.get_num_nodes()).unwrap();
+        }
     }
 }

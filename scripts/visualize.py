@@ -20,9 +20,9 @@ def get_max_x(args):
 
 def get_values(filename, args):
     data = [tuple(map(float, line.split())) for line in open(filename)]
-    # if not args.keep_outliers:
-    #     data = [x for x in data if x[0] < 10_000_000]
-    data = [x for x in data if x[0] > 2**10]
+    if not args.keep_outliers:
+        data = [x for x in data if x[0] < 10_000_000]
+    # data = [x for x in data if x[0] > 2**10]
     x, y = zip(*data)
     return x, y
 
@@ -86,7 +86,7 @@ def visualize(args):
             x_values, y_values = bin_data(x_values, y_values, args)
 
         scatter(x_values, y_values, label, colors[i], markers[i])
-         
+
         if args.fit_line:
             assert args.loglog
             tmp_x = np.log2(x_values)
@@ -96,17 +96,16 @@ def visualize(args):
             plot_function(
                 lambda x: p[0] * np.power(x, m),
                 max_x,
-                f"${p[0]:.4f} \cdot x^{{ {m:.4f} }}$ (fitted)",
+                f"${p[0]:.4f} \\cdot x^{{ {m:.4f} }}$ (fitted)",
                 linestyle=":",
                 color=colors[i],
                 alpha=0.5,
             )
 
-
     plt.grid(True, linestyle="--", alpha=0.2)
     plt.xlabel(args.x_label)
     plt.ylabel(args.y_label)
-    plt.legend()
+    plt.legend(loc="upper left")
     plt.savefig(args.output, format=args.type, dpi=600)
     plt.show()
 

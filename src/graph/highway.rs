@@ -150,3 +150,14 @@ fn build_graph_from_position_edges(edges: &[(Point, Point)]) -> GeometricGraph {
     let pos = unique_points.par_iter().map(|&p| inv_quantize(p)).collect();
     GeometricGraph::new(g, pos)
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn example_highway_network() {
+        let g = build_highway_network(10_000);
+        g.visualize("highway");
+    }
+}
