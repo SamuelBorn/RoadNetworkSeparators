@@ -208,4 +208,12 @@ mod tests {
         g.graph.info();
         g.save(Path::new("output/sparse_grid"));
     }
+
+    #[test]
+    fn visualize_sparse_grid() {
+        let edges = build_sparse_grid(&[0, 2, 2, 64], 3);
+        let g = build_graph_from_edges(&edges);
+        g.visualize("sparse_grid");
+        g.graph.info();
+    }
 }

@@ -31,12 +31,9 @@ use std::path::Path;
 use std::sync::Arc;
 
 fn main() {
-    let g = grid::generate_grid_with_avg_degree_geometric(1_000_000, 2.5);
-    g.inertial_flowcutter("grid");
 
-    let p = library::random_points_in_circle(Point::new(10000.0, 10000.0), 1000, 1_000_000);
-    let g = delaunay::delauny_avg_degree(&p, 2.5);
-    g.inertial_flowcutter("delaunay");
+
+
 
     return;
     let city_percentage = vec![1.0, 0.001, 0.01, 0.3];

@@ -4,7 +4,7 @@ use geo::{
 };
 use hashbrown::{HashMap, HashSet};
 use petgraph::unionfind::UnionFind;
-use rand::Rng;
+use rand::{seq::SliceRandom, Rng};
 use rand_distr::{Distribution, Exp, Uniform};
 use rayon::{iter::Positions, prelude::*};
 use rstar::PointDistance;
@@ -162,7 +162,9 @@ pub fn prune_graph(g: &mut GeometricGraph, spanning_parameter: f64) {
     let edge_lengths = g.get_edge_lengths();
     let directed_edge_lengths = g.get_edge_lengths_unidirectional(); // only half of the edges
     let mut sorted = directed_edge_lengths.iter().collect::<Vec<_>>();
+    // sorted.shuffle(&mut rand::thread_rng());
     sorted.par_sort_by(|(_, l1), (_, l2)| l1.partial_cmp(l2).unwrap());
+    // sorted.par_sort_by(|(_, l1), (_, l2)| l2.partial_cmp(l1).unwrap());
 
     for (i, &((u, v), length)) in sorted.iter().enumerate() {
         if i % 1000 == 0 {
@@ -175,15 +177,8 @@ pub fn prune_graph(g: &mut GeometricGraph, spanning_parameter: f64) {
         }
 
         g.graph.remove_edge(*u, *v);
-        if i > (0.98 * sorted.len() as f64) as usize {
-            if !g.bidirectional_multithreaded_dijsktra(*u, *v, length * spanning_parameter, &edge_lengths) {
-                g.graph.add_edge(*u, *v);
-            }
-        } else {
-            if !g.connected_with_prune_distance(*u, *v, length * spanning_parameter, &edge_lengths)
-            {
-                g.graph.add_edge(*u, *v);
-            }
+        if !g.connected_with_prune_distance(*u, *v, length * spanning_parameter, &edge_lengths) {
+            g.graph.add_edge(*u, *v);
         }
     }
 }
@@ -193,8 +188,7 @@ pub fn build_voronoi_road_network(
     levels: usize,
     centers: Vec<Uniform<f64>>,
     fractions: Vec<f64>,
-    output: &Path,
-) {
+) -> GeometricGraph {
     assert_eq!(centers.len(), levels);
     assert_eq!(fractions.len(), levels);
 
@@ -239,9 +233,10 @@ pub fn build_voronoi_road_network(
     g.graph.info();
     println!("Graph build");
     prune_graph(&mut g, 3.0);
+    // prune_graph(&mut g, 4.0);
     g.graph.info();
     println!("Graph pruned");
-    g.save(output).unwrap();
+    g
 }
 
 pub fn voronoi_example() {
@@ -268,16 +263,10 @@ pub fn voronoi_example() {
         (x: 0.0, y: 0.0),
     ];
 
-    build_voronoi_road_network(
-        poly,
-        levels,
-        centers,
-        fractions,
-        Path::new("output/tmp/voronoi-non-disk-300top"),
-    );
+    build_voronoi_road_network(poly, levels, centers, fractions);
 }
 
-pub fn voronoi_example_small() {
+pub fn voronoi_example_small() -> GeometricGraph {
     let levels = 4;
     let centers = vec![
         Uniform::new(10.0, 10.1),
@@ -294,11 +283,15 @@ pub fn voronoi_example_small() {
         (x: 0.0, y: 0.0),
     ];
 
-    build_voronoi_road_network(
-        poly,
-        levels,
-        centers,
-        fractions,
-        Path::new("output/tmp/voronoi-non-disk-10top"),
-    );
+    build_voronoi_road_network(poly, levels, centers, fractions)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_voronoi() {
+        let g = voronoi_example_small();
+        g.visualize("voronoi");
+    }
 }
