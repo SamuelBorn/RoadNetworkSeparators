@@ -1,6 +1,7 @@
 use geo::Distance;
 use geo::Euclidean;
 use geo::Point;
+use itertools::Itertools;
 use ordered_float::OrderedFloat;
 use rand::distributions::Distribution;
 use rand::distributions::WeightedIndex;
@@ -38,25 +39,29 @@ pub fn generate_random_connected(n: usize, m: usize) -> Graph {
 
 pub fn generate_local_graph_all(n: usize, m: usize) -> Graph {
     let mut g = tree::generate_random_tree(n);
-    let weights = (0..n).into_par_iter().map(|i| {
-        let distances = g.bfs(i);
-        let w = distances.into_iter().map(|d| 1.0 / d as f64);
-        WeightedIndex::new(w).unwrap()
-    }).collect::<Vec<_>>();
+    let weights = (0..n)
+        .into_par_iter()
+        .map(|i| {
+            let mut distances = g.bfs(i);
+            distances[i] = usize::MAX;
+            let w = distances.into_iter().map(|d| 1.0 / d as f64);
+            WeightedIndex::new(w).unwrap()
+        })
+        .collect::<Vec<_>>();
 
     let mut edge_count = n - 1;
     let rng = &mut rand::thread_rng();
 
     while edge_count < m {
         let u = rand::thread_rng().gen_range(0..n);
-        let distribution = &weights[u]; 
+        let distribution = &weights[u];
         let v = distribution.sample(rng);
         if !g.has_edge(u, v) && u != v {
             g.add_edge(u, v);
             edge_count += 1;
         }
     }
-    
+
     g
 }
 
@@ -178,14 +183,12 @@ mod tests {
 
     #[test]
     fn bulk_random_local() {
-        (1..=10).into_par_iter().for_each(|i| {
-            let n = 10000 * i;
-            let m = 12500 * i;
+        (1..=10).into_iter().for_each(|i| {
+            let n = 100000 * i;
+            let m = 125000 * i;
             let g = generate_local_graph_all(n, m);
             let size = g.get_separator_size(crate::separator::Mode::Eco);
             println!("{} {}", n, size);
         });
     }
-
-
 }
