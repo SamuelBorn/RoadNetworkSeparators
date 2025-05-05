@@ -155,6 +155,18 @@ impl Graph {
         library::write_binary_vec(&adjncy, &dir.join("head"))
     }
 
+    pub fn save_metis(&self, file: &Path) {
+        let mut res = String::new();
+        res.push_str(&format!("{} {}\n", self.get_num_nodes(), self.get_num_edges()));
+        for neighbors in &self.data {
+            for neighbor in neighbors {
+                res.push_str(&format!("{} ", neighbor + 1));
+            }
+            res.push_str("\n");
+        }
+        fs::write(file, res).expect("Unable to write file");
+    }
+
     pub fn has_edge(&self, i: usize, j: usize) -> bool {
         self.data[i].contains(&j)
     }

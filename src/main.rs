@@ -31,9 +31,21 @@ use std::path::Path;
 use std::sync::Arc;
 
 fn main() {
-
-
-
+    let ord = fs::read_to_string(
+        "/home/born/Nextcloud/ws2425/Master/Code/dependencies/KaHIP/tmpnodeordering",
+    )
+    .unwrap()
+    .lines()
+    .map(|x| {
+        let tmp = x.split_whitespace().nth(1).unwrap();
+        let tmp = tmp.parse::<usize>().unwrap();
+        tmp - 1
+    })
+    .collect::<Vec<_>>();
+    // print first 10 elements
+    println!("{:?}", &ord[0..10]);
+    let g = example::karlsruhe();
+    cch::compute_separator_sizes_from_order(&g, &ord, Path::new("./output/sep/karlsruhe-metis"));
 
     return;
     let city_percentage = vec![1.0, 0.001, 0.01, 0.3];
