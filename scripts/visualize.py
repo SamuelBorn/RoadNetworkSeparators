@@ -22,7 +22,7 @@ def get_values(filename, args):
     data = [tuple(map(float, line.split())) for line in open(filename)]
     if not args.keep_outliers:
         data = [x for x in data if x[0] < 10_000_000]
-    # data = [x for x in data if x[0] > 2**10]
+    data = [x for x in data if x[0] > 2**7]
     x, y = zip(*data)
     return x, y
 
@@ -69,13 +69,17 @@ def visualize(args):
 
     max_x = get_max_x(args)
     if args.sqrt:
-        plot_function(np.sqrt, max_x, r"$x^{1/2}$", linestyle=":")
+        plot_function(np.sqrt, max_x, r"$x^{1/2}$", linestyle="-")
     if args.cbrt:
         plot_function(np.cbrt, max_x, r"$x^{1/3}$", linestyle="-.")
+    if args.europe:
+        plot_function(lambda x: 0.3411 * x**0.3702, max_x, r"Observed Europe Fit $(\approx 0.34\cdot x^{0.37}$)", linestyle=":")
 
-    # plot_function(lambda x: 0.3411 * x**0.3702, max_x, r"$0.3411 \cdot x^{0.3702}$", linestyle="-", color="red", alpha=0.7)
-    # 7.54738 x^0.3737000000000000
-    # plot_function(lambda x: 3.84738 * x**0.3737, max_x, r"$3.8474 \cdot x^{0.3737}$", linestyle="-", color="black", alpha=0.7)
+    # plot_function(lambda x: 0.546995 * x**(0.2676), max_x, r"$\log_2 y = 0.2676 \cdot \log_2 x - 0.8704$", linestyle=":", color="purple", alpha=0.25)
+    # plot_function(lambda x: 0.300993 * x**(0.365), max_x, r"$\log_2 y = 0.3650 \cdot \log_2 x - 1.7322$", linestyle="-", color="brown", alpha=0.25)
+    # plot_function(lambda x: 0.4599 * x**(1/3) - 0.0341, max_x, r"$0.4599 \cdot x^{1/3} - 0.0341$", linestyle="-.", color="blue", alpha=0.25)
+    # plot_function(lambda x: 0.1087 * x**(1/2) + 0.5000, max_x, r"$0.1087 \cdot x^{1/2} + 0.5000$", linestyle="-", color="green", alpha=0.25)
+    # plot_function(lambda x: 0.2346 * x**(0.3980) + 0.6140, max_x, r"$0.2346 \cdot x^{0.3980} + 0.6140$", linestyle="--", color="orange", alpha=0.25)
 
     for i, filename in enumerate(args.files):
         label = filename.stem
@@ -122,6 +126,7 @@ def main():
     parser.add_argument("--type", type=str, default="pdf")
     parser.add_argument("--bins", type=int)
     parser.add_argument("--fit-line", action="store_true")
+    parser.add_argument("--europe", action="store_true")
     parser.add_argument("files", type=Path, nargs="+")
 
     args = parser.parse_args()

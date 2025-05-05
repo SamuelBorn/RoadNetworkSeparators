@@ -2,6 +2,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 from scipy.optimize import curve_fit
 from scipy.stats import binned_statistic, linregress
 from sklearn.metrics import r2_score
@@ -11,7 +12,8 @@ def load_data(file: Path):
     data = np.loadtxt(file)
     np.sort(data, axis=0)
     # data = data[(data[:, 0] > 0) & (data[:, 0] < 10_000_000)]
-    data = data[(data[:, 0] > 2**8) & (data[:, 0] < 2**18)]
+    # data = data[(data[:, 0] > 2**8) & (data[:, 0] < 2**18)]
+    data = data[(data[:, 0] > 2**8)]
     return data[:, 0], data[:, 1]
 
 
@@ -111,12 +113,12 @@ def analyze_data(x, y):
 
 def main():
     # x, y = load_data(Path("./output/sep/Europe"))
-    x,y = load_data(Path("./output/sep/RandomAvgDeg2.5.txt"))
+    x,y = load_data(sys.argv[1])
     analyze_data(x, y)
 
-    x, y = apply_log_log_transformation(x, y)
-    x, y = bin_data(x, y, 30)
-    fit_line(x, y)
+    # x, y = apply_log_log_transformation(x, y)
+    # x, y = bin_data(x, y, 30)
+    # fit_line(x, y)
 
 
 

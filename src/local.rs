@@ -42,10 +42,10 @@ pub fn generate_local_graph(n: usize, m: usize) -> Graph {
         let u = rand::thread_rng().gen_range(0..n);
 
         let (nodes, distances): (Vec<_>, Vec<_>) =
-            g.get_extended_neighborhood(u, 200).into_iter().unzip();
+            g.get_extended_neighborhood(u, 1000).into_iter().unzip();
         let weights = distances
             .into_iter()
-            .map(|d| 1.0 / d.pow(7) as f32)
+            .map(|d| 1.0 / d as f32)
             .collect::<Vec<_>>();
         let dist = WeightedIndex::new(&weights).unwrap();
         let mut rng = rand::thread_rng();
@@ -96,6 +96,8 @@ pub fn generate_local_points(n: usize, m: usize) -> GeometricGraph {
 
 #[cfg(test)]
 mod tests {
+    use rayon::iter::{IntoParallelIterator, ParallelIterator};
+
     use crate::graph::tree::generate_random_tree;
 
     use super::*;
@@ -146,5 +148,16 @@ mod tests {
         g.graph.info();
         g.visualize("local_embedding");
         // g.inertial_flowcutter("local_embedding");
+    }
+
+    #[test]
+    fn bulk_random_local() {
+        (1..=24).into_par_iter().for_each(|i| {
+            let n = 10000 * i;
+            let m = 12500 * i;
+            let g = generate_local_graph(n, m);
+            let size = g.get_separator_size(crate::separator::Mode::Eco);
+            println!("{} {}", n, size);
+        });
     }
 }
