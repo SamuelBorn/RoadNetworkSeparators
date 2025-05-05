@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import binned_statistic
 
-markers = ["x", "^", "o", "+"]
-colors = ["#009682", "#df9b1b", "#4664aa", "#a3107c"]
+markers = ["x", "^", "o", "+", "v"]
+colors = ["#009682", "#df9b1b", "#4664aa", "#a3107c", "#88d548"]
 
 
 def get_max_x(args):
