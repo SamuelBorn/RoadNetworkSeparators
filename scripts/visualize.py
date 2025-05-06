@@ -83,6 +83,8 @@ def visualize(args):
 
     for i, filename in enumerate(args.files):
         label = filename.stem
+        if args.labels:
+            label = args.labels[i]
         if args.bins:
             label = f"{label} (binned average)"
         x_values, y_values = get_values(filename, args)
@@ -127,6 +129,7 @@ def main():
     parser.add_argument("--bins", type=int)
     parser.add_argument("--fit-line", action="store_true")
     parser.add_argument("--europe", action="store_true")
+    parser.add_argument("--labels", type=str, nargs="*")
     parser.add_argument("files", type=Path, nargs="+")
 
     args = parser.parse_args()
