@@ -22,7 +22,7 @@ use hashbrown::HashSet;
 use library::{
     read_binary_vec, read_text_vec, read_to_usize_vec, write_binary_vec, write_text_vec,
 };
-use local::generate_random_connected;
+use local::{generate_local_points, generate_random_connected};
 use ordered_float::Pow;
 use rayon::prelude::*;
 use separator::{get_ord, print_binned_statistic, Mode::*};
@@ -31,9 +31,17 @@ use std::path::Path;
 use std::sync::Arc;
 
 fn main() {
-    // let g = generate_random_tree(10_000_000);
-    let g = europe();
-    dbg!(g.degree_distribution());
+    // for i in 1..10 {
+    //     let mut g = local::generate_local_points(i*10000, i*12500);
+    //     dbg!(g.graph.get_diameter());
+    // }
+
+    let g = germany();
+    dbg!(g.get_diameter());
+
+    let mut g = generate_local_points(g.get_num_nodes(), g.get_num_edges());
+    dbg!(g.graph.get_diameter());
+
 
     return;
     let city_percentage = vec![1.0, 0.001, 0.01, 0.3];

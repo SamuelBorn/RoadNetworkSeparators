@@ -22,7 +22,6 @@ def get_values(filename, args):
     data = [tuple(map(float, line.split())) for line in open(filename)]
     if not args.keep_outliers:
         data = [x for x in data if x[0] < 10_000_000]
-    # data = [x for x in data if x[0] > 2**7]
     x, y = zip(*data)
     return x, y
 
@@ -82,21 +81,25 @@ def visualize(args):
     # plot_function(lambda x: 0.2346 * x**(0.3980) + 0.6140, max_x, r"$0.2346 \cdot x^{0.3980} + 0.6140$", linestyle="--", color="orange", alpha=0.25)
 
     for i, filename in enumerate(args.files):
-        label = filename.stem
-        if args.labels:
-            label = args.labels[i]
+        label = args.labels[i] if args.labels else filename.stem
         if args.bins:
             label = f"{label} (binned average)"
         x_values, y_values = get_values(filename, args)
         if args.bins:
             x_values, y_values = bin_data(x_values, y_values, args)
 
+        if args.cutoff:
+            condition_left = x_values < args.cutoff
+            condition_right = x_values >= args.cutoff
+            x_values_left = x_values[condition_left]
+            y_values_left = y_values[condition_left]
+            x_values = x_values[condition_right]
+            y_values = y_values[condition_right]
+            scatter(x_values_left, y_values_left, "", colors[i], markers[i], alpha=0.3)
         scatter(x_values, y_values, label, colors[i], markers[i])
 
         if args.fit_line:
             assert args.loglog
-            # tmp_x = np.log2(x_values[x_values > 1000])
-            # tmp_y = np.log2(y_values[x_values > 1000])
             tmp_x = np.log2(x_values)
             tmp_y = np.log2(y_values)
             m, _ = np.polyfit(tmp_x, tmp_y, 1)
@@ -132,6 +135,7 @@ def main():
     parser.add_argument("--fit-line", action="store_true")
     parser.add_argument("--europe", action="store_true")
     parser.add_argument("--labels", type=str, nargs="*")
+    parser.add_argument("--cutoff", type=int)
     parser.add_argument("files", type=Path, nargs="+")
 
     args = parser.parse_args()
