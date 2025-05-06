@@ -22,7 +22,7 @@ def get_values(filename, args):
     data = [tuple(map(float, line.split())) for line in open(filename)]
     if not args.keep_outliers:
         data = [x for x in data if x[0] < 10_000_000]
-    data = [x for x in data if x[0] > 2**7]
+    # data = [x for x in data if x[0] > 2**7]
     x, y = zip(*data)
     return x, y
 
@@ -95,6 +95,8 @@ def visualize(args):
 
         if args.fit_line:
             assert args.loglog
+            # tmp_x = np.log2(x_values[x_values > 1000])
+            # tmp_y = np.log2(y_values[x_values > 1000])
             tmp_x = np.log2(x_values)
             tmp_y = np.log2(y_values)
             m, _ = np.polyfit(tmp_x, tmp_y, 1)
