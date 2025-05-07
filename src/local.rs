@@ -75,14 +75,9 @@ pub fn generate_local_graph_all_lca(n: usize, m: usize) -> Graph {
     let edges = (0..additional_edges)
         .map(|i| {
             let v = vs[i];
-            let mut distances = (0..n)
+            let mut w = (0..n)
                 .into_par_iter()
-                .map(|i| lca.distance(v, i))
-                .collect::<Vec<_>>();
-            distances[v] = 1;
-            let mut w = distances
-                .into_iter()
-                .map(|d| 1.0 / (d as f64).powf(3.0))
+                .map(|i| 1.0 / (lca.distance(v, i) as f64).powf(3.0))
                 .collect::<Vec<_>>();
             w[v] = 0.0;
             let u = WeightedIndex::new(w).unwrap().sample(rng);
