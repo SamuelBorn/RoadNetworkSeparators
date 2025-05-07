@@ -6,6 +6,16 @@ use crate::{
 use geo::Point;
 use rand::seq::SliceRandom;
 
+pub fn pruned_hierachical_delaunay(
+    city_percentage: &[f64],
+    points_per_level: &[usize],
+    radii: &[f64],
+) -> GeometricGraph {
+    let mut g = generate_hierachical_delaunay(city_percentage, points_per_level, radii);
+    prune_graph(&mut g, 2.0);
+    g
+}
+
 pub fn generate_hierachical_delaunay(
     city_percentage: &[f64],
     points_per_level: &[usize],

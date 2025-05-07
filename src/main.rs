@@ -2,11 +2,11 @@ pub mod bidirectional;
 pub mod cch;
 pub mod graph;
 pub mod kruskal;
+pub mod lca;
 pub mod library;
 pub mod local;
 pub mod random_set;
 pub mod separator;
-pub mod lca;
 
 use cch::{compute_separator_sizes_from_order, get_top_level_separator};
 use geo::Point;
@@ -32,33 +32,27 @@ use std::path::Path;
 use std::sync::Arc;
 
 fn main() {
-    // for i in 1..10 {
-    //     let mut g = local::generate_local_points(i*10000, i*12500);
-    //     dbg!(g.graph.get_diameter());
-    // }
+    // let mut diam_walk = String::new();
+    let mut diam_kruskal = String::new();
+    for i in 1..=10 {
+        println!("i: {}", i);
+        // let g = generate_random_tree(i * 100000);
+        // diam_walk.push_str(&format!("{} {}\n", g.get_num_nodes(), g.get_diameter()));
 
-    let g = germany();
-    dbg!(g.get_diameter());
-
-    let mut g = generate_local_points(g.get_num_nodes(), g.get_num_edges());
-    dbg!(g.graph.get_diameter());
-
+        let g = kruskal::get_mst(i * 100000);
+        diam_kruskal.push_str(&format!(
+            "{} {}\n",
+            g.graph.get_num_nodes(),
+            g.graph.get_diameter()
+        ));
+    }
+    // fs::write("output/diameter/random_walk.txt", diam_walk).unwrap();
+    fs::write("output/diameter/kruskal.txt", diam_kruskal).unwrap();
 
     return;
-    let city_percentage = vec![1.0, 0.001, 0.01, 0.3];
-    let points_per_level = vec![1000, 1000, 200, 50];
-    let radii = vec![5000., 1000., 100., 20.];
-    let mut g = hierachical_delaunay::generate_hierachical_delaunay(
-        &city_percentage,
-        &points_per_level,
-        &radii,
+    let mut g = hierachical_delaunay::pruned_hierachical_delaunay(
+        &[1.0, 0.001, 0.01, 0.3],
+        &[1000, 1000, 200, 50],
+        &[5000., 1000., 100., 20.],
     );
-    prune_graph(&mut g, 2.0);
-    //
-    //g.visualize("hierachical_delaunay");
-    //g.graph.recurse_separator(Fast, None);
-    //
-
-    //let s = g.inertial_flowcutter("tmp");
-    //print_binned_statistic(s, 10);
 }

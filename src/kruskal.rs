@@ -3,7 +3,10 @@ use petgraph::unionfind::UnionFind;
 use rayon::prelude::*;
 use rstar::PointDistance;
 
-use crate::graph::{geometric_graph::GeometricGraph, Graph};
+use crate::{
+    graph::{geometric_graph::GeometricGraph, Graph},
+    library,
+};
 
 impl GeometricGraph {
     pub fn get_mst(&self) -> GeometricGraph {
@@ -34,6 +37,11 @@ impl GeometricGraph {
 pub fn get_mst_points(points: &[Point]) -> GeometricGraph {
     let g = crate::graph::delaunay::delaunay(points);
     g.get_mst()
+}
+
+pub fn get_mst(n: usize) -> GeometricGraph {
+    let points = library::random_points_in_circle(Point::new(1000.0, 1000.), 100.0, n);
+    get_mst_points(&points)
 }
 
 #[cfg(test)]

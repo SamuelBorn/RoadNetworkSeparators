@@ -157,7 +157,11 @@ impl Graph {
 
     pub fn save_metis(&self, file: &Path) {
         let mut res = String::new();
-        res.push_str(&format!("{} {}\n", self.get_num_nodes(), self.get_num_edges()));
+        res.push_str(&format!(
+            "{} {}\n",
+            self.get_num_nodes(),
+            self.get_num_edges()
+        ));
         for neighbors in &self.data {
             for neighbor in neighbors {
                 res.push_str(&format!("{} ", neighbor + 1));
@@ -535,6 +539,16 @@ impl Graph {
         let (furthest_node, _) = self.get_furthest_node(0);
         let (_, diameter) = self.get_furthest_node(furthest_node);
         diameter
+    }
+
+    pub fn recurse_diameter(&self) {
+        let mut g = self.clone();
+        while g.get_num_nodes() > 100 {
+            println!("{} {}", g.get_num_nodes(), g.get_diameter());
+            let sep = g.get_separator_wrapper(separator::Mode::Fast);
+            let sub = g.get_subgraphs(&sep);
+            g = sub.into_iter().max_by_key(|g| g.get_num_nodes()).unwrap();
+        }
     }
 
     pub fn get_degree(&self, u: usize) -> usize {
