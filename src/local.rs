@@ -43,8 +43,9 @@ pub fn generate_local_graph_all(n: usize, m: usize) -> Graph {
         .into_par_iter()
         .map(|i| {
             let mut distances = g.bfs(i);
-            distances[i] = usize::MAX;
-            let w = distances.into_iter().map(|d| 1.0 / d as f64);
+            distances[i] = 1;
+            let mut w = distances.into_iter().map(|d| 1.0 / (d * d * d) as f64).collect::<Vec<_>>();
+            w[i] = 0.0;
             WeightedIndex::new(w).unwrap()
         })
         .collect::<Vec<_>>();
@@ -184,8 +185,8 @@ mod tests {
     #[test]
     fn bulk_random_local() {
         (1..=10).into_iter().for_each(|i| {
-            let n = 100000 * i;
-            let m = 125000 * i;
+            let n = 10000 * i;
+            let m = 12500 * i;
             let g = generate_local_graph_all(n, m);
             let size = g.get_separator_size(crate::separator::Mode::Eco);
             println!("{} {}", n, size);
