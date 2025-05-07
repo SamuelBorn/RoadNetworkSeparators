@@ -46,7 +46,7 @@ pub fn generate_local_graph_all(n: usize, m: usize) -> Graph {
             distances[i] = 1;
             let mut w = distances
                 .into_iter()
-                .map(|d| 1.0 / (d as f64).powf(2.7))
+                .map(|d| 1.0 / (d as f64).powf(3.0))
                 .collect::<Vec<_>>();
             w[i] = 0.0;
             WeightedIndex::new(w).unwrap()
