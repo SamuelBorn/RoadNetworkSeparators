@@ -1,5 +1,6 @@
-use geo::Point;
+use geo::{Distance, Euclidean, Point};
 use petgraph::unionfind::UnionFind;
+use rand::Rng;
 use rayon::prelude::*;
 use rstar::PointDistance;
 
@@ -7,6 +8,39 @@ use crate::{
     graph::{geometric_graph::GeometricGraph, Graph},
     library,
 };
+
+pub struct Point3D {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
+impl Point3D {
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
+        Point3D { x, y, z }
+    }
+
+    pub fn random() -> Self {
+        let rng = &mut rand::thread_rng();
+        Point3D::new(
+            rng.gen_range(1.0..1000.0),
+            rng.gen_range(1.0..1000.0),
+            rng.gen_range(1.0..1000.0),
+        )
+    }
+
+    pub fn distance_2(&self, other: &Point3D) -> f64 {
+        (self.x - other.x).powi(2) + (self.y - other.y).powi(2) + (self.z - other.z).powi(2)
+    }
+
+    pub fn distance(&self, other: &Point3D) -> f64 {
+        self.distance_2(other).sqrt()
+    }
+
+    pub fn to_array(&self) -> [f64; 3] {
+        [self.x, self.y, self.z]
+    }
+}
 
 impl GeometricGraph {
     pub fn get_mst(&self) -> GeometricGraph {
@@ -44,6 +78,39 @@ pub fn get_mst(n: usize) -> GeometricGraph {
     get_mst_points(&points)
 }
 
+pub fn kruskal3d_points(points: &[Point3D]) -> Graph {
+    let n = points.len();
+    let mut distances = (0..n)
+        .into_par_iter()
+        .flat_map(|i| {
+            (i + 1..n)
+                .map(|j| (i, j, points[i].distance_2(&points[j])))
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    distances.par_sort_unstable_by(|a, b| a.2.total_cmp(&b.2));
+
+    let mut uf: UnionFind<usize> = UnionFind::new(n);
+    let mut g = Graph::with_node_count(n);
+    let mut num_edges = 0;
+    for (u, v, _) in distances {
+        if uf.union(u, v) {
+            g.add_edge(u, v);
+            num_edges += 1;
+            if num_edges == n - 1 {
+                break;
+            }
+        }
+    }
+
+    g
+}
+
+pub fn kruskal3d(n: usize) -> (Graph, Vec<Point3D>) {
+    let points = (0..n).map(|_| Point3D::random()).collect::<Vec<_>>();
+    (kruskal3d_points(&points), points)
+}
+
 #[cfg(test)]
 mod tests {
     use std::path::Path;
@@ -52,7 +119,7 @@ mod tests {
 
     #[test]
     fn test_get_mst() {
-        let g = GeometricGraph::from_edges_usize(&vec![
+        let g = GeometricGraph::from_edges_usize(&[
             ((0, 0), (0, 1)),
             ((0, 0), (2, 0)),
             ((0, 1), (2, 3)),
@@ -132,5 +199,11 @@ mod tests {
             .collect::<Vec<_>>();
         let mst = get_mst_points(&points);
         mst.save(Path::new("./output/tmp/kruskal_100k")).unwrap();
+    }
+
+    #[test]
+    fn simple_kruskal_3d() {
+        let (g, points) = kruskal3d(10_000);
+        g.recurse_diameter();
     }
 }
