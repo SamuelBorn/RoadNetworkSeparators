@@ -171,6 +171,12 @@ impl Graph {
         self.data[i].contains(&j)
     }
 
+    pub fn add_edges(&mut self, edges: &[(usize, usize)]) {
+        for (i, j) in edges {
+            self.add_edge(*i, *j);
+        }
+    }
+
     pub fn add_edge(&mut self, i: usize, j: usize) {
         self.data[i].insert(j);
         self.data[j].insert(i);

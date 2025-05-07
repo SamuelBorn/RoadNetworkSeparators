@@ -6,6 +6,7 @@ pub mod library;
 pub mod local;
 pub mod random_set;
 pub mod separator;
+pub mod lca;
 
 use cch::{compute_separator_sizes_from_order, get_top_level_separator};
 use geo::Point;

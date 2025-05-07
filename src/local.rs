@@ -16,6 +16,7 @@ use crate::graph::geometric_graph::GeometricGraph;
 use crate::graph::tree;
 use crate::graph::Graph;
 use crate::kruskal::get_mst_points;
+use crate::lca;
 use crate::library;
 
 type IndexedPoint = GeomWithData<Point, usize>;
@@ -38,34 +39,58 @@ pub fn generate_random_connected(n: usize, m: usize) -> Graph {
 }
 
 pub fn generate_local_graph_all(n: usize, m: usize) -> Graph {
+    let rng = &mut rand::thread_rng();
     let mut g = tree::generate_random_tree(n);
-    let weights = (0..n)
-        .into_par_iter()
+    let additional_edges = m - (n - 1);
+    let vs = (0..additional_edges)
+        .map(|_| rng.gen_range(0..n))
+        .collect::<Vec<_>>();
+    let edges = (0..additional_edges)
         .map(|i| {
-            let mut distances = g.bfs(i);
-            distances[i] = 1;
+            let v = vs[i];
+            let mut distances = g.bfs(v);
+            distances[v] = 1;
             let mut w = distances
                 .into_iter()
                 .map(|d| 1.0 / (d as f64).powf(3.0))
                 .collect::<Vec<_>>();
-            w[i] = 0.0;
-            WeightedIndex::new(w).unwrap()
+            w[v] = 0.0;
+            let u = WeightedIndex::new(w).unwrap().sample(rng);
+            (u, v)
         })
         .collect::<Vec<_>>();
 
-    let mut edge_count = n - 1;
+    g.add_edges(&edges);
+    g
+}
+
+pub fn generate_local_graph_all_lca(n: usize, m: usize) -> Graph {
     let rng = &mut rand::thread_rng();
+    let mut g = tree::generate_random_tree(n);
+    let lca = lca::LcaUtil::new(&g);
+    let additional_edges = m - (n - 1);
+    let vs = (0..additional_edges)
+        .map(|_| rng.gen_range(0..n))
+        .collect::<Vec<_>>();
+    let edges = (0..additional_edges)
+        .map(|i| {
+            let v = vs[i];
+            let mut distances = (0..n)
+                .into_par_iter()
+                .map(|i| lca.distance(v, i))
+                .collect::<Vec<_>>();
+            distances[v] = 1;
+            let mut w = distances
+                .into_iter()
+                .map(|d| 1.0 / (d as f64).powf(3.0))
+                .collect::<Vec<_>>();
+            w[v] = 0.0;
+            let u = WeightedIndex::new(w).unwrap().sample(rng);
+            (u, v)
+        })
+        .collect::<Vec<_>>();
 
-    while edge_count < m {
-        let u = rand::thread_rng().gen_range(0..n);
-        let distribution = &weights[u];
-        let v = distribution.sample(rng);
-        if !g.has_edge(u, v) && u != v {
-            g.add_edge(u, v);
-            edge_count += 1;
-        }
-    }
-
+    g.add_edges(&edges);
     g
 }
 
@@ -131,7 +156,7 @@ pub fn generate_local_points(n: usize, m: usize) -> GeometricGraph {
 
 #[cfg(test)]
 mod tests {
-    use std::vec;
+    use std::{time::Instant, vec};
 
     use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
@@ -196,5 +221,19 @@ mod tests {
                 let g = generate_local_graph_all(n, m);
                 g.recurse_separator(crate::separator::Mode::Fast, None);
             });
+    }
+
+    #[test]
+    fn time_random_tree_local() {
+        let n = 10_000;
+        let m = 12_500;
+
+        let now = Instant::now();
+        let g = generate_local_graph_all(n, m);
+        println!("Time taken: {:?}", now.elapsed());
+
+        let now = Instant::now();
+        let g = generate_local_graph_all_lca(n, m);
+        println!("Time taken: {:?}", now.elapsed());
     }
 }
