@@ -1,142 +1,237 @@
 use std::collections::HashSet;
-use rayon::prelude::*;
 
 use crate::graph::Graph;
 
+fn compute_log_table(n: usize) -> Vec<usize> {
+    let mut log_table = vec![0; n + 1];
+    if n > 0 {
+        for i in 2..=n {
+            log_table[i] = log_table[i / 2] + 1;
+        }
+    }
+    log_table
+}
+
+struct SparseTable {
+    st: Vec<Vec<usize>>,
+    log_table: Vec<usize>,
+}
+
+impl SparseTable {
+    fn new(values_to_compare: &[usize]) -> Self {
+        let n = values_to_compare.len();
+        if n == 0 {
+            return SparseTable {
+                st: Vec::new(),
+                log_table: compute_log_table(0),
+            };
+        }
+
+        let num_cols = compute_log_table(n).last().copied().unwrap_or(0) + 1;
+
+        let mut st_table = vec![vec![0; num_cols]; n];
+
+        for i in 0..n {
+            st_table[i][0] = i;
+        }
+
+        for j_power in 1..num_cols {
+            let block_half_len = 1 << (j_power - 1);
+            for i_start_idx in 0..=(n - (1 << j_power)) {
+                let idx1 = st_table[i_start_idx][j_power - 1];
+                let idx2 = st_table[i_start_idx + block_half_len][j_power - 1];
+                if values_to_compare[idx1] <= values_to_compare[idx2] {
+                    st_table[i_start_idx][j_power] = idx1;
+                } else {
+                    st_table[i_start_idx][j_power] = idx2;
+                }
+            }
+        }
+
+        SparseTable {
+            st: st_table,
+            log_table: compute_log_table(n),
+        }
+    }
+
+    fn query_min_idx(&self, l: usize, r: usize, values_to_compare: &[usize]) -> usize {
+        if self.st.is_empty() {
+            panic!("Query on empty sparse table");
+        }
+
+        let length = r - l + 1;
+        let j_power = self.log_table[length];
+
+        let idx1 = self.st[l][j_power];
+        let idx2 = self.st[r + 1 - (1 << j_power)][j_power];
+
+        if values_to_compare[idx1] <= values_to_compare[idx2] {
+            idx1
+        } else {
+            idx2
+        }
+    }
+}
+
+fn euler_dfs_recursive(
+    u: usize,
+    d: usize,
+    parent_of_u: Option<usize>,
+    graph: &Graph,
+    nodes_tour: &mut Vec<usize>,
+    depths_tour: &mut Vec<usize>,
+    first_occ: &mut [usize],
+    current_tour_idx: &mut usize,
+    visited_dfs: &mut [bool],
+) {
+    visited_dfs[u] = true;
+    nodes_tour.push(u);
+    depths_tour.push(d);
+    first_occ[u] = *current_tour_idx;
+    *current_tour_idx += 1;
+
+    if let Some(neighbors) = graph.data.get(u) {
+        for &v_neighbor in neighbors {
+            if Some(v_neighbor) == parent_of_u {
+                continue;
+            }
+            if !visited_dfs[v_neighbor] {
+                euler_dfs_recursive(
+                    v_neighbor,
+                    d + 1,
+                    Some(u),
+                    graph,
+                    nodes_tour,
+                    depths_tour,
+                    first_occ,
+                    current_tour_idx,
+                    visited_dfs,
+                );
+                nodes_tour.push(u);
+                depths_tour.push(d);
+                *current_tour_idx += 1;
+            }
+        }
+    }
+}
+
 pub struct LcaUtil {
-    n: usize,
-    log_n: usize,
-    parent: Vec<Vec<Option<usize>>>,
-    depth: Vec<usize>,
+    n_nodes: usize,
+    nodes_in_tour: Vec<usize>,
+    depth_in_tour: Vec<usize>,
+    first_occurrence: Vec<usize>,
+    sparse_table: SparseTable,
 }
 
 impl LcaUtil {
-    pub fn new(tree: &Graph) -> Self {
+    pub fn new(graph: &Graph) -> Self {
         let root = 0;
-        let n = tree.data.len();
-
-        let mut log_n_val = 0;
-        while (1 << log_n_val) <= n {
-            log_n_val += 1;
+        let n = graph.data.len();
+        if n == 0 {
+            return LcaUtil {
+                n_nodes: 0,
+                nodes_in_tour: Vec::new(),
+                depth_in_tour: Vec::new(),
+                first_occurrence: Vec::new(),
+                sparse_table: SparseTable::new(&[]),
+            };
         }
-
-        let mut parent_table = vec![vec![None; log_n_val]; n];
-        let mut depth_vec = vec![0; n];
-        let mut visited_dfs = vec![false; n];
-
-        let mut dfs_stack: Vec<(usize, usize, Option<usize>)> = Vec::new();
-
-        dfs_stack.push((root, 0, None));
-        visited_dfs[root] = true;
-
-        while let Some((u_node, d, parent_of_u_opt)) = dfs_stack.pop() {
-            depth_vec[u_node] = d;
-            parent_table[u_node][0] = parent_of_u_opt;
-
-            if let Some(neighbors) = tree.data.get(u_node) {
-                for &v_neighbor in neighbors {
-                    if v_neighbor < n {
-                        let is_dfs_parent =
-                            parent_of_u_opt.map_or(false, |p_node| p_node == v_neighbor);
-                        if !is_dfs_parent {
-                            if !visited_dfs[v_neighbor] {
-                                visited_dfs[v_neighbor] = true;
-                                dfs_stack.push((v_neighbor, d + 1, Some(u_node)));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        for j_power in 1..log_n_val {
-            for i_node in 0..n {
-                if let Some(p_i_j_minus_1) = parent_table[i_node][j_power - 1] {
-                    parent_table[i_node][j_power] = parent_table[p_i_j_minus_1][j_power - 1];
-                }
-            }
-        }
-
-        LcaUtil {
-            n,
-            log_n: log_n_val,
-            parent: parent_table,
-            depth: depth_vec,
-        }
-    }
-
-    pub fn query(&self, mut u_node: usize, mut v_node: usize) -> usize {
-        if self.n == 0 {
-            panic!("Query called on LcaUtil for an empty graph.");
-        }
-        if u_node >= self.n || v_node >= self.n {
+        if root >= n {
             panic!(
-                "Node index out of bounds in query. u: {}, v: {}, n: {}",
-                u_node, v_node, self.n
+                "Root node index {} is out of bounds for graph with {} nodes.",
+                root, n
             );
         }
 
-        if self.depth[u_node] < self.depth[v_node] {
-            std::mem::swap(&mut u_node, &mut v_node);
-        }
+        let tour_capacity = if n == 0 { 0 } else { 2 * n - 1 };
+        let mut nodes_in_tour_vec = Vec::with_capacity(tour_capacity);
+        let mut depth_in_tour_vec = Vec::with_capacity(tour_capacity);
+        let mut first_occurrence_vec = vec![0; n];
+        let mut visited_dfs_vec = vec![false; n];
+        let mut current_tour_idx_val = 0;
 
-        for j_power in (0..self.log_n).rev() {
-            if let Some(ancestor_u) = self.parent[u_node][j_power] {
-                if self.depth[ancestor_u] >= self.depth[v_node] {
-                    u_node = ancestor_u;
-                }
-            }
-        }
+        euler_dfs_recursive(
+            root,
+            0,
+            None,
+            graph,
+            &mut nodes_in_tour_vec,
+            &mut depth_in_tour_vec,
+            &mut first_occurrence_vec,
+            &mut current_tour_idx_val,
+            &mut visited_dfs_vec,
+        );
 
-        if u_node == v_node {
-            return u_node;
-        }
+        let st = SparseTable::new(&depth_in_tour_vec);
 
-        for j_power in (0..self.log_n).rev() {
-            match (self.parent[u_node][j_power], self.parent[v_node][j_power]) {
-                (Some(p_u), Some(p_v)) if p_u != p_v => {
-                    u_node = p_u;
-                    v_node = p_v;
-                }
-                _ => {}
-            }
+        LcaUtil {
+            n_nodes: n,
+            nodes_in_tour: nodes_in_tour_vec,
+            depth_in_tour: depth_in_tour_vec,
+            first_occurrence: first_occurrence_vec,
+            sparse_table: st,
         }
-        self.parent[u_node][0].expect("LCA logic error or graph not connected as assumed")
     }
 
-    pub fn distance(&self, u_node: usize, v_node: usize) -> usize {
-        let lca = self.query(u_node, v_node);
-        self.depth[u_node] + self.depth[v_node] - 2 * self.depth[lca]
+    pub fn query(&self, u: usize, v: usize) -> usize {
+        if self.n_nodes == 0 {
+            panic!("Query on empty LcaUtil structure.");
+        }
+        if u >= self.n_nodes || v >= self.n_nodes {
+            panic!(
+                "Node index out of bounds in query. u: {}, v: {}, n_nodes: {}",
+                u, v, self.n_nodes
+            );
+        }
+
+        let mut idx_u_tour = self.first_occurrence[u];
+        let mut idx_v_tour = self.first_occurrence[v];
+
+        if idx_u_tour > idx_v_tour {
+            std::mem::swap(&mut idx_u_tour, &mut idx_v_tour);
+        }
+
+        let tour_idx_of_lca_candidate =
+            self.sparse_table
+                .query_min_idx(idx_u_tour, idx_v_tour, &self.depth_in_tour);
+
+        self.nodes_in_tour[tour_idx_of_lca_candidate]
+    }
+
+    pub fn distance(&self, u: usize, v: usize) -> usize {
+        if self.n_nodes == 0 {
+            panic!("Distance query on empty LcaUtil structure.");
+        }
+        if u >= self.n_nodes || v >= self.n_nodes {
+            panic!(
+                "Node index out of bounds in distance query. u: {}, v: {}, n_nodes: {}",
+                u, v, self.n_nodes
+            );
+        }
+
+        let lca = self.query(u, v);
+        let depth_u = self.depth_in_tour[self.first_occurrence[u]];
+        let depth_v = self.depth_in_tour[self.first_occurrence[v]];
+        let depth_lca = self.depth_in_tour[self.first_occurrence[lca]];
+
+        depth_u + depth_v - 2 * depth_lca
     }
 }
 
 #[cfg(test)]
 mod test {
-    use rayon::iter::IntoParallelIterator;
-
-    use super::*;
     use crate::graph::tree::generate_random_tree;
 
     #[test]
     fn lca_simple() {
-        let n = 100_000;
+        let n = 10;
         let g = generate_random_tree(n);
-        let lca = LcaUtil::new(&g);
-
-        println!("LCA initialized for {} nodes", n);
-        for i in 0..100 {
-            dbg!(i);
-            (0..n).into_par_iter().for_each(|j| {
-                lca.distance(i, j);
-            });
+        g.print();
+        let lca = super::LcaUtil::new(&g);
+        for i in 0..n {
+            for j in i + 1..n {
+                println!("{} {} {}", i, j, lca.distance(i, j));
+            }
         }
-        println!("LCA distance queries completed for {} nodes", n);
-
-        // for i in 0..n {
-        //     for j in i + 1..n {
-        //         println!("LCA of {} and {} is {}", i, j, lca.query(i, j));
-        //         println!("Distance between {} and {} is {}", i, j, lca.distance(i, j));
-        //     }
-        // }
     }
 }

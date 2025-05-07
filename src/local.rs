@@ -218,15 +218,15 @@ mod tests {
             .into_iter()
             .for_each(|n| {
                 let m = (1.25 * n as f64) as usize;
-                let g = generate_local_graph_all(n, m);
+                let g = generate_local_graph_all_lca(n, m);
                 g.recurse_separator(crate::separator::Mode::Fast, None);
             });
     }
 
     #[test]
     fn time_random_tree_local() {
-        let n = 10_000;
-        let m = 12_500;
+        let n = 20_000;
+        let m = (n * 5) / 4;
 
         let now = Instant::now();
         let g = generate_local_graph_all(n, m);
