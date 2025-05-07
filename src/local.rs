@@ -44,7 +44,10 @@ pub fn generate_local_graph_all(n: usize, m: usize) -> Graph {
         .map(|i| {
             let mut distances = g.bfs(i);
             distances[i] = 1;
-            let mut w = distances.into_iter().map(|d| 1.0 / (d * d * d) as f64).collect::<Vec<_>>();
+            let mut w = distances
+                .into_iter()
+                .map(|d| 1.0 / (d as f64).powf(2.7))
+                .collect::<Vec<_>>();
             w[i] = 0.0;
             WeightedIndex::new(w).unwrap()
         })
@@ -128,6 +131,8 @@ pub fn generate_local_points(n: usize, m: usize) -> GeometricGraph {
 
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
     use crate::graph::tree::generate_random_tree;
@@ -184,12 +189,12 @@ mod tests {
 
     #[test]
     fn bulk_random_local() {
-        (1..=10).into_iter().for_each(|i| {
-            let n = 10000 * i;
-            let m = 12500 * i;
-            let g = generate_local_graph_all(n, m);
-            let size = g.get_separator_size(crate::separator::Mode::Eco);
-            println!("{} {}", n, size);
-        });
+        vec![10_000, 30_000, 60_000, 100_000, 200_000]
+            .into_iter()
+            .for_each(|n| {
+                let m = (1.25 * n as f64) as usize;
+                let g = generate_local_graph_all(n, m);
+                g.recurse_separator(crate::separator::Mode::Fast, None);
+            });
     }
 }
