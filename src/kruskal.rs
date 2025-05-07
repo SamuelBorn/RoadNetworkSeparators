@@ -1,13 +1,15 @@
 use geo::{Distance, Euclidean, Point};
 use petgraph::unionfind::UnionFind;
-use rand::Rng;
+use rand::{thread_rng, Rng};
 use rayon::prelude::*;
-use rstar::PointDistance;
+use rstar::{primitives::GeomWithData, PointDistance};
 
 use crate::{
     graph::{geometric_graph::GeometricGraph, Graph},
     library,
 };
+
+type IndexedPoint3D = GeomWithData<[f64; 3], usize>;
 
 pub struct Point3D {
     pub x: f64,
@@ -39,6 +41,12 @@ impl Point3D {
 
     pub fn to_array(&self) -> [f64; 3] {
         [self.x, self.y, self.z]
+    }
+
+    pub fn almost_equal(&self, other: &Point3D) -> bool {
+        (self.x - other.x).abs() < 1e-7
+            && (self.y - other.y).abs() < 1e-7
+            && (self.z - other.z).abs() < 1e-7
     }
 }
 
@@ -79,15 +87,27 @@ pub fn get_mst(n: usize) -> GeometricGraph {
 }
 
 pub fn kruskal3d_points(points: &[Point3D]) -> Graph {
+    let mut rng = &mut rand::thread_rng();
     let n = points.len();
+
+    let rtee_data = points
+        .iter()
+        .enumerate()
+        .map(|(i, p)| IndexedPoint3D::new(p.to_array(), i))
+        .collect::<Vec<_>>();
+    let rtree = rstar::RTree::bulk_load(rtee_data);
+
     let mut distances = (0..n)
         .into_par_iter()
-        .flat_map(|i| {
-            (i + 1..n)
-                .map(|j| (i, j, points[i].distance_2(&points[j])))
+        .flat_map(|u| {
+            let mut near = rtree.nearest_neighbor_iter(&points[u].to_array());
+            near.skip(1)
+                .take(10)
+                .map(|x| (u, x.data, points[u].distance_2(&points[x.data])))
                 .collect::<Vec<_>>()
         })
         .collect::<Vec<_>>();
+
     distances.par_sort_unstable_by(|a, b| a.2.total_cmp(&b.2));
 
     let mut uf: UnionFind<usize> = UnionFind::new(n);
@@ -203,7 +223,16 @@ mod tests {
 
     #[test]
     fn simple_kruskal_3d() {
-        let (g, points) = kruskal3d(10_000);
-        g.recurse_diameter();
+        // let (g, points) = kruskal3d(10_000);
+        // g.recurse_diameter();
+
+        let instances = 30;
+        let mut avg = 0.0;
+        for i in 0..instances {
+            let (g, points) = kruskal3d(10_000);
+            let diameter = g.get_diameter();
+            avg += diameter as f64 / instances as f64;
+        }
+        println!("{}", avg)
     }
 }
