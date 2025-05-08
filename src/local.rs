@@ -174,12 +174,13 @@ mod tests {
 
     #[test]
     fn test_generate_random_connected() {
-        let n = 12000;
-        let m = 15000;
-        // let g = generate_random_connected(n, m);
-        let g = generate_random_tree(n);
-
-        dbg!(g.get_diameter());
+        let n = 120000;
+        let m = 150000;
+        let g = generate_random_connected(n, m);
+        g.info();
+        let sep = g.get_separator_wrapper(crate::separator::Mode::Fast);
+        let subgraphs = g.get_subgraphs(&sep);
+        subgraphs.iter().for_each(|g| g.info());
     }
 
     #[test]
