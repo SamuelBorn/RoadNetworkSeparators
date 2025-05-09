@@ -16,6 +16,18 @@ pub fn pruned_hierachical_delaunay(
     g
 }
 
+pub fn random_pruned_hierachical_delaunay(
+    city_percentage: &[f64],
+    points_per_level: &[usize],
+    radii: &[f64],
+) -> GeometricGraph {
+    let mut g = generate_hierachical_delaunay(city_percentage, points_per_level, radii);
+    let goal_edges = g.graph.get_num_nodes() * 5 / 4;
+    let edges_to_remove = g.graph.get_num_edges() - goal_edges;
+    g.graph.remove_random_edges(edges_to_remove);
+    g.largest_connected_component()
+}
+
 pub fn generate_hierachical_delaunay(
     city_percentage: &[f64],
     points_per_level: &[usize],
