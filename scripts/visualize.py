@@ -19,10 +19,10 @@ def get_max_x(args):
 
 
 def get_values(filename, args):
-    data = [tuple(map(float, line.split())) for line in open(filename)]
+    x, y = np.loadtxt(filename, unpack=True)
     if not args.keep_outliers:
-        data = [x for x in data if x[0] < 10_000_000]
-    x, y = zip(*data)
+        y = y[x < 10_000_000]
+        x = x[x < 10_000_000]
     return x, y
 
 
@@ -72,7 +72,12 @@ def visualize(args):
     if args.cbrt:
         plot_function(np.cbrt, max_x, r"$x^{1/3}$", linestyle="-.")
     if args.europe:
-        plot_function(lambda x: 0.3411 * x**0.3702, max_x, r"Observed Europe Fit $(\approx 0.34\cdot x^{0.37}$)", linestyle=":")
+        plot_function(
+            lambda x: 0.3411 * x**0.3702,
+            max_x,
+            r"Observed Europe Fit $(\approx 0.34\cdot x^{0.37}$)",
+            linestyle=":",
+        )
 
     # plot_function(lambda x: 0.546995 * x**(0.2676), max_x, r"$\log_2 y = 0.2676 \cdot \log_2 x - 0.8704$", linestyle=":", color="purple", alpha=0.25)
     # plot_function(lambda x: 0.300993 * x**(0.365), max_x, r"$\log_2 y = 0.3650 \cdot \log_2 x - 1.7322$", linestyle="-", color="brown", alpha=0.25)
