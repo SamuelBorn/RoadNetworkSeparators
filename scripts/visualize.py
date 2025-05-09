@@ -135,7 +135,7 @@ def main():
     parser.add_argument("--fit-line", action="store_true")
     parser.add_argument("--europe", action="store_true")
     parser.add_argument("--labels", type=str, nargs="*")
-    parser.add_argument("--cutoff", type=int, default=1000)
+    parser.add_argument("--cutoff", type=int, default=512)
     parser.add_argument("files", type=Path, nargs="+")
 
     args = parser.parse_args()

@@ -19,13 +19,13 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let mut g = hierachical_delaunay::pruned_hierachical_delaunay(
-        &[1.0, 0.02, 0.7, 0.9],
-        &[200, 20, 50, 20],
-        &[5000., 600., 500., 50.],
+    let mut g = hierachical_delaunay::random_pruned_hierachical_delaunay(
+        &[1.0, 0.01, 0.5, 0.5],
+        &[500, 30, 120, 100],
+        &[5000., 500., 350., 20.],
     );
     g.graph.info();
     // g.visualize("hierachical_delaunay");
-    g.inertial_flowcutter("hierachical_delaunay");
     // g.graph.recurse_separator(Fast, None);
+    g.inertial_flowcutter("hierachical_delaunay");
 }
