@@ -541,12 +541,26 @@ impl Graph {
         diameter
     }
 
-    pub fn recurse_diameter(&self) {
+    pub fn recurse_diameter(&self, file: Option<&Path>) {
+        if let Some(x) = file {
+            fs::write(x, "");
+        }
         let mut g = self.clone();
+        println!("{} {}", g.get_num_nodes(), g.get_diameter());
+        library::optional_append_to_file(
+            file,
+            &format!("{} {}\n", g.get_num_nodes(), g.get_diameter()),
+        );
         while g.get_num_nodes() > 100 {
-            println!("{} {}", g.get_num_nodes(), g.get_diameter());
             let sep = g.get_separator_wrapper(separator::Mode::Fast);
             let sub = g.get_subgraphs(&sep);
+            sub.par_iter().for_each(|g| {
+                println!("{} {}", g.get_num_nodes(), g.get_diameter());
+                library::optional_append_to_file(
+                    file,
+                    &format!("{} {}\n", g.get_num_nodes(), g.get_diameter()),
+                );
+            });
             g = sub.into_iter().max_by_key(|g| g.get_num_nodes()).unwrap();
         }
     }

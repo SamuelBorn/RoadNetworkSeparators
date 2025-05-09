@@ -133,6 +133,7 @@ impl Graph {
         self.get_subgraphs_map(separator)
             .iter()
             .map(|x| get_graph(&x))
+            .filter(|g| g.get_num_nodes() > 10)
             .collect()
     }
 

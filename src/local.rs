@@ -221,7 +221,7 @@ mod tests {
 
     #[test]
     fn time_random_tree_local() {
-        let n = 20_000;
+        let n = 10_000;
         let m = (n * 5) / 4;
 
         let now = Instant::now();

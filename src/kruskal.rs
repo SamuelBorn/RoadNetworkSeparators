@@ -86,6 +86,14 @@ pub fn get_mst(n: usize) -> GeometricGraph {
     get_mst_points(&points)
 }
 
+fn get_expected_max_mst_distance2(n: usize, side_length: f64) -> f64 {
+    const GAMMA: f64 = 0.5772156649015329;
+    let n_f64 = n as f64;
+    let res =
+        side_length * ((3.0 * (n_f64.ln() + GAMMA)) / (4.0 * std::f64::consts::PI * n_f64)).cbrt();
+    (res * 2.0).powi(2)
+}
+
 pub fn kruskal3d_points(points: &[Point3D]) -> Graph {
     let mut rng = &mut rand::thread_rng();
     let n = points.len();
@@ -97,17 +105,17 @@ pub fn kruskal3d_points(points: &[Point3D]) -> Graph {
         .collect::<Vec<_>>();
     let rtree = rstar::RTree::bulk_load(rtee_data);
 
+    // this assumes uniform distribution of points
+    let max_expected_distance2 = get_expected_max_mst_distance2(n, 999.0);
     let mut distances = (0..n)
         .into_par_iter()
-        .flat_map(|u| {
-            let mut near = rtree.nearest_neighbor_iter(&points[u].to_array());
-            near.skip(1)
-                .take(10)
-                .map(|x| (u, x.data, points[u].distance_2(&points[x.data])))
+        .flat_map(|v| {
+            rtree
+                .locate_within_distance(points[v].to_array(), max_expected_distance2)
+                .map(|u| (v, u.data, points[v].distance_2(&points[u.data])))
                 .collect::<Vec<_>>()
         })
         .collect::<Vec<_>>();
-
     distances.par_sort_unstable_by(|a, b| a.2.total_cmp(&b.2));
 
     let mut uf: UnionFind<usize> = UnionFind::new(n);
@@ -223,16 +231,15 @@ mod tests {
 
     #[test]
     fn simple_kruskal_3d() {
-        // let (g, points) = kruskal3d(10_000);
-        // g.recurse_diameter();
-
-        let instances = 30;
-        let mut avg = 0.0;
-        for i in 0..instances {
-            let (g, points) = kruskal3d(10_000);
-            let diameter = g.get_diameter();
-            avg += diameter as f64 / instances as f64;
+        for i in [10_000, 20_000, 50_000, 70_000, 100_000, 500_000, 1_000_000] {
+            let g = kruskal3d(i);
+            println!("{} {}", i, g.0.get_diameter());
         }
-        println!("{}", avg)
+    }
+
+    #[test]
+    fn recurse_kruskal_3d() {
+        let g = kruskal3d(10_000_000).0;
+        g.recurse_diameter(Some(Path::new("./output/diameter/kruskal_3d")));
     }
 }
