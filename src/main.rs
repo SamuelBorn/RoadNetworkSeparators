@@ -19,7 +19,7 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let mut g = hierachical_delaunay::random_pruned_hierachical_delaunay(
+    let mut g = hierachical_delaunay::pruned_hierachical_delaunay(
         &[1.0, 0.01, 0.5, 0.5],
         &[500, 30, 120, 100],
         &[5000., 500., 350., 20.],
