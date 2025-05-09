@@ -1,6 +1,6 @@
 use geo::{Distance, Euclidean, Point};
 use petgraph::unionfind::UnionFind;
-use rand::{thread_rng, Rng};
+use rand::{seq::SliceRandom, thread_rng, Rng};
 use rayon::prelude::*;
 use rstar::{primitives::GeomWithData, PointDistance};
 
@@ -131,6 +131,27 @@ pub fn kruskal3d_points(points: &[Point3D]) -> Graph {
         }
     }
 
+    // WARNING: SPAGHETTI CODE -- THIS SHOULD NOT BE HERE but in local.rs
+    // this is a hack to save time
+
+    let mut remaining_edges = (1.25 * n as f64) as usize - (n - 1);
+    while remaining_edges > 0 {
+        let v = rng.gen_range(0..n);
+        let vp = &points[v];
+
+        let options = rtree
+            .locate_within_distance(vp.to_array(), max_expected_distance2)
+            .map(|u| u.data)
+            .filter(|&u| u != v && !g.has_edge(v, u))
+            .collect::<Vec<_>>();
+
+        if !options.is_empty() {
+            let u = options.choose(rng).unwrap();
+            g.add_edge(v, *u);
+            remaining_edges -= 1;
+        }
+    }
+
     g
 }
 
@@ -241,5 +262,11 @@ mod tests {
     fn recurse_kruskal_3d() {
         let g = kruskal3d(10_000_000).0;
         g.recurse_diameter(Some(Path::new("./output/diameter/kruskal_3d")));
+    }
+
+    #[test]
+    fn kruskal_separators() {
+        let g = kruskal3d(1_000_000).0;
+        g.recurse_separator(crate::separator::Mode::Fast, Some(Path::new("./output/sep/kruskal_3d")));
     }
 }
