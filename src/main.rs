@@ -8,6 +8,8 @@ pub mod local;
 pub mod random_set;
 pub mod separator;
 
+use std::path::Path;
+
 use cch::{compute_separator_sizes_from_order, get_top_level_separator};
 use graph::example::{self, *};
 use graph::geometric_graph::GeometricGraph;
@@ -20,12 +22,18 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let g = hierachical_delaunay::pruned_hierachical_delaunay(
-        &[1.0, 0.01, 0.5, 0.5],
-        &[500, 30, 120, 100],
-        &[5000., 500., 350., 20.],
-    );
+    // let g = karlsruhe();
+    // g.save_pace(Path::new("./output/graphs/karlsruhe_pace"));
+    // let g = Graph::from_pace(Path::new("/home/born/Repos/flow-cutter/cool2"));
+    // g.info();
+    // let ord = (0..g.get_num_nodes()).collect::<Vec<_>>();
+    // compute_separator_sizes_from_order(&g, &ord, Path::new("./output/sep/karlsruhe_flow_cutter"));
 
+    let g = germany();
+    g.flowcutter("tmp");
+
+
+    return;
     for city_percentage in [0.1, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9] {
         let g = hierachical_delaunay::pruned_hierachical_delaunay(
             &[1.0, 0.01, city_percentage, 0.5],

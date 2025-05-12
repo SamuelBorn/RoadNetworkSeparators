@@ -10,6 +10,7 @@ use rayon::iter::ParallelIterator;
 use rayon::prelude::*;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
+use std::fmt::format;
 use std::hash::Hash;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -100,6 +101,22 @@ impl Graph {
         g
     }
 
+    pub fn from_pace(file: &Path) -> Self {
+        let edges = fs::read_to_string(file)
+            .unwrap()
+            .lines()
+            .skip(1)
+            .map(|line| {
+                let mut parts = line.split_whitespace();
+                let u = parts.next().unwrap().parse::<usize>().unwrap() - 1;
+                let v = parts.next().unwrap().parse::<usize>().unwrap() - 1;
+                (u, v)
+            })
+            .collect::<Vec<_>>();
+
+        Graph::from_edge_list(edges)
+    }
+
     pub fn info(&self) {
         println!(
             "n={}\tm={}\tdeg={:.4}\tconn:{}\tbi:{}",
@@ -167,6 +184,19 @@ impl Graph {
                 res.push_str(&format!("{} ", neighbor + 1));
             }
             res.push_str("\n");
+        }
+        fs::write(file, res).expect("Unable to write file");
+    }
+
+    pub fn save_pace(&self, file: &Path) {
+        let mut res = String::new();
+        res.push_str(&format!(
+            "p tw {} {}\n",
+            self.get_num_nodes(),
+            self.get_num_edges()
+        ));
+        for (u, v) in self.get_directed_edges() {
+            res.push_str(&format!("{} {}\n", u + 1, v + 1));
         }
         fs::write(file, res).expect("Unable to write file");
     }

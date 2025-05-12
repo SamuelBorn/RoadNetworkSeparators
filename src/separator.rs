@@ -8,6 +8,7 @@ use std::io::Write;
 use std::path::Path;
 use std::process::Command;
 use std::{fs, ptr};
+use tempfile::NamedTempFile;
 
 use chrono::format;
 use itertools::{Combinations, Itertools};
@@ -215,6 +216,42 @@ impl Graph {
             }
         }
     }
+
+    pub fn flowcutter(&self, name: &str) -> Vec<(usize, usize)> {
+        let tmp_graph = NamedTempFile::new().unwrap();
+        let tmp_stats = NamedTempFile::new().unwrap();
+        self.save_pace(tmp_graph.path());
+
+        Command::new("./console")
+            .arg("load_pace_graph")
+            .arg(tmp_graph.path())
+            .arg("reorder_nodes_in_flow_cutter_nested_dissection_order_with_separator_stats")
+            .arg(tmp_stats.path())
+            .current_dir("../flow-cutter")
+            .spawn()
+            .expect("Failed to execute flowcutter")
+            .wait()
+            .unwrap();
+
+        let sep = read_flowcutter_stats_file(tmp_stats.path());
+        let s = sep.iter().map(|(u,v)| format!("{} {}\n", u, v)).collect::<String>();
+        fs::write(format!("./output/sep/{}", name), s).unwrap();
+        sep
+    }
+}
+
+fn read_flowcutter_stats_file(file: &Path) -> Vec<(usize, usize)> {
+    fs::read_to_string(file)
+        .unwrap()
+        .lines()
+        .skip(1)
+        .map(|line| {
+            let parts = line.split(',').collect::<Vec<_>>();
+            let node_count = parts[0].parse::<usize>().unwrap();
+            let arc_count = parts[2].parse::<usize>().unwrap();
+            (node_count, arc_count)
+        })
+        .collect()
 }
 
 fn get_graph(g_map: &HashMap<usize, Vec<usize>>) -> Graph {
