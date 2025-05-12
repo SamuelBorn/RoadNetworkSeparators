@@ -6,8 +6,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import binned_statistic
 
-markers = ["x", "^", "o", "+", "v"]
-colors = ["#009682", "#df9b1b", "#4664aa", "#a3107c", "#88d548"]
+markers = ["x", "^", "o", "+", "v", "s", "D", "P", "*"]
+markers = markers * 10
+colors = list(plt.get_cmap("tab10").colors)
+colors = colors * 10
+colors[0] = "#009682"
 
 
 def get_max_x(args):
