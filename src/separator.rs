@@ -4,11 +4,12 @@ use rayon::iter::IntoParallelIterator;
 use rayon::{prelude::*, vec};
 use std::collections::VecDeque;
 use std::env;
+use std::fmt::format;
 use std::io::Write;
 use std::path::Path;
 use std::process::Command;
 use std::{fs, ptr};
-use tempfile::NamedTempFile;
+use tempfile::{NamedTempFile, TempDir};
 
 use chrono::format;
 use itertools::{Combinations, Itertools};
@@ -16,7 +17,7 @@ use itertools::{Combinations, Itertools};
 use crate::cch::compute_separator_sizes_from_order;
 use crate::graph::geometric_graph::GeometricGraph;
 use crate::graph::Graph;
-use crate::library::optional_append_to_file;
+use crate::library::{optional_append_to_file, read_text_vec, read_to_usize_vec};
 use crate::{cch, graph, library, separator};
 
 #[link(name = "kahip")]
@@ -257,6 +258,28 @@ impl Graph {
 
         let ord = read_kahip_order_file(Path::new("./dependencies/KaHIP/deploy/tmpnodeordering"));
         compute_separator_sizes_from_order(self, &ord, &Path::new("./output/sep").join(name))
+    }
+
+    pub fn metis(&self, name: &str) -> Vec<(usize, usize)> {
+        let tmp_dir = TempDir::new().unwrap();
+        let tmp_g = tmp_dir.path().join(name);
+        let tmp_ord = tmp_g.with_extension("iperm");
+
+        self.save_metis(tmp_g.as_path());
+
+        Command::new("ndmetis")
+            .arg(name)
+            .current_dir(tmp_dir.path())
+            // .arg("-ncuts=20")
+            .arg("-niter=1000")
+            .arg("-ufactor=30")
+            .spawn()
+            .expect("Failed to execute ndmetis")
+            .wait()
+            .expect("Failed to execute ndmetis");
+
+        let ord = read_text_vec::<usize>(&tmp_ord).unwrap();
+        compute_separator_sizes_from_order(self, &ord, &Path::new("./output/sep/").join(name))
     }
 }
 
