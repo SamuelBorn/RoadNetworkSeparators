@@ -13,6 +13,7 @@ use tempfile::NamedTempFile;
 use chrono::format;
 use itertools::{Combinations, Itertools};
 
+use crate::cch::compute_separator_sizes_from_order;
 use crate::graph::geometric_graph::GeometricGraph;
 use crate::graph::Graph;
 use crate::library::optional_append_to_file;
@@ -234,9 +235,28 @@ impl Graph {
             .unwrap();
 
         let sep = read_flowcutter_stats_file(tmp_stats.path());
-        let s = sep.iter().map(|(u,v)| format!("{} {}\n", u, v)).collect::<String>();
+        let s = sep
+            .iter()
+            .map(|(u, v)| format!("{} {}\n", u, v))
+            .collect::<String>();
         fs::write(format!("./output/sep/{}", name), s).unwrap();
         sep
+    }
+
+    pub fn kahip(&self, name: &str) -> Vec<(usize, usize)> {
+        let tmp_graph = NamedTempFile::new().unwrap();
+        self.save_metis(tmp_graph.path());
+
+        Command::new("./node_ordering")
+            .arg(tmp_graph.path())
+            .current_dir("./dependencies/KaHIP/deploy")
+            .spawn()
+            .expect("Failed to execute node_ordering")
+            .wait()
+            .unwrap();
+
+        let ord = read_kahip_order_file(Path::new("./dependencies/KaHIP/deploy/tmpnodeordering"));
+        compute_separator_sizes_from_order(self, &ord, &Path::new("./output/sep").join(name))
     }
 }
 
@@ -252,6 +272,24 @@ fn read_flowcutter_stats_file(file: &Path) -> Vec<(usize, usize)> {
             (node_count, arc_count)
         })
         .collect()
+}
+
+fn read_kahip_order_file(file: &Path) -> Vec<usize> {
+    let ord_inv = fs::read_to_string(file)
+        .unwrap()
+        .lines()
+        .skip(1)
+        .map(|line| {
+            let parts = line.split('\t').collect::<Vec<_>>();
+            parts[1].parse::<usize>().unwrap() - 1
+        })
+        .collect::<Vec<_>>();
+
+    let mut ord = vec![0; ord_inv.len()];
+    for (i, &x) in ord_inv.iter().enumerate() {
+        ord[x] = i;
+    }
+    ord
 }
 
 fn get_graph(g_map: &HashMap<usize, Vec<usize>>) -> Graph {

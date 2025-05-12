@@ -183,7 +183,7 @@ impl Graph {
             for neighbor in neighbors {
                 res.push_str(&format!("{} ", neighbor + 1));
             }
-            res.push_str("\n");
+            res.push('\n');
         }
         fs::write(file, res).expect("Unable to write file");
     }
