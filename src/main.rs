@@ -22,17 +22,36 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let x1 = 1000.;
-    let x2 = x1 / 50_f64.sqrt() * 2.;
-    let x3 = x2 / 50_f64.sqrt() * 1.5;
-    let x4 = x3 / 50_f64.sqrt() * 1.;
+    let g = tree::generate_random_tree(1000000);
 
-    let g = hierachical_delaunay::pruned_hierachical_delaunay(
-        &[1.0, 0.8, 0.2, 0.1],
-        &[50, 50, 50, 50],
-        &[x1, x2, x3, x4],
-    );
-    g.inertial_flowcutter("hierachical_delaunay_tmp");
+    // time bfs
+    let start = std::time::Instant::now();
+    for i in 0..10 {
+        let _ = g.bfs(i);
+    }
+    dbg!(&start.elapsed());
+
+    // time parallel bfs
+    let start = std::time::Instant::now();
+    for i in 0..10 {
+        let _ = g.bfs_parallel(i);
+    }
+    dbg!(&start.elapsed());
+    return;
+
+
+
+    // let x1 = 1000.;
+    // let x2 = x1 / 50_f64.sqrt() * 2.;
+    // let x3 = x2 / 50_f64.sqrt() * 1.5;
+    // let x4 = x3 / 50_f64.sqrt() * 1.;
+    //
+    // let g = hierachical_delaunay::pruned_hierachical_delaunay(
+    //     &[1.0, 0.4, 0.2, 0.1],
+    //     &[50, 50, 50, 50],
+    //     &[x1, x2, x3, x4],
+    // );
+    // g.inertial_flowcutter("hierachical_delaunay_tmp");
     // g.visualize("hierachical_delaunay_tmp");
 
     // for city_percentage in [0.1, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9] {
