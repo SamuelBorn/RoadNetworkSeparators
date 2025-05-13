@@ -26,15 +26,15 @@ fn main() {
 
     // time bfs
     let start = std::time::Instant::now();
-    for i in 0..10 {
+    for i in 0..3 {
         let _ = g.bfs(i);
     }
     dbg!(&start.elapsed());
 
     // time parallel bfs
     let start = std::time::Instant::now();
-    for i in 0..10 {
-        let _ = g.bfs_parallel(i);
+    for i in 0..3 {
+        let _ = g.bfs_bounded(i, 10_000);
     }
     dbg!(&start.elapsed());
     return;

@@ -10,6 +10,7 @@ use rayon::iter::ParallelIterator;
 use rayon::prelude::*;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
+use std::collections::VecDeque;
 use std::fmt::format;
 use std::hash::Hash;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -439,7 +440,7 @@ impl Graph {
     pub fn bfs(&self, start: usize) -> Vec<usize> {
         let mut distances = vec![usize::MAX; self.get_num_nodes()];
         distances[start] = 0;
-        let mut queue = std::collections::VecDeque::with_capacity(self.get_num_nodes() / 2);
+        let mut queue = std::collections::VecDeque::with_capacity(self.get_num_nodes().isqrt() * 2);
         queue.push_back(start);
 
         while let Some(u) = queue.pop_front() {
@@ -455,77 +456,54 @@ impl Graph {
         distances
     }
 
-    // warning: this is actually slower
-    pub fn bfs_parallel(&self, start: usize) -> Vec<usize> {
-        let num_nodes = self.data.len();
+    pub fn bfs_bounded(&self, start: usize, bound: usize) -> HashMap<usize, usize> {
+        let mut distances = HashMap::with_capacity(bound);
+        let mut queue = VecDeque::with_capacity(2 * self.get_num_nodes().isqrt());
+        queue.push_back((start, 0));
 
-        if num_nodes == 0 {
-            return Vec::new();
-        }
-
-        if start >= num_nodes {
-            panic!(
-                "Start node index {} is out of bounds for graph with {} nodes.",
-                start, num_nodes
-            );
-        }
-
-        let distances: Vec<std::sync::atomic::AtomicUsize> = (0..num_nodes)
-            .map(|_| std::sync::atomic::AtomicUsize::new(usize::MAX))
-            .collect();
-
-        distances[start].store(0, std::sync::atomic::Ordering::Relaxed);
-
-        let mut current_frontier: Vec<usize> = vec![start];
-        let mut current_dist_level = 0;
-
-        loop {
-            if current_frontier.is_empty() {
+        for i in 0..bound {
+            let item = queue.pop_front();
+            if item.is_none() {
                 break;
             }
 
-            // This requires `use rayon::prelude::*;` in the scope where this function is used.
-            let next_frontier: Vec<usize> = current_frontier
-                .par_iter() // Iterates over Vec<usize> in parallel
-                .flat_map(|&u_node_idx| {
-                    // For each node in the current frontier:
-                    // 1. Get its neighbors from the HashSet (self.data[u_node_idx] is a hashbrown::HashSet<usize>)
-                    // 2. .iter().copied() creates a standard iterator over the neighbor IDs (usize).
-                    // 3. .collect::<Vec<usize>>() gathers these IDs into a new Vec<usize>.
-                    // 4. .into_par_iter() converts this Vec<usize> into a parallel iterator.
-                    // This parallel iterator is what Rayon's flat_map expects.
-                    self.data[u_node_idx]
-                        .iter()
-                        .copied()
-                        .collect::<Vec<usize>>()
-                        .into_par_iter()
-                })
-                .filter_map(|v_neighbor_idx| {
-                    // v_neighbor_idx is an item from the parallel iterator produced by flat_map.
-                    distances[v_neighbor_idx]
-                        .compare_exchange(
-                            usize::MAX,
-                            current_dist_level + 1,
-                            std::sync::atomic::Ordering::SeqCst,
-                            std::sync::atomic::Ordering::Relaxed,
-                        )
-                        .ok()
-                        .map(|_| v_neighbor_idx) // If successful, map to Some(v_neighbor_idx)
-                })
-                .collect(); // Collects the results into Vec<usize> for the next_frontier
-
-            if next_frontier.is_empty() {
-                break;
+            let (u, depth) = item.unwrap();
+            if distances.contains_key(&u) {
+                continue;
             }
-
-            current_frontier = next_frontier;
-            current_dist_level += 1;
+            for &v in self.get_neighbors(u) {
+                if distances.contains_key(&v) {
+                    continue;
+                }
+                queue.push_back((v, depth + 1));
+            }
         }
 
         distances
-            .into_iter()
-            .map(|atomic_dist| atomic_dist.load(std::sync::atomic::Ordering::Relaxed))
-            .collect()
+    }
+
+    // warning: this is actually slower
+    pub fn bfs_parallel(&self, start: usize) -> Vec<usize> {
+        let mut distances = vec![usize::MAX; self.get_num_nodes()];
+        distances[start] = 0;
+        let mut current_front = HashSet::new();
+        current_front.insert(&start);
+        let mut depth = 1;
+
+        while !current_front.is_empty() {
+            current_front = current_front
+                .par_iter()
+                .flat_map(|&&u| self.get_neighbors(u))
+                .filter(|&&v| distances[v] == usize::MAX)
+                .collect::<HashSet<_>>();
+
+            current_front.iter().for_each(|&&v| {
+                distances[v] = depth;
+            });
+            depth += 1;
+        }
+
+        vec![]
     }
 
     pub fn dijkstra(&self, start: usize, end: usize) -> usize {
