@@ -3,6 +3,7 @@ use geo::Euclidean;
 use geo::Point;
 use itertools::Itertools;
 use ordered_float::OrderedFloat;
+use ordered_float::Pow;
 use rand::distributions::Distribution;
 use rand::distributions::WeightedIndex;
 use rand::seq::SliceRandom;
@@ -81,6 +82,28 @@ pub fn generate_local_graph_all_lca(n: usize, m: usize) -> Graph {
                 .collect::<Vec<_>>();
             w[v] = 0.0;
             let u = WeightedIndex::new(w).unwrap().sample(rng);
+            (u, v)
+        })
+        .collect::<Vec<_>>();
+
+    g.add_edges(&edges);
+    g
+}
+
+pub fn generate_local_graph_bounded<F>(n: usize, m: usize, f: F) -> Graph
+where
+    F: Fn(usize) -> f64 + Send + Sync + Copy
+{
+    let mut g = tree::generate_random_tree(n);
+    let edges_to_add = m - (n - 1);
+
+    let mut edges = (0..edges_to_add)
+        .into_par_iter()
+        .map(|_| {
+            let u = rand::thread_rng().gen_range(0..n);
+            let (idx, distances): (Vec<_>, Vec<_>) = g.bfs_bounded(u, 50_000).into_iter().unzip();
+            let weights = WeightedIndex::new(distances.into_iter().map(f)).unwrap();
+            let v = weights.sample(&mut rand::thread_rng());
             (u, v)
         })
         .collect::<Vec<_>>();

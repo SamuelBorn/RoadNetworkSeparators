@@ -22,24 +22,19 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let g = tree::generate_random_tree(1000000);
+    let n = 1_000_000;
+    let m = n * 5 / 4;
 
-    // time bfs
-    let start = std::time::Instant::now();
-    for i in 0..3 {
-        let _ = g.bfs(i);
+    let step_size = 0.1;
+    let mut current = 2.0;
+    let end = 6.0;
+
+    while current < end {
+        println!("current: {}", current);
+        let g = local::generate_local_graph_bounded(n, m, |x: usize| (x as f64).powf(current));
+        g.flowcutter(&format!("local_graph_{}", (current * 10.0).round() as u32));
+        current += step_size;
     }
-    dbg!(&start.elapsed());
-
-    // time parallel bfs
-    let start = std::time::Instant::now();
-    for i in 0..3 {
-        let _ = g.bfs_bounded(i, 10_000);
-    }
-    dbg!(&start.elapsed());
-    return;
-
-
 
     // let x1 = 1000.;
     // let x2 = x1 / 50_f64.sqrt() * 2.;

@@ -457,17 +457,12 @@ impl Graph {
     }
 
     pub fn bfs_bounded(&self, start: usize, bound: usize) -> HashMap<usize, usize> {
-        let mut distances = HashMap::with_capacity(bound);
+        let mut distances = HashMap::with_capacity(bound + 20);
         let mut queue = VecDeque::with_capacity(2 * self.get_num_nodes().isqrt());
         queue.push_back((start, 0));
 
-        for i in 0..bound {
-            let item = queue.pop_front();
-            if item.is_none() {
-                break;
-            }
-
-            let (u, depth) = item.unwrap();
+        while distances.len() < bound + 1 && !queue.is_empty() {
+            let (u, depth) = queue.pop_front().unwrap();
             if distances.contains_key(&u) {
                 continue;
             }
@@ -476,6 +471,7 @@ impl Graph {
                     continue;
                 }
                 queue.push_back((v, depth + 1));
+                distances.insert(v, depth + 1);
             }
         }
 
