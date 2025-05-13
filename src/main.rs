@@ -23,27 +23,17 @@ use separator::Mode::*;
 
 fn main() {
     let x1 = 1000.;
-    let x2 = x1 / 50_f64.sqrt() * 2.0;
-    let x3 = x2 / 50_f64.sqrt() * 2.0;
-    let x4 = x3 / 50_f64.sqrt() * 2.0;
+    let x2 = x1 / 50_f64.sqrt() * 2.;
+    let x3 = x2 / 50_f64.sqrt() * 1.5;
+    let x4 = x3 / 50_f64.sqrt() * 1.;
 
-    for i in [0.2, 0.3, 0.4, 0.5, 0.7, 0.9] {
-        for j in [0.2, 0.3, 0.4, 0.5, 0.7, 0.9] {
-            for k in [0.2, 0.3, 0.4, 0.5, 0.7, 0.9] {
-                let g = hierachical_delaunay::pruned_hierachical_delaunay(
-                    &[1.0, i, j, k],
-                    &[50, 50, 50, 50],
-                    &[x1, x2, x3, x4],
-                );
-                g.inertial_flowcutter(&format!(
-                    "hierachical_delaunay_city_all_{}_{}_{}",
-                    (i * 100.0) as u32,
-                    (j * 100.0) as u32,
-                    (k * 100.0) as u32
-                ));
-            }
-        }
-    }
+    let g = hierachical_delaunay::pruned_hierachical_delaunay(
+        &[1.0, 0.8, 0.2, 0.1],
+        &[50, 50, 50, 50],
+        &[x1, x2, x3, x4],
+    );
+    g.inertial_flowcutter("hierachical_delaunay_tmp");
+    // g.visualize("hierachical_delaunay_tmp");
 
     // for city_percentage in [0.1, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9] {
     //     let g = hierachical_delaunay::random_pruned_hierachical_delaunay(
