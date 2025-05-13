@@ -7,9 +7,9 @@ import numpy as np
 from scipy.stats import binned_statistic
 
 markers = ["x", "^", "o", "+", "v", "s", "D", "P", "*"]
-markers = markers * 10
+markers = markers * 50
 colors = list(plt.get_cmap("tab10").colors)
-colors = colors * 10
+colors = colors * 50
 colors[0] = "#009682"
 
 
