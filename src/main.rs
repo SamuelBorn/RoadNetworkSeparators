@@ -31,7 +31,7 @@ fn main() {
         .into_par_iter()
         .map(|i| 2.0 + 0.1 * i as f64)
         .for_each(|p| {
-            let g = local::generate_local_graph_bounded(n, m, |x: usize| (x as f64).powf(-p));
+            let g = local::tree_locality_bounded(n, m, |x: usize| (x as f64).powf(-p));
             g.kahip(&format!("local_graph_bounded_{}", (10. * p).round()));
         });
 

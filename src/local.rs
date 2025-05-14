@@ -22,7 +22,7 @@ use crate::library;
 
 type IndexedPoint = GeomWithData<Point, usize>;
 
-pub fn generate_random_connected(n: usize, m: usize) -> Graph {
+pub fn no_locality(n: usize, m: usize) -> Graph {
     let mut g = tree::generate_random_tree(n);
     let mut edge_count = n - 1;
 
@@ -39,7 +39,7 @@ pub fn generate_random_connected(n: usize, m: usize) -> Graph {
     g
 }
 
-pub fn generate_local_graph_all(n: usize, m: usize) -> Graph {
+pub fn tree_locality(n: usize, m: usize) -> Graph {
     let rng = &mut rand::thread_rng();
     let mut g = tree::generate_random_tree(n);
     let additional_edges = m - (n - 1);
@@ -65,7 +65,7 @@ pub fn generate_local_graph_all(n: usize, m: usize) -> Graph {
     g
 }
 
-pub fn generate_local_graph_all_lca(n: usize, m: usize) -> Graph {
+pub fn tree_locality_lca(n: usize, m: usize) -> Graph {
     let rng = &mut rand::thread_rng();
     let mut g = tree::generate_random_tree(n);
     let lca = lca::LcaUtil::new(&g);
@@ -90,7 +90,7 @@ pub fn generate_local_graph_all_lca(n: usize, m: usize) -> Graph {
     g
 }
 
-pub fn generate_local_graph_bounded<F>(n: usize, m: usize, f: F) -> Graph
+pub fn tree_locality_bounded<F>(n: usize, m: usize, f: F) -> Graph
 where
     F: Fn(usize) -> f64 + Send + Sync + Copy,
 {
@@ -118,33 +118,7 @@ where
     g
 }
 
-pub fn generate_local_graph(n: usize, m: usize) -> Graph {
-    let mut g = tree::generate_random_tree(n);
-    let mut edge_count = n - 1;
-
-    while edge_count < m {
-        let u = rand::thread_rng().gen_range(0..n);
-
-        let (nodes, distances): (Vec<_>, Vec<_>) =
-            g.get_extended_neighborhood(u, 1000).into_iter().unzip();
-        let weights = distances
-            .into_iter()
-            .map(|d| 1.0 / d as f32)
-            .collect::<Vec<_>>();
-        let dist = WeightedIndex::new(&weights).unwrap();
-        let mut rng = rand::thread_rng();
-        let v = nodes[dist.sample(&mut rng)];
-
-        if !g.has_edge(u, v) {
-            g.add_edge(u, v);
-            edge_count += 1;
-        }
-    }
-
-    g
-}
-
-pub fn generate_local_points(n: usize, m: usize) -> GeometricGraph {
+pub fn geometric_locality(n: usize, m: usize) -> GeometricGraph {
     let points = library::random_points_in_circle(Point::new(1000.0, 1000.), 100.0, n);
     let rtree_data = points
         .iter()
@@ -205,7 +179,7 @@ mod tests {
     fn test_generate_random_connected() {
         let n = 120000;
         let m = 150000;
-        let g = generate_random_connected(n, m);
+        let g = no_locality(n, m);
         g.info();
         let sep = g.get_separator_wrapper(crate::separator::Mode::Fast);
         let subgraphs = g.get_subgraphs(&sep);
@@ -216,9 +190,9 @@ mod tests {
     fn random_spanning_tree_overview() {
         for i in 2..21 {
             let n = 2_usize.pow(i);
-            let g1 = generate_random_connected(n, (1.25 * n as f32) as usize);
-            let g2 = generate_random_connected(n, (1.25 * n as f32) as usize);
-            let g3 = generate_random_connected(n, (1.25 * n as f32) as usize);
+            let g1 = no_locality(n, (1.25 * n as f32) as usize);
+            let g2 = no_locality(n, (1.25 * n as f32) as usize);
+            let g3 = no_locality(n, (1.25 * n as f32) as usize);
             let d1 = g1.get_diameter();
             let d2 = g2.get_diameter();
             let d3 = g3.get_diameter();
@@ -231,7 +205,7 @@ mod tests {
     fn random_local_embedding() {
         let n = 10000;
         let m = 12500;
-        let g = generate_local_points(n, m);
+        let g = geometric_locality(n, m);
         g.graph.info();
         g.visualize("local_embedding");
         // g.inertial_flowcutter("local_embedding");
@@ -243,7 +217,7 @@ mod tests {
             .into_iter()
             .for_each(|n| {
                 let m = (1.25 * n as f64) as usize;
-                let g = generate_local_graph_all_lca(n, m);
+                let g = tree_locality_lca(n, m);
                 g.recurse_separator(crate::separator::Mode::Fast, None);
             });
     }
@@ -254,11 +228,11 @@ mod tests {
         let m = (n * 5) / 4;
 
         let now = Instant::now();
-        let g = generate_local_graph_all(n, m);
+        let g = tree_locality(n, m);
         println!("Time taken: {:?}", now.elapsed());
 
         let now = Instant::now();
-        let g = generate_local_graph_all_lca(n, m);
+        let g = tree_locality_lca(n, m);
         println!("Time taken: {:?}", now.elapsed());
     }
 }

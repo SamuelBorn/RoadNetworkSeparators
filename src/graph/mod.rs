@@ -404,30 +404,6 @@ impl Graph {
         (xadj, adjncy)
     }
 
-    pub fn get_extended_neighborhood(&self, u: usize, num_nodes: usize) -> HashMap<usize, usize> {
-        let mut distances = HashMap::with_capacity(num_nodes);
-        distances.insert(u, 0);
-
-        let mut queue = std::collections::VecDeque::new();
-        queue.push_back(u);
-
-        while distances.len() < num_nodes + 1 && !queue.is_empty() {
-            let u = queue.pop_front().unwrap();
-
-            for &v in self.get_neighbors(u) {
-                if distances.contains_key(&v) {
-                    continue;
-                }
-                distances.insert(v, distances[&u] + 1);
-                queue.push_back(v);
-            }
-        }
-
-        distances.remove(&u);
-
-        distances
-    }
-
     pub fn is_connected(&self) -> bool {
         let distances = self.bfs(0);
         distances.par_iter().all(|&d| d != usize::MAX)

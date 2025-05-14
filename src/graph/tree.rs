@@ -24,24 +24,6 @@ pub fn generate_random_tree(n: usize) -> Graph {
     Graph::new(data)
 }
 
-pub fn generate_random_graph_avg_deg(n: usize, avg_deg: f64) -> Graph {
-    let mut g = generate_random_tree(n);
-    let mut edges_to_add = ((avg_deg * n as f64) / 2.0).round() as usize - (n - 1);
-    let rng = &mut rand::thread_rng();
-
-    while edges_to_add > 0 {
-        let n1 = rng.gen_range(0..n);
-        let n2 = rng.gen_range(0..n);
-
-        if n1 != n2 && !g.has_edge(n1, n2) {
-            g.add_edge(n1, n2);
-            edges_to_add -= 1;
-        }
-    }
-
-    g
-}
-
 #[cfg(test)]
 mod tests {
     use std::fs::File;
