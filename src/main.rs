@@ -8,6 +8,8 @@ pub mod local;
 pub mod random_set;
 pub mod separator;
 
+use ordered_float::Pow;
+use rayon::prelude::*;
 use std::path::Path;
 
 use cch::{compute_separator_sizes_from_order, get_top_level_separator};
@@ -25,16 +27,13 @@ fn main() {
     let n = 1_000_000;
     let m = n * 5 / 4;
 
-    let step_size = 0.1;
-    let mut current = 2.0;
-    let end = 6.0;
-
-    while current < end {
-        println!("current: {}", current);
-        let g = local::generate_local_graph_bounded(n, m, |x: usize| (x as f64).powf(current));
-        g.flowcutter(&format!("local_graph_{}", (current * 10.0).round() as u32));
-        current += step_size;
-    }
+    (0..48)
+        .into_par_iter()
+        .map(|i| 2.0 + 0.1 * i as f64)
+        .for_each(|p| {
+            let g = local::generate_local_graph_bounded(n, m, |x: usize| (x as f64).powf(-p));
+            g.kahip(&format!("local_graph_bounded_{}", (10. * p).round()));
+        });
 
     // let x1 = 1000.;
     // let x2 = x1 / 50_f64.sqrt() * 2.;

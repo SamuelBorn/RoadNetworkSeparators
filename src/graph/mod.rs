@@ -8,11 +8,13 @@ use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelBridge;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::*;
+use tempfile::NamedTempFile;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::collections::VecDeque;
 use std::fmt::format;
 use std::hash::Hash;
+use std::process::Command;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -457,7 +459,7 @@ impl Graph {
     }
 
     pub fn bfs_bounded(&self, start: usize, bound: usize) -> HashMap<usize, usize> {
-        let mut distances = HashMap::with_capacity(bound + 20);
+        let mut distances = HashMap::with_capacity(bound);
         let mut queue = VecDeque::with_capacity(2 * self.get_num_nodes().isqrt());
         queue.push_back((start, 0));
 
@@ -466,15 +468,16 @@ impl Graph {
             if distances.contains_key(&u) {
                 continue;
             }
+            distances.insert(u, depth);
+
             for &v in self.get_neighbors(u) {
-                if distances.contains_key(&v) {
-                    continue;
+                if !distances.contains_key(&v) {
+                    queue.push_back((v, depth + 1));
                 }
-                queue.push_back((v, depth + 1));
-                distances.insert(v, depth + 1);
             }
         }
 
+        distances.remove(&start);
         distances
     }
 
@@ -714,6 +717,29 @@ impl Graph {
         for (i, neighbors) in self.data.iter().enumerate() {
             println!("{}: {:?}", i, neighbors);
         }
+    }
+
+    pub fn visualize(&self, name: &str) {
+        let g_path = format!("./output/graphs/{}", name);
+        self.save(Path::new(&g_path));
+
+        Command::new("python3")
+            .arg("scripts/visualize_graph.py")
+            .arg("--auto-layout")
+            .arg(g_path)
+            .spawn();
+    }
+
+    pub fn visualize_small(&self) {
+        let f = NamedTempFile::new().unwrap();
+        self.save_metis(f.path());
+
+        Command::new("python3")
+            .arg("scripts/visualize_metis.py")
+            .arg(f.path())
+            .spawn()
+            .expect("Failed to execute command")
+            .wait();
     }
 }
 

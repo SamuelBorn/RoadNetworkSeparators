@@ -92,8 +92,10 @@ pub fn generate_local_graph_all_lca(n: usize, m: usize) -> Graph {
 
 pub fn generate_local_graph_bounded<F>(n: usize, m: usize, f: F) -> Graph
 where
-    F: Fn(usize) -> f64 + Send + Sync + Copy
+    F: Fn(usize) -> f64 + Send + Sync + Copy,
 {
+    assert!(f(2) > f(3));
+    assert!(m > n);
     let mut g = tree::generate_random_tree(n);
     let edges_to_add = m - (n - 1);
 
@@ -101,9 +103,13 @@ where
         .into_par_iter()
         .map(|_| {
             let u = rand::thread_rng().gen_range(0..n);
-            let (idx, distances): (Vec<_>, Vec<_>) = g.bfs_bounded(u, 50_000).into_iter().unzip();
+            let (idx, distances): (Vec<_>, Vec<_>) = g
+                .bfs_bounded(u, 50_000)
+                .into_iter()
+                .filter(|(_, d)| *d > 1)
+                .unzip();
             let weights = WeightedIndex::new(distances.into_iter().map(f)).unwrap();
-            let v = weights.sample(&mut rand::thread_rng());
+            let v = idx[weights.sample(&mut rand::thread_rng())];
             (u, v)
         })
         .collect::<Vec<_>>();

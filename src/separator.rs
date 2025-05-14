@@ -7,7 +7,7 @@ use std::env;
 use std::fmt::format;
 use std::io::Write;
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::{fs, ptr};
 use tempfile::{NamedTempFile, TempDir};
 
@@ -246,17 +246,20 @@ impl Graph {
 
     pub fn kahip(&self, name: &str) -> Vec<(usize, usize)> {
         let tmp_graph = NamedTempFile::new().unwrap();
+        let tmp_ord = NamedTempFile::new().unwrap();
         self.save_metis(tmp_graph.path());
 
         Command::new("./node_ordering")
             .arg(tmp_graph.path())
+            .arg(format!("--output_file={}", tmp_ord.path().display()))
             .current_dir("./dependencies/KaHIP/deploy")
+            .stdout(Stdio::null())
             .spawn()
             .expect("Failed to execute node_ordering")
             .wait()
             .unwrap();
 
-        let ord = read_kahip_order_file(Path::new("./dependencies/KaHIP/deploy/tmpnodeordering"));
+        let ord = read_kahip_order_file(tmp_ord.path());
         compute_separator_sizes_from_order(self, &ord, &Path::new("./output/sep").join(name))
     }
 
