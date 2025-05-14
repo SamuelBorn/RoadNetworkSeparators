@@ -220,12 +220,12 @@ impl LcaUtil {
 
 #[cfg(test)]
 mod test {
-    use crate::graph::tree::generate_random_tree;
+    use crate::graph::tree::random_tree;
 
     #[test]
     fn lca_simple() {
         let n = 10;
-        let g = generate_random_tree(n);
+        let g = random_tree(n);
         g.print();
         let lca = super::LcaUtil::new(&g);
         for i in 0..n {

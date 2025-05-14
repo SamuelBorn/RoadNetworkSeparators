@@ -4,7 +4,7 @@ use rayon::prelude::*;
 
 use crate::graph::Graph;
 
-pub fn generate_random_tree(n: usize) -> Graph {
+pub fn random_tree(n: usize) -> Graph {
     let mut data = vec![Vec::new(); n];
     let mut visited = HashSet::new();
     let mut n1 = 0;
@@ -36,7 +36,7 @@ mod tests {
 
     #[test]
     fn test_generate_random_tree() {
-        let graph = generate_random_tree(100);
+        let graph = random_tree(100);
         assert_eq!(graph.get_num_nodes(), 100);
         assert_eq!(graph.get_num_edges(), 99);
 
@@ -56,7 +56,7 @@ mod tests {
         let mut result = String::new();
         for n in (start_n..=end_n).step_by(step) {
             for _ in 0..iterations {
-                let g = generate_random_tree(n);
+                let g = random_tree(n);
                 result.push_str(&format!("{} {}\n", n, g.get_diameter()));
             }
         }
@@ -72,7 +72,7 @@ mod tests {
         let sizes = vec![5_000_000, 4_000_000, 3_000_000, 2_000_000, 1_000_000];
 
         sizes.into_par_iter().for_each(|n| {
-            let g = generate_random_graph_avg_deg(n, 2.5);
+            let g = crate::local::no_locality(n, n * 5 / 4);
             g.recurse_separator(
                 crate::separator::Mode::Eco,
                 Some(Path::new(&format!("./output/sep/RandomAvgDeg_{}", n))),

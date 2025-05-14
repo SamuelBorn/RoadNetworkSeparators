@@ -23,7 +23,7 @@ use crate::library;
 type IndexedPoint = GeomWithData<Point, usize>;
 
 pub fn no_locality(n: usize, m: usize) -> Graph {
-    let mut g = tree::generate_random_tree(n);
+    let mut g = tree::random_tree(n);
     let mut edge_count = n - 1;
 
     while edge_count < m {
@@ -41,7 +41,7 @@ pub fn no_locality(n: usize, m: usize) -> Graph {
 
 pub fn tree_locality(n: usize, m: usize) -> Graph {
     let rng = &mut rand::thread_rng();
-    let mut g = tree::generate_random_tree(n);
+    let mut g = tree::random_tree(n);
     let additional_edges = m - (n - 1);
     let vs = (0..additional_edges)
         .map(|_| rng.gen_range(0..n))
@@ -67,7 +67,7 @@ pub fn tree_locality(n: usize, m: usize) -> Graph {
 
 pub fn tree_locality_lca(n: usize, m: usize) -> Graph {
     let rng = &mut rand::thread_rng();
-    let mut g = tree::generate_random_tree(n);
+    let mut g = tree::random_tree(n);
     let lca = lca::LcaUtil::new(&g);
     let additional_edges = m - (n - 1);
     let vs = (0..additional_edges)
@@ -96,7 +96,7 @@ where
 {
     assert!(f(2) > f(3));
     assert!(m > n);
-    let mut g = tree::generate_random_tree(n);
+    let mut g = tree::random_tree(n);
     let edges_to_add = m - (n - 1);
 
     let mut edges = (0..edges_to_add)
@@ -158,22 +158,9 @@ mod tests {
 
     use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
-    use crate::graph::tree::generate_random_tree;
+    use crate::graph::tree::random_tree;
 
     use super::*;
-
-    #[test]
-    fn test_generate_local_graph() {
-        return;
-        let n = 12000;
-        let m = 15000;
-        let g = generate_local_graph(n, m);
-        assert_eq!(g.get_num_nodes(), n);
-        assert_eq!(g.get_num_edges(), m * 2);
-
-        // expect 22 at highest level
-        g.recurse_separator(crate::separator::Mode::Fast, None);
-    }
 
     #[test]
     fn test_generate_random_connected() {
@@ -234,5 +221,21 @@ mod tests {
         let now = Instant::now();
         let g = tree_locality_lca(n, m);
         println!("Time taken: {:?}", now.elapsed());
+    }
+
+    #[test]
+    fn check_bounded_percentage() {
+        for i in [100_000, 500_000, 1_000_000] {
+            let g = tree::random_tree(i);
+            let mut dist = g.bfs(0);
+            dist[0] = usize::MAX;
+            let (_, dist_bounded): (Vec<usize>, Vec<usize>) =
+                g.bfs_bounded(0, 50_000).iter().unzip();
+            let f = |x: usize| (x as f64).pow(-3.0);
+            let sum: f64 = dist.iter().map(|x| f(*x)).sum();
+            let sum_bounded: f64 = dist_bounded.iter().map(|x| f(*x)).sum();
+            let percentage = sum_bounded / sum;
+            println!("n: {}, percentage: {}", i, percentage);
+        }
     }
 }
