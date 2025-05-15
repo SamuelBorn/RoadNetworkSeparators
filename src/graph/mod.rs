@@ -418,7 +418,7 @@ impl Graph {
     pub fn bfs(&self, start: usize) -> Vec<usize> {
         let mut distances = vec![usize::MAX; self.get_num_nodes()];
         distances[start] = 0;
-        let mut queue = std::collections::VecDeque::with_capacity(self.get_num_nodes().isqrt() * 2);
+        let mut queue = VecDeque::with_capacity(self.get_num_nodes().isqrt() * 2);
         queue.push_back(start);
 
         while let Some(u) = queue.pop_front() {
@@ -429,30 +429,6 @@ impl Graph {
                 distances[v] = distances[u] + 1;
                 queue.push_back(v);
             }
-        }
-
-        distances
-    }
-
-    pub fn bfs_adjncy(&self, start: usize) -> Vec<usize> {
-        let (xadj, adjncy) = self.get_adjacency_array();
-        let mut distances = vec![usize::MAX; self.get_num_nodes()];
-        distances[start] = 0;
-        let mut queue = VecDeque::with_capacity(self.get_num_nodes().isqrt() * 2);
-        queue.push_back(start);
-
-        while let Some(q) = queue.pop_front() {
-            let start = xadj[q] as usize;
-            let end = xadj[q + 1] as usize;
-
-            adjncy[start..end].iter().for_each(|&v| {
-                let v = v as usize;
-                if distances[v] != usize::MAX {
-                    return;
-                }
-                distances[v] = distances[q] + 1;
-                queue.push_back(v);
-            });
         }
 
         distances
