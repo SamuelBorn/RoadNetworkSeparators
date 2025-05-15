@@ -39,24 +39,25 @@ pub fn no_locality(n: usize, m: usize) -> Graph {
     g
 }
 
-pub fn tree_locality(n: usize, m: usize) -> Graph {
-    let rng = &mut rand::thread_rng();
+pub fn tree_locality<F>(n: usize, m: usize, f: F) -> Graph
+where
+    F: Fn(usize) -> f64 + Send + Sync + Copy,
+{
+    assert!(f(2) > f(3));
+    assert!(m > n);
     let mut g = tree::random_tree(n);
-    let additional_edges = m - (n - 1);
-    let vs = (0..additional_edges)
-        .map(|_| rng.gen_range(0..n))
-        .collect::<Vec<_>>();
-    let edges = (0..additional_edges)
-        .map(|i| {
-            let v = vs[i];
-            let mut distances = g.bfs(v);
-            distances[v] = 1;
-            let mut w = distances
+    let edges_to_add = m - (n - 1);
+
+    let mut edges = (0..edges_to_add)
+        .into_par_iter()
+        .map(|_| {
+            let u = rand::thread_rng().gen_range(0..n);
+            let distances = g
+                .bfs(u)
                 .into_iter()
-                .map(|d| 1.0 / (d as f64).powf(3.0))
-                .collect::<Vec<_>>();
-            w[v] = 0.0;
-            let u = WeightedIndex::new(w).unwrap().sample(rng);
+                .map(|d| if d > 1 { d } else { usize::MAX });
+            let weights = WeightedIndex::new(distances.into_iter().map(f)).unwrap();
+            let v = weights.sample(&mut rand::thread_rng());
             (u, v)
         })
         .collect::<Vec<_>>();
@@ -211,16 +212,27 @@ mod tests {
 
     #[test]
     fn time_random_tree_local() {
-        let n = 10_000;
-        let m = (n * 5) / 4;
+        let n = 1_000_000;
+        let m = n * 5 / 4;
+        let f = |x: usize| (x as f64).pow(-3.2);
 
-        let now = Instant::now();
-        let g = tree_locality(n, m);
-        println!("Time taken: {:?}", now.elapsed());
+        // let g = tree_locality(n, m, f);
+        let g = random_tree(n);
+        let start = Instant::now();
+        (0..100).for_each(|_| {
+            let u = rand::thread_rng().gen_range(0..n);
+            g.bfs(u);
+        });
+        println!(
+            "Time taken for 100 BFS calls: {} seconds",
+            start.elapsed().as_secs_f64()
+        );
 
-        let now = Instant::now();
-        let g = tree_locality_lca(n, m);
-        println!("Time taken: {:?}", now.elapsed());
+        // (0..2).into_par_iter().for_each(|_| {
+        //     let g = tree_locality(n, m, f);
+        //     println!("tree built");
+        //     g.kahip(&format!("tree_locality_32_{}", n));
+        // });
     }
 
     #[test]
