@@ -478,7 +478,7 @@ impl Graph {
             depth += 1;
         }
 
-        vec![]
+        distances
     }
 
     pub fn dijkstra(&self, start: usize, end: usize) -> usize {

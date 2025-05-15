@@ -214,26 +214,11 @@ mod tests {
     fn time_random_tree_local() {
         let n = 1_000_000;
         let m = n * 5 / 4;
-        let f = |x: usize| (x as f64).pow(-3.2);
+        let f = |x: usize| (x as f64).powf(-3.3);
 
-        // let g = tree_locality(n, m, f);
-        let g = random_tree(n);
-        let start = Instant::now();
-        (0..10).for_each(|_| {
-            let u = rand::thread_rng().gen_range(0..n);
-            // g.bfs(u);
-            g.bfs_parallel(u);
-        });
-        println!(
-            "Time taken for 100 BFS calls: {} seconds",
-            start.elapsed().as_secs_f64()
-        );
-
-        // (0..2).into_par_iter().for_each(|_| {
-        //     let g = tree_locality(n, m, f);
-        //     println!("tree built");
-        //     g.kahip(&format!("tree_locality_32_{}", n));
-        // });
+        let g = tree_locality(n, m, f);
+        println!("tree built");
+        g.flowcutter(&format!("tree_locality_33_{}", n));
     }
 
     #[test]
