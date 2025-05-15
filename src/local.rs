@@ -221,7 +221,8 @@ mod tests {
         let start = Instant::now();
         (0..100).for_each(|_| {
             let u = rand::thread_rng().gen_range(0..n);
-            g.bfs(u);
+            // g.bfs(u);
+            g.bfs_adjncy(u);
         });
         println!(
             "Time taken for 100 BFS calls: {} seconds",
