@@ -1,3 +1,4 @@
+#!/bin/python3
 import argparse
 from scipy.optimize import curve_fit
 from pathlib import Path

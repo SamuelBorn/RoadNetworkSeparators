@@ -1,3 +1,4 @@
+#!/bin/python3
 # this file is used to visualize line segments of a file that look like this:
 # (Point(Coord { x: 85.26012714888755, y: 18.56196412476775 }), Point(Coord { x: 83.20492860368525, y: 20.928480933643275 }))
 

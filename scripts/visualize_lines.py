@@ -1,3 +1,4 @@
+#!/bin/python3
 import matplotlib.pyplot as plt
 import sys
 import re
