@@ -239,7 +239,54 @@ impl GeometricGraph {
             .collect()
     }
 
-    pub fn distance_less_than(
+    pub fn dijkstra_less_than_ignore_edge(
+        &self,
+        u: usize,
+        v: usize,
+        prune_distance: f64,
+        edge_lengths: &HashMap<(usize, usize), f64>,
+    ) -> bool {
+        let mut distances = HashMap::new();
+        let mut heap = BinaryHeap::new();
+        distances.insert(u, 0.0);
+        heap.push(Reverse((OrderedFloat(0.0), u))); // (distance, vertex)
+
+        while let Some(Reverse((OrderedFloat(dist), current))) = heap.pop() {
+            if dist >= prune_distance {
+                return false;
+            }
+
+            if current == v {
+                return dist <= prune_distance;
+            }
+
+            let current_best = *distances.get(&current).unwrap();
+            if dist > current_best || dist >= prune_distance {
+                continue;
+            }
+
+            for &neighbor in self.graph.get_neighbors(current) {
+                if (current, neighbor) == (u, v) || (neighbor, current) == (u, v) {
+                    continue; // Ignore the edge
+                }
+
+                let weight = *edge_lengths.get(&(current, neighbor)).unwrap();
+                let new_dist = dist + weight;
+
+                // Only process if the new distance is better and less than prune_distance
+                if new_dist < *distances.get(&neighbor).unwrap_or(&f64::INFINITY)
+                    && new_dist <= prune_distance
+                {
+                    distances.insert(neighbor, new_dist);
+                    heap.push(Reverse((OrderedFloat(new_dist), neighbor)));
+                }
+            }
+        }
+
+        false
+    }
+
+    pub fn dijkstra_less_than(
         &self,
         u: usize,
         v: usize,
@@ -348,7 +395,7 @@ mod test {
     fn approx_connected() {
         let g = example::example_c4();
         let edge_lengths = g.get_edge_lengths();
-        assert!(!g.distance_less_than(0, 2, 1.4, &edge_lengths));
-        assert!(g.distance_less_than(0, 2, 2.00001, &edge_lengths));
+        assert!(!g.dijkstra_less_than(0, 2, 1.4, &edge_lengths));
+        assert!(g.dijkstra_less_than(0, 2, 2.00001, &edge_lengths));
     }
 }

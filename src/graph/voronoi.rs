@@ -154,7 +154,6 @@ fn build_graph(mut edges: Vec<((usize, usize), (usize, usize))>) -> GeometricGra
 }
 
 pub fn prune_graph(g: &mut GeometricGraph, dist_multiplier: f64) {
-    let mut uf: UnionFind<usize> = UnionFind::new(g.graph.get_num_nodes() + 1);
     let edge_lengths = g.get_edge_lengths();
     let mut edges = g
         .get_edge_lengths_unidirectional()
@@ -168,14 +167,36 @@ pub fn prune_graph(g: &mut GeometricGraph, dist_multiplier: f64) {
             println!("{} / {}", i, m);
         }
 
-        if uf.union(u, v) {
-            continue;
+        // g.graph.remove_edge(u, v);
+        // if !g.dijkstra_less_than(u, v, length * dist_multiplier, &edge_lengths) {
+        if g.dijkstra_less_than_ignore_edge(u, v, length * dist_multiplier, &edge_lengths) {
+            // g.graph.add_edge(u, v);
+            g.graph.remove_edge(u, v);
         }
+    }
+}
 
-        g.graph.remove_edge(u, v);
-        if !g.distance_less_than(u, v, length * dist_multiplier, &edge_lengths) {
-            g.graph.add_edge(u, v);
-        }
+pub fn prune_graph_parallel(g: &mut GeometricGraph, dist_multiplier: f64) {
+    let edge_lengths = g.get_edge_lengths();
+    let mut edges = g
+        .get_edge_lengths_unidirectional()
+        .into_iter()
+        .collect::<Vec<_>>();
+    edges.par_sort_by(|(_, l1), (_, l2)| l1.partial_cmp(l2).unwrap());
+    let m = edges.len();
+    let threads = rayon::current_num_threads().max(1) * 5;
+
+    for chunk in edges.chunks(threads) {
+        let removal = chunk
+            .into_par_iter()
+            .filter(|((u, v), length)| {
+                g.dijkstra_less_than_ignore_edge(*u, *v, length * dist_multiplier, &edge_lengths)
+            })
+            .collect::<Vec<_>>();
+
+        removal.into_iter().for_each(|((u, v), _)| {
+            g.graph.remove_edge(*u, *v);
+        });
     }
 }
 
@@ -211,7 +232,7 @@ pub fn prune_graph_spanner(g: &mut GeometricGraph, spanning_parameter: f64) {
         //     g.graph.add_edge(*u, *v);
         // }
 
-        if uf.union(u, v) || !h.distance_less_than(u, v, spanning_parameter * length, &edge_lengths)
+        if uf.union(u, v) || !h.dijkstra_less_than(u, v, spanning_parameter * length, &edge_lengths)
         {
             h.graph.add_edge(u, v);
         }
