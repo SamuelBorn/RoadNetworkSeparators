@@ -22,6 +22,10 @@ pub fn pruned_hierachical_delaunay(
     // prune_graph(&mut g, 2.0);
     prune_graph_parallel(&mut g, 2.0);
     println!("Pruning took {} s", start.elapsed().as_secs());
+
+    if !g.graph.is_connected() {
+        g = g.largest_connected_component();
+    }
     g
 }
 

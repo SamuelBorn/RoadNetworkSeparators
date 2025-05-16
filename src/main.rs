@@ -25,19 +25,23 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let x1 = 1000.;
-    let x2 = x1 / 50_f64.sqrt() * 2.;
-    let x3 = x2 / 50_f64.sqrt() * 1.5;
-    let x4 = x3 / 50_f64.sqrt() * 1.;
-    println!("x1: {}, x2: {}, x3: {}, x4: {}", x1, x2, x3, x4);
+    let sites1 = 50;
+    let sites2 = 30;
+    let sites3 = 20;
+    let sites4 = 10;
+    let r1 = 1000.;
+    let r2 = r1 / (sites1 as f64).sqrt() * 3.;
+    let r3 = r2 / (sites2 as f64).sqrt() * 2.;
+    let r4 = r3 / (sites3 as f64).sqrt() * 1.;
+    println!("x1: {}, x2: {}, x3: {}, x4: {}", r1, r2, r3, r4);
 
     let g = hierachical_delaunay::pruned_hierachical_delaunay(
-        &[1.0, 0.4, 0.2, 0.1],
-        &[50, 50, 50, 50],
-        &[x1, x2, x3, x4],
+        &[1.0, 0.3, 0.2, 0.1],
+        &[sites1, sites2, sites3, sites4],
+        &[r1, r2, r3, r4],
     );
     g.graph.info();
 
-    g.inertial_flowcutter("tmp");
-    // g.visualize("hierachical_delaunay_tmp");
+    // g.inertial_flowcutter("tmp");
+    g.visualize("tmp");
 }
