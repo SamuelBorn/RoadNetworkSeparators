@@ -1,6 +1,10 @@
 use super::geometric_graph::GeometricGraph;
 use crate::{
-    graph::{delaunay, geometric_graph::approx_dedup_points, voronoi::{prune_graph, prune_graph_parallel}},
+    graph::{
+        delaunay,
+        geometric_graph::approx_dedup_points,
+        voronoi::{prune_graph, prune_graph_parallel},
+    },
     library,
 };
 use geo::Point;
@@ -11,14 +15,13 @@ pub fn pruned_hierachical_delaunay(
     points_per_level: &[usize],
     radii: &[f64],
 ) -> GeometricGraph {
+    let start = std::time::Instant::now();
     let mut g = generate_hierachical_delaunay(city_percentage, points_per_level, radii);
+    println!("Delaunay took {} s", start.elapsed().as_secs());
     let start = std::time::Instant::now();
     // prune_graph(&mut g, 2.0);
     prune_graph_parallel(&mut g, 2.0);
-    println!(
-        "Pruning took {} ms",
-        start.elapsed().as_millis()
-    );
+    println!("Pruning took {} s", start.elapsed().as_secs());
     g
 }
 

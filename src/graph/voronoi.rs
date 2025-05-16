@@ -184,7 +184,7 @@ pub fn prune_graph_parallel(g: &mut GeometricGraph, dist_multiplier: f64) {
         .collect::<Vec<_>>();
     edges.par_sort_by(|(_, l1), (_, l2)| l1.partial_cmp(l2).unwrap());
     let m = edges.len();
-    let threads = rayon::current_num_threads().max(1) * 5;
+    let threads = rayon::current_num_threads().max(1) * 2;
 
     for chunk in edges.chunks(threads) {
         let removal = chunk

@@ -29,13 +29,15 @@ fn main() {
     let x2 = x1 / 50_f64.sqrt() * 2.;
     let x3 = x2 / 50_f64.sqrt() * 1.5;
     let x4 = x3 / 50_f64.sqrt() * 1.;
+    println!("x1: {}, x2: {}, x3: {}, x4: {}", x1, x2, x3, x4);
 
     let g = hierachical_delaunay::pruned_hierachical_delaunay(
         &[1.0, 0.4, 0.2, 0.1],
         &[50, 50, 50, 50],
         &[x1, x2, x3, x4],
     );
-    // g.inertial_flowcutter("hierachical_delaunay_tmp");
     g.graph.info();
-    g.visualize("hierachical_delaunay_tmp");
+
+    g.inertial_flowcutter("tmp");
+    // g.visualize("hierachical_delaunay_tmp");
 }
