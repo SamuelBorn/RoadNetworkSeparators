@@ -150,35 +150,70 @@ fn build_graph(mut edges: Vec<((usize, usize), (usize, usize))>) -> GeometricGra
         .map(|(x, y)| Point::new(*x as f64 / SCALE, *y as f64 / SCALE))
         .collect();
 
-    let mut g = GeometricGraph::new(graph, pos);
-    g
+    GeometricGraph::new(graph, pos)
+}
+
+pub fn prune_graph(g: &mut GeometricGraph, dist_multiplier: f64) {
+    let mut uf: UnionFind<usize> = UnionFind::new(g.graph.get_num_nodes() + 1);
+    let edge_lengths = g.get_edge_lengths();
+    let mut edges = g
+        .get_edge_lengths_unidirectional()
+        .into_iter()
+        .collect::<Vec<_>>();
+    edges.par_sort_by(|(_, l1), (_, l2)| l1.partial_cmp(l2).unwrap());
+    let m = edges.len();
+
+    for (i, ((u, v), length)) in edges.into_iter().enumerate() {
+        if i % 10000 == 0 {
+            println!("{} / {}", i, m);
+        }
+
+        if uf.union(u, v) {
+            continue;
+        }
+
+        g.graph.remove_edge(u, v);
+        if !g.distance_less_than(u, v, length * dist_multiplier, &edge_lengths) {
+            g.graph.add_edge(u, v);
+        }
+    }
 }
 
 // compute a sparse graph spanner of the graph computed in phase one. Given a graph G a graph spanner H of G with stretch t is
 // a subgraph of G such that for each pair of vertices u, v in G we have distH (u, v) ≤ t · distG (u, v).
 // Paper used t = 4
-pub fn prune_graph(g: &mut GeometricGraph, spanning_parameter: f64) {
+pub fn prune_graph_spanner(g: &mut GeometricGraph, spanning_parameter: f64) {
     let mut uf: UnionFind<usize> = UnionFind::new(g.graph.get_num_nodes() + 1);
     let edge_lengths = g.get_edge_lengths();
     let directed_edge_lengths = g.get_edge_lengths_unidirectional(); // only half of the edges
     let mut sorted = directed_edge_lengths.iter().collect::<Vec<_>>();
     // sorted.shuffle(&mut rand::thread_rng());
-    sorted.par_sort_by(|(_, l1), (_, l2)| l1.partial_cmp(l2).unwrap());
-    // sorted.par_sort_by(|(_, l1), (_, l2)| l2.partial_cmp(l1).unwrap());
+    // sorted.par_sort_by(|(_, l1), (_, l2)| l1.partial_cmp(l2).unwrap());
+    sorted.par_sort_by(|(_, l1), (_, l2)| l2.partial_cmp(l1).unwrap());
 
-    for (i, &((u, v), length)) in sorted.iter().enumerate() {
+    let mut h = GeometricGraph::new(
+        Graph::with_node_count(g.graph.get_num_nodes()),
+        g.positions.clone(),
+    );
+
+    for (i, &(&(u, v), length)) in sorted.iter().enumerate() {
         if i % 1000 == 0 {
             println!("{} / {}", i, sorted.len());
         }
+        //
+        // if uf.find(*u) != uf.find(*v) {
+        //     uf.union(*u, *v);
+        //     continue;
+        // }
 
-        if uf.find(*u) != uf.find(*v) {
-            uf.union(*u, *v);
-            continue;
-        }
+        // g.graph.remove_edge(*u, *v);
+        // if !g.connected_with_prune_distance(*u, *v, length * spanning_parameter, &edge_lengths) {
+        //     g.graph.add_edge(*u, *v);
+        // }
 
-        g.graph.remove_edge(*u, *v);
-        if !g.connected_with_prune_distance(*u, *v, length * spanning_parameter, &edge_lengths) {
-            g.graph.add_edge(*u, *v);
+        if uf.union(u, v) || !h.distance_less_than(u, v, spanning_parameter * length, &edge_lengths)
+        {
+            h.graph.add_edge(u, v);
         }
     }
 }
@@ -232,8 +267,8 @@ pub fn build_voronoi_road_network(
     let mut g = g.largest_connected_component();
     g.graph.info();
     println!("Graph build");
-    prune_graph(&mut g, 3.0);
-    // prune_graph(&mut g, 4.0);
+    // prune_graph(&mut g, 3.0);
+    prune_graph(&mut g, 4.0);
     g.graph.info();
     println!("Graph pruned");
     g

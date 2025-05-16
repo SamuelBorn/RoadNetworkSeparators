@@ -52,9 +52,6 @@ pub fn generate_hierachical_delaunay(
         }
     }
 
-    //let mut g = delaunay::delaunay(&points);
-    //prune_graph(&mut g, 4.0);
-    //g
     delaunay::delaunay(&points)
 }
 

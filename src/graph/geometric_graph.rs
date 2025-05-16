@@ -239,7 +239,7 @@ impl GeometricGraph {
             .collect()
     }
 
-    pub fn connected_with_prune_distance(
+    pub fn distance_less_than(
         &self,
         u: usize,
         v: usize,
@@ -348,7 +348,7 @@ mod test {
     fn approx_connected() {
         let g = example::example_c4();
         let edge_lengths = g.get_edge_lengths();
-        assert!(!g.connected_with_prune_distance(0, 2, 1.4, &edge_lengths));
-        assert!(g.connected_with_prune_distance(0, 2, 2.00001, &edge_lengths));
+        assert!(!g.distance_less_than(0, 2, 1.4, &edge_lengths));
+        assert!(g.distance_less_than(0, 2, 2.00001, &edge_lengths));
     }
 }
