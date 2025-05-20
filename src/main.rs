@@ -8,6 +8,7 @@ pub mod local;
 pub mod random_set;
 pub mod separator;
 
+use geo::Rect;
 use ordered_float::Pow;
 use rayon::prelude::*;
 use std::fs;
@@ -25,23 +26,38 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let sites1 = 50;
-    let sites2 = 30;
-    let sites3 = 20;
-    let sites4 = 10;
+    let s1 = 60;
+    let s2 = 50;
+    let s3 = 30;
+    let s4 = 10;
     let r1 = 1000.;
-    let r2 = r1 / (sites1 as f64).sqrt() * 3.;
-    let r3 = r2 / (sites2 as f64).sqrt() * 2.;
-    let r4 = r3 / (sites3 as f64).sqrt() * 1.;
-    println!("x1: {}, x2: {}, x3: {}, x4: {}", r1, r2, r3, r4);
+    let r2 = 420.0;
+    let r3 = 120.0;
+    let r4 = 17.0;
+    let f1 = 1.0;
+    let f2 = 0.3;
+    let f3 = 0.2;
+    let f4 = 0.1;
+
+    println!("exp fraction: {:.1}, {:.1}, {:.1}, {:.1}", f1, f2, f3, f4);
+    println!("sites: {:.1}, {:.1}, {:.1}, {:.1}", s1, s2, s3, s4);
+    println!("radii: {:.1}, {:.1}, {:.1}, {:.1}", r1, r2, r3, r4);
+
+    let t1 = s1 as f64;
+    let t2 = t1 + t1 * f2 * s2 as f64;
+    let t3 = t2 + t2 * f3 * s3 as f64;
+    let t4 = t3 + t3 * f4 * s4 as f64;
+    println!("total size: {:.1}", t4);
 
     let g = hierachical_delaunay::pruned_hierachical_delaunay(
         &[1.0, 0.3, 0.2, 0.1],
-        &[sites1, sites2, sites3, sites4],
+        &[s1, s2, s3, s4],
         &[r1, r2, r3, r4],
     );
     g.graph.info();
 
+
     // g.inertial_flowcutter("tmp");
     g.visualize("tmp");
 }
+

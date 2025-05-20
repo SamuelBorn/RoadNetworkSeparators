@@ -48,9 +48,14 @@ pub fn delaunay_edges(positions: &[Point]) -> Vec<(Point, Point)> {
         .collect()
 }
 
-pub fn random_delaunay(n: usize, aabb: Rect) -> GeometricGraph {
+pub fn random_delaunay_aabb(n: usize, aabb: Rect) -> GeometricGraph {
     let positions = library::random_points_in_rect(aabb, n);
     delaunay(&positions)
+}
+
+pub fn random_delaunay(n: usize) -> GeometricGraph {
+    let aabb = geometric_graph::karlsruhe_bounding_rect();
+    random_delaunay_aabb(n, aabb)
 }
 
 pub fn dynamic_length_restriced_delaunay(
