@@ -20,7 +20,7 @@ pub fn pruned_hierachical_delaunay(
     println!("Delaunay took {} s", start.elapsed().as_secs());
     let start = std::time::Instant::now();
     // prune_graph(&mut g, 2.0);
-    prune_graph_parallel(&mut g, 2.0);
+    prune_graph_parallel(&mut g, 2.5);
     println!("Pruning took {} s", start.elapsed().as_secs());
 
     if !g.graph.is_connected() {
