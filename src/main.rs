@@ -26,18 +26,20 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let s1 = 60;
-    let s2 = 50;
-    let s3 = 30;
-    let s4 = 10;
+    let s1 = 70;
+    let s2 = 60;
+    let s3 = 50;
+    let s4 = 40;
+
     let r1 = 1000.;
-    let r2 = 420.0;
-    let r3 = 120.0;
-    let r4 = 17.0;
+    let r2 = 1.5 * r1 / (s1 as f64).sqrt();
+    let r3 = 1.5 * r2 / (s2 as f64).sqrt();
+    let r4 = 1.5 * r3 / (s3 as f64).sqrt();
+
     let f1 = 1.0;
-    let f2 = 0.3;
-    let f3 = 0.2;
-    let f4 = 0.1;
+    let f2 = 0.5;
+    let f3 = 0.4;
+    let f4 = 0.3;
 
     println!("exp fraction: {:.1}, {:.1}, {:.1}, {:.1}", f1, f2, f3, f4);
     println!("sites: {:.1}, {:.1}, {:.1}, {:.1}", s1, s2, s3, s4);
@@ -50,14 +52,12 @@ fn main() {
     println!("total size: {:.1}", t4);
 
     let g = hierachical_delaunay::pruned_hierachical_delaunay(
-        &[1.0, 0.3, 0.2, 0.1],
+        &[f1, f2, f3, f4],
         &[s1, s2, s3, s4],
         &[r1, r2, r3, r4],
     );
     g.graph.info();
 
-
-    // g.inertial_flowcutter("tmp");
-    g.visualize("tmp");
+    g.inertial_flowcutter("tmp");
+    // g.visualize("tmp");
 }
-
