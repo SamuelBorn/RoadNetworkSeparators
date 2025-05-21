@@ -26,30 +26,24 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let s1 = 70;
-    let s2 = 60;
-    let s3 = 50;
-    let s4 = 40;
+    let s1 = 200;
+    let s2 = 50;
+    let s3 = 35;
+    let s4 = 25;
 
     let r1 = 1000.;
-    let r2 = 1.5 * r1 / (s1 as f64).sqrt();
-    let r3 = 1.5 * r2 / (s2 as f64).sqrt();
-    let r4 = 1.5 * r3 / (s3 as f64).sqrt();
+    let r2 = 2.0 * r1 / (s1 as f64).sqrt();
+    let r3 = 1.3 * r2 / (s2 as f64).sqrt();
+    let r4 = 1.3 * r3 / (s3 as f64).sqrt();
 
     let f1 = 1.0;
     let f2 = 0.5;
     let f3 = 0.4;
     let f4 = 0.3;
 
-    println!("exp fraction: {:.1}, {:.1}, {:.1}, {:.1}", f1, f2, f3, f4);
-    println!("sites: {:.1}, {:.1}, {:.1}, {:.1}", s1, s2, s3, s4);
-    println!("radii: {:.1}, {:.1}, {:.1}, {:.1}", r1, r2, r3, r4);
-
-    let t1 = s1 as f64;
-    let t2 = t1 + t1 * f2 * s2 as f64;
-    let t3 = t2 + t2 * f3 * s3 as f64;
-    let t4 = t3 + t3 * f4 * s4 as f64;
-    println!("total size: {:.1}", t4);
+    println!("fract: {:.1}, {:.1}, {:.1}, {:.1}", f1, f2, f3, f4);
+    println!("sites: {:.0}, {:.0}, {:.0}, {:.0}", s1, s2, s3, s4);
+    println!("radii: {:.0}, {:.0}, {:.0}, {:.0}\n", r1, r2, r3, r4);
 
     let g = hierachical_delaunay::pruned_hierachical_delaunay(
         &[f1, f2, f3, f4],
@@ -58,6 +52,7 @@ fn main() {
     );
     g.graph.info();
 
-    g.inertial_flowcutter("tmp");
+    g.inertial_flowcutter("hierachical_delaunay_pruned");
     // g.visualize("tmp");
 }
+
