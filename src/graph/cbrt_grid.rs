@@ -6,6 +6,8 @@ use rayon::prelude::*;
 
 use super::geometric_graph::GeometricGraph;
 
+use self::Direction::*;
+
 type Point = (usize, usize);
 type Edge = (Point, Point);
 
@@ -80,6 +82,49 @@ impl Grid {
         }
     }
 
+    fn cbrt_join_v2(&mut self, other: &mut Grid, side: Direction) -> Grid {
+        let mut join_side_1 = self.perimeter[side as usize].clone();
+        let mut join_side_2 = other.perimeter[side.opposite() as usize].clone();
+
+        let cbrt = ((self.node_count + other.node_count) as f64).cbrt().ceil() as usize;
+        join_side_1.shuffle(&mut thread_rng());
+        join_side_2.shuffle(&mut thread_rng());
+        join_side_1.truncate(cbrt);
+        join_side_2.truncate(cbrt);
+        join_side_1.sort_unstable();
+        join_side_2.sort_unstable();
+
+        let mut bridges = join_side_1
+            .iter()
+            .map(|x| {
+                let other = join_side_2
+                    .iter()
+                    .min_by_key(|&y| {
+                        let dx = (x.0 as isize - y.0 as isize).abs();
+                        let dy = (x.1 as isize - y.1 as isize).abs();
+                        dx * dx + dy * dy
+                    })
+                    .unwrap();
+                (*x, *other)
+            })
+            .collect::<Vec<_>>();
+
+        let mut new_edges = Vec::new();
+        new_edges.append(self.edges.as_mut());
+        new_edges.append(other.edges.as_mut());
+        new_edges.append(&mut bridges);
+
+        Grid {
+            perimeter: join_perimeters(
+                mem::take(&mut self.perimeter),
+                mem::take(&mut other.perimeter),
+                side,
+            ),
+            edges: new_edges,
+            node_count: self.node_count + other.node_count,
+        }
+    }
+
     fn cbrt_join(&mut self, other: &mut Grid, side: Direction) -> Grid {
         let mut join_side_1 = self.perimeter[side as usize].clone();
         let mut join_side_2 = other.perimeter[side.opposite() as usize].clone();
@@ -144,33 +189,41 @@ fn join_perimeters(
 pub fn build_cbrt_grid(num_doubles: usize) -> GeometricGraph {
     let p = (0, 0);
     let mut g = Grid {
-        perimeter: vec![vec![p.clone()]; 4],
+        perimeter: vec![vec![p]; 4],
         edges: Vec::new(),
         node_count: 1,
     };
 
     for i in 0..num_doubles {
-        let mut g_new = g.translate(Direction::Top, 1 << i + 10);
-        g = g.cbrt_join(&mut g_new, Direction::Top);
-        let mut g_new = g.translate(Direction::Right, 1 << i + 10);
-        g = g.cbrt_join(&mut g_new, Direction::Right);
+        let mut g_new = g.translate(Direction::Top, 1 << i);
+        g = g.cbrt_join_v2(&mut g_new, Direction::Top);
+        let mut g_new = g.translate(Direction::Right, 1 << i);
+        g = g.cbrt_join_v2(&mut g_new, Direction::Right);
     }
-    //let mut g_new = g.translate(Direction::Top, (1 << 0) +1);
-    //g = g.cbrt_join(&mut g_new, Direction::Top);
-    //let mut g_new = g.translate(Direction::Right, (1 << 0) +1);
-    //g = g.cbrt_join(&mut g_new, Direction::Right);
-    //let mut g_new = g.translate(Direction::Top, (1 << 1) +1);
-    //g = g.cbrt_join(&mut g_new, Direction::Top);
-    //let mut g_new = g.translate(Direction::Right, (1 << 1) +1);
-    //g = g.cbrt_join(&mut g_new, Direction::Right);
-
-    //println!("top: {:?}", g.perimeter[Direction::Top as usize]);
-    //println!("right: {:?}", g.perimeter[Direction::Right as usize]);
-    //println!("bottom: {:?}", g.perimeter[Direction::Bottom as usize]);
-    //println!("left: {:?}", g.perimeter[Direction::Left as usize]);
 
     GeometricGraph::from_edges_usize(&g.edges)
 }
+
+// pub fn build_cbrt_grid_recursive(i: usize) -> Grid {
+//     if i == 0 {
+//         return Grid {
+//             perimeter: vec![vec![(0, 0)]; 4],
+//             edges: Vec::new(),
+//             node_count: 1,
+//         };
+//     }
+//
+//     let g1 = build_cbrt_grid_recursive(i - 1);
+//     let g2 = build_cbrt_grid_recursive(i - 1).translate(Top, 1 << i + 1);
+//     let g3 = build_cbrt_grid_recursive(i - 1).translate(Right, 1 << i + 1);
+//     let g4 = build_cbrt_grid_recursive(i - 1)
+//         .translate(Top, 1 << i + 1)
+//         .translate(Right, 1 << i + 1);
+//
+//     let g_left = g1.
+//
+//     unimplemented!()
+// }
 
 #[cfg(test)]
 mod tests {
@@ -181,8 +234,10 @@ mod tests {
 
     #[test]
     fn cbrt_grid() {
-        let g = build_cbrt_grid(11);
-        g.graph.recurse_separator(Fast, None);
-        g.save(Path::new("output/cbrt_grid"));
+        let g = build_cbrt_grid(5);
+        g.graph.info();
+        // g.graph.recurse_separator(Fast, None);
+        // g.save(Path::new("output/cbrt_grid"));
+        g.visualize("cbrt_grid");
     }
 }
