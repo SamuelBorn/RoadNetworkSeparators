@@ -3,6 +3,7 @@ use std::path::Path;
 use geo::Point;
 use noise::{NoiseFn, Perlin};
 use rand::Rng;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::library;
 
@@ -28,10 +29,12 @@ pub fn noise(n: usize, scale: Option<f64>) -> GeometricGraph {
     let mut perlin = Perlin::new(rng.gen());
 
     while p.len() < n {
-        let x = library::random_point_in_circle(Point::new(0., 0.), 1.);
-        if should_place_point(&x, &perlin, scale) {
-            p.push(x);
-        }
+        p.append(
+            &mut library::random_points_in_circle(Point::new(0., 0.), 1., 1000)
+                .into_par_iter()
+                .filter(|p| should_place_point(p, &perlin, None))
+                .collect::<Vec<Point>>(),
+        );
     }
 
     library::write_point_vec(Path::new("./output/noise_points"), &p);
