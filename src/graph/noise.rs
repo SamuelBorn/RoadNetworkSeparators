@@ -14,43 +14,46 @@ use super::{
     voronoi::{prune_graph, prune_graph_parallel},
 };
 
-fn should_place_point(p: &Point, perlin: &Perlin, scale: Option<f64>) -> bool {
-    let chance: f64 = rand::thread_rng().gen();
+fn should_place_point(p: &Point, perlin: &Perlin, scales: &[f64]) -> bool {
+    let noise: f64 = scales
+        .iter()
+        .map(|scale| perlin.get([p.x() * scale, p.y() * scale]) * 0.5 + 0.5)
+        .product();
 
-    let noise1 = (perlin.get([p.x() * 10., p.y() * 10.]) + 1.) * 0.5;
-    let noise2 = (perlin.get([p.x() * 50. + 10., p.y() * 50. + 10.]) + 1.) * 0.5;
-    // chance.powi(5) > noise1 * noise2
-    noise1 * noise2 > 0.3
+    noise > 0.5f64.powi(scales.len() as i32)
 }
 
-pub fn noise(n: usize, scale: Option<f64>) -> GeometricGraph {
+pub fn noise(n: usize) -> GeometricGraph {
     let mut p = Vec::with_capacity(n);
     let rng = &mut rand::thread_rng();
     let mut perlin = Perlin::new(rng.gen());
+
+    let scales = vec![10., 40., 160.];
 
     while p.len() < n {
         p.append(
             &mut library::random_points_in_circle(Point::new(0., 0.), 1., 1000)
                 .into_par_iter()
-                .filter(|p| should_place_point(p, &perlin, None))
+                .filter(|p| should_place_point(p, &perlin, &scales))
                 .collect::<Vec<Point>>(),
         );
     }
+    // library::write_point_vec(Path::new("./output/noise_points"), &p);
 
-    library::write_point_vec(Path::new("./output/noise_points"), &p);
-
+    println!("Points");
     let mut g = delaunay(&p);
+    println!("Delaunay");
     prune_graph_parallel(&mut g, 2.5);
-    // prune_graph(&mut g, 2.5);
+    println!("Pruned");
     g.largest_connected_component()
 }
 
 mod tests {
     use super::*;
-    use crate::{graph::geometric_graph::GeometricGraph, library};
 
     #[test]
     fn noise_test() {
-        let g = noise(40_000, Some(10.));
+        let g = noise(1_000_000);
+        g.inertial_flowcutter("tmp");
     }
 }
