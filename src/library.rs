@@ -89,6 +89,16 @@ pub fn write_text_vec<T: std::fmt::Display>(input: &[T], file: &Path) -> io::Res
     )
 }
 
+pub fn write_point_vec(file: &Path, points: &[Point<f64>]) -> io::Result<()> {
+    fs::write(
+        file,
+        points
+            .iter()
+            .map(|point| format!("{} {}\n", point.x(), point.y()))
+            .collect::<String>(),
+    )
+}
+
 pub fn read_edge_list(file: &Path) -> io::Result<Vec<(usize, usize)>> {
     Ok(std::fs::read_to_string(file)?
         .lines()
@@ -146,7 +156,11 @@ where
     Point::new(center.x() + dx, center.y() + dy)
 }
 
-pub fn random_points_in_circle<R>(center: Point<f64>, radius: R, num_points: usize) -> Vec<Point<f64>>
+pub fn random_points_in_circle<R>(
+    center: Point<f64>,
+    radius: R,
+    num_points: usize,
+) -> Vec<Point<f64>>
 where
     R: Into<f64> + Copy,
 {
