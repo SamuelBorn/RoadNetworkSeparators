@@ -34,6 +34,7 @@ pub mod hierachical_disks;
 pub mod highway;
 pub mod nested_grid;
 pub mod nested_sparse;
+pub mod noise;
 pub mod planar;
 pub mod tree;
 pub mod unit_disk;
