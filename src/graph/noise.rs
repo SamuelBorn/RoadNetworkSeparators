@@ -14,17 +14,18 @@ use super::{
 };
 
 fn should_place_point(p: &Point, perlin: &Perlin, scale: Option<f64>) -> bool {
-    let scale = scale.unwrap_or(10.0);
-    let noise = perlin.get([p.x() * scale, p.y() * scale]);
-    let chance = rand::thread_rng().gen_range(-1.0..1.0);
-    let chance = chance * chance * chance;
-    noise > chance
+    let chance: f64 = rand::thread_rng().gen();
+
+    let noise1 = (perlin.get([p.x() * 10., p.y() * 10.]) + 1.) * 0.5;
+    let noise2 = (perlin.get([p.x() * 50. + 10., p.y() * 50. + 10.]) + 1.) * 0.5;
+    // chance.powi(5) > noise1 * noise2
+    noise1 * noise2 > 0.3
 }
 
 pub fn noise(n: usize, scale: Option<f64>) -> GeometricGraph {
     let mut p = Vec::with_capacity(n);
     let rng = &mut rand::thread_rng();
-    let mut perlin = Perlin::new(0);
+    let mut perlin = Perlin::new(rng.gen());
 
     while p.len() < n {
         let x = library::random_point_in_circle(Point::new(0., 0.), 1.);
@@ -47,13 +48,7 @@ mod tests {
 
     #[test]
     fn noise_test() {
-        // let g = noise(50_000, Some(5.0));
-        // g.inertial_flowcutter("noise");
-        // g.visualize("noise");
-        for i in 1..=10 {
-            let g = noise(50_000, Some(i as f64));
-            g.inertial_flowcutter(&format!("noise_{}", i));
-        }
+        let g = noise(40_000, Some(10.));
     }
 
     #[test]
