@@ -53,7 +53,4 @@ mod tests {
     fn noise_test() {
         let g = noise(40_000, Some(10.));
     }
-
-    #[test]
-    fn noise_test_scale() {}
 }
