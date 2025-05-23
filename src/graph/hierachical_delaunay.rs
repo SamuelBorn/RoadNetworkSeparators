@@ -17,6 +17,7 @@ pub fn pruned_hierachical_delaunay(
 ) -> GeometricGraph {
     let start = std::time::Instant::now();
     let mut g = generate_hierachical_delaunay(city_percentage, points_per_level, radii);
+    // g.visualize("delaunay_pre_prune");
     println!("Delaunay took {} s", start.elapsed().as_secs());
     let start = std::time::Instant::now();
     // prune_graph(&mut g, 2.0);
@@ -26,6 +27,7 @@ pub fn pruned_hierachical_delaunay(
     if !g.graph.is_connected() {
         g = g.largest_connected_component();
     }
+    // g.visualize("delaunay_post_prune");
     g
 }
 
