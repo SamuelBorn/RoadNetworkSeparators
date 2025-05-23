@@ -50,22 +50,27 @@ pub fn generate_hierachical_delaunay(
 ) -> GeometricGraph {
     assert_eq!(city_percentage[0], 1.0);
     let rng = &mut rand::thread_rng();
-    let mut points = vec![Point::new(1000.0, 1000.0)];
+    // let mut points = vec![Point::new(1000.0, 1000.0)];
+
+    let mut points = vec![vec![]; city_percentage.len() + 1];
+    points[0].push(Point::new(1000.0, 1000.0));
 
     for i in 0..city_percentage.len() {
-        let chosen = points
-            .choose_multiple(rng, (city_percentage[i] * points.len() as f64) as usize)
+        let chosen = points[i]
+            .choose_multiple(rng, (city_percentage[i] * points[i].len() as f64) as usize)
             .cloned()
             .collect::<Vec<_>>();
 
         for center in chosen {
-            points.append(&mut library::random_points_in_circle(
+            points[i + 1].append(&mut library::random_points_in_circle(
                 center,
                 radii[i],
                 points_per_level[i],
             ));
         }
     }
+
+    let points = points.iter().flatten().cloned().collect::<Vec<_>>();
 
     delaunay::delaunay(&points)
 }
