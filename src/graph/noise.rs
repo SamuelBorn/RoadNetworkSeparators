@@ -17,7 +17,7 @@ use super::{
 fn should_place_point(p: &Point, perlin: &Perlin, scales: &[f64]) -> bool {
     let noise: f64 = scales
         .iter()
-        .map(|scale| perlin.get([p.x() * scale, p.y() * scale]) * 0.5 + 0.5)
+        .map(|s| perlin.get([p.x() * s + 3. * s, p.y() * s + 3. * s]) * 0.5 + 0.5)
         .product();
 
     noise > 0.5f64.powi(scales.len() as i32)
@@ -28,8 +28,7 @@ pub fn noise(n: usize) -> GeometricGraph {
     let rng = &mut rand::thread_rng();
     let mut perlin = Perlin::new(rng.gen());
 
-    // let scales = vec![10., 40., 160.];
-    let scales = vec![10.];
+    let scales = vec![10., 40., 160.];
 
     while p.len() < n {
         p.append(
