@@ -162,7 +162,7 @@ pub fn kruskal3d(n: usize) -> (Graph, Vec<Point3D>) {
 
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
+    use std::{fs, path::Path};
 
     use super::*;
 
@@ -251,6 +251,20 @@ mod tests {
     }
 
     #[test]
+    fn kruskal_2d_diam() {
+        let out = (5..22)
+            .into_par_iter()
+            .map(|i| {
+                let i = 2usize.pow(i);
+                let g = get_mst(i);
+                let diam = g.graph.get_diameter();
+                format!("{} {}\n", i, diam)
+            })
+            .collect::<String>();
+        fs::write("./output/diam_kruskal_2d", out).unwrap();
+    }
+
+    #[test]
     fn simple_kruskal_3d() {
         for i in [10_000, 20_000, 50_000, 70_000, 100_000, 500_000, 1_000_000] {
             let g = kruskal3d(i);
@@ -265,8 +279,20 @@ mod tests {
     }
 
     #[test]
-    fn kruskal_separators() {
-        let g = kruskal3d(1_000_000).0;
-        g.recurse_separator(crate::separator::Mode::Fast, Some(Path::new("./output/sep/kruskal_3d")));
+    fn diam_kruskal_3d() {
+        // let g = kruskal3d(100_000).0;
+        // g.flowcutter("kruskal3d");
+        // g.recurse_separator(crate::separator::Mode::Fast, Some(Path::new("./output/sep/kruskal_3d")));
+
+        let diams = [10_000, 20_000, 40_000, 80_000, 160_000, 320_000]
+            .into_par_iter()
+            .map(|i| {
+                let g = kruskal3d(i).0;
+                let diam = g.get_diameter();
+                format!("{} {}\n", i, diam)
+            })
+            .collect::<String>();
+
+        fs::write("./output/diam_kruskal_3d", diams).unwrap();
     }
 }
