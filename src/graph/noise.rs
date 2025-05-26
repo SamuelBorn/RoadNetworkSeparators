@@ -28,7 +28,7 @@ pub fn noise(n: usize) -> GeometricGraph {
     let rng = &mut rand::thread_rng();
     let mut perlin = Perlin::new(rng.gen());
 
-    let scales = vec![10., 40., 160.];
+    let scales = vec![4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0];
 
     while p.len() < n {
         p.append(
