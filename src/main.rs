@@ -26,20 +26,21 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let s1 = 200;
-    let s2 = 50;
-    let s3 = 35;
-    let s4 = 25;
-
-    let r1 = 1000.;
-    let r2 = 2.0 * r1 / (s1 as f64).sqrt();
-    let r3 = 1.3 * r2 / (s2 as f64).sqrt();
-    let r4 = 1.3 * r3 / (s3 as f64).sqrt();
-
+    // \(f_i=(1.0, 0.3, 0.2, 0.1)\); \(k_i=(50, 50, 50, 50)\); \(r_i=(1000, 424, 120, 17)\).}
     let f1 = 1.0;
-    let f2 = 0.5;
-    let f3 = 0.4;
-    let f4 = 0.3;
+    let f2 = 0.3;
+    let f3 = 0.2;
+    let f4 = 0.1;
+
+    let s1 = 50.0;
+    let s2 = 50.0;
+    let s3 = 50.0;
+    let s4 = 50.0;
+
+    let r1 = 1000.0;
+    let r2 = 424.0;
+    let r3 = 120.0;
+    let r4 = 17.0;
 
     println!("fract: {:.1}, {:.1}, {:.1}, {:.1}", f1, f2, f3, f4);
     println!("sites: {:.0}, {:.0}, {:.0}, {:.0}", s1, s2, s3, s4);
@@ -52,7 +53,6 @@ fn main() {
     );
     g.graph.info();
 
-    g.inertial_flowcutter("hierachical_delaunay_pruned");
-    // g.visualize("tmp");
+    g.inertial_flowcutter("tmp");
+    g.visualize("tmp");
 }
-
