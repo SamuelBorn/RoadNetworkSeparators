@@ -289,7 +289,8 @@ pub fn build_voronoi_road_network(
     g.graph.info();
     println!("Graph build");
     // prune_graph(&mut g, 3.0);
-    prune_graph(&mut g, 4.0);
+    // prune_graph(&mut g, 4.0);
+    prune_graph_spanner(&mut g, 4.0);
     g.graph.info();
     println!("Graph pruned");
     g
