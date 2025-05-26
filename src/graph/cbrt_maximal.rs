@@ -72,8 +72,15 @@ mod tests {
     }
 
     #[test]
+    fn cbrt_maximal_small() {
+        let g = generate_cbrt_maximal(10_000);
+        dbg!(g.data.iter().map(|s| s.len()).max());
+        g.info();
+    }
+
+    #[test]
     fn gen_cbrt_maximal_degree_distribution() {
-        let mut g = generate_cbrt_maximal(20000);
+        let mut g = generate_cbrt_maximal(10000);
         g.approx_degrees(&example::DEGREE_DISTRIBUTION_GER);
         g.info();
         g.save(Path::new("./output/cbrt_maximal_avg_deg_20k/"));
