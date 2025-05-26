@@ -26,16 +26,15 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    // \(f_i=(1.0, 0.3, 0.2, 0.1)\); \(k_i=(50, 50, 50, 50)\); \(r_i=(1000, 424, 120, 17)\).}
     let f1 = 1.0;
     let f2 = 0.3;
     let f3 = 0.2;
     let f4 = 0.1;
 
-    let s1 = 50.0;
-    let s2 = 50.0;
-    let s3 = 50.0;
-    let s4 = 50.0;
+    let s1 = 50;
+    let s2 = 50;
+    let s3 = 50;
+    let s4 = 50;
 
     let r1 = 1000.0;
     let r2 = 424.0;
@@ -54,5 +53,5 @@ fn main() {
     g.graph.info();
 
     g.inertial_flowcutter("tmp");
-    g.visualize("tmp");
+    // g.visualize("tmp");
 }
