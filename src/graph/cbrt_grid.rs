@@ -97,15 +97,23 @@ impl Grid {
         let mut bridges = join_side_1
             .iter()
             .map(|x| {
-                let other = join_side_2
-                    .iter()
-                    .min_by_key(|&y| {
-                        let dx = (x.0 as isize - y.0 as isize).abs();
-                        let dy = (x.1 as isize - y.1 as isize).abs();
-                        dx * dx + dy * dy
-                    })
-                    .unwrap();
-                (*x, *other)
+                // let other = join_side_2
+                //     .iter()
+                //     .min_by_key(|&y| {
+                //         let dx = (x.0 as isize - y.0 as isize).abs();
+                //         let dy = (x.1 as isize - y.1 as isize).abs();
+                //         dx * dx + dy * dy
+                //     })
+                //     .unwrap();
+
+                // just move by one step in the direction
+                match side {
+                    Direction::Top => (*x, (x.0, x.1 + 1)),
+                    Direction::Right => (*x, (x.0 + 1, x.1)),
+                    Direction::Bottom => (*x, (x.0, x.1 - 1)),
+                    Direction::Left => (*x, (x.0 - 1, x.1)),
+                }
+                // (*x, *other)
             })
             .collect::<Vec<_>>();
 
@@ -239,5 +247,11 @@ mod tests {
         // g.graph.recurse_separator(Fast, None);
         // g.save(Path::new("output/cbrt_grid"));
         g.visualize("cbrt_grid");
+    }
+
+    #[test]
+    fn cbrt_grid_large() {
+        let g = build_cbrt_grid(10);
+        g.inertial_flowcutter("cbrt_grid_large");
     }
 }
