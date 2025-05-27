@@ -239,16 +239,22 @@ mod tests {
 
     #[test]
     fn find_best_tree_locality_pow() {
-        let n = 1_000_000;
+        let n = 2usize.pow(18);
         let m = n * 5 / 4;
         let pows = [2.9, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6];
 
-        pows.into_par_iter().for_each(|pow| {
-            let f = |x: usize| (x as f64).powf(-pow);
-            let g = tree_locality(n, m, f);
-            println!("graph with pow {} built", pow);
-            g.flowcutter(&format!("tree_locality_{}", pow * 10.));
-            println!("flowcutter finished for pow {}", pow);
-        })
+        let graphs = pows
+            .iter()
+            .map(|pow| {
+                let start = Instant::now();
+                let g = tree_locality(n, m, |x: usize| (x as f64).powf(-pow));
+                println!("Built {} in {} s", pow, start.elapsed().as_secs());
+                (g, *pow)
+            })
+            .collect::<Vec<_>>();
+
+        graphs.into_par_iter().for_each(|(g, pow)| {
+            g.flowcutter(&format!("tree_locality_pow_{}", pow));
+        });
     }
 }

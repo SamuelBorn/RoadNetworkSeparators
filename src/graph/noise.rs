@@ -24,7 +24,7 @@ fn should_place_point(p: &Point, perlin: &Perlin, scales: &[f64]) -> bool {
 }
 
 pub fn noise(n: usize) -> GeometricGraph {
-    let scales = [4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0];
+    let scales = [8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0];
     noise_scales(n, &scales)
 }
 
