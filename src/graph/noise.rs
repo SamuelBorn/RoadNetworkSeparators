@@ -48,8 +48,8 @@ pub fn noise_scales(n: usize, scales: &[f64]) -> GeometricGraph {
     let starttime = std::time::Instant::now();
     while p.len() < n {
         let option = library::random_point_in_circle(Point::new(0., 0.), 1.);
-        if should_place_point_fractal_noise(&option, &perlin, scales) {
-        // if should_place_point(&option, &perlin, scales) {
+        // if should_place_point_fractal_noise(&option, &perlin, scales) {
+        if should_place_point(&option, &perlin, scales) {
             p.push(option);
         }
     }

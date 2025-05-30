@@ -21,17 +21,11 @@ use graph::hierachical_delaunay::random_pruned_hierachical_delaunay;
 use graph::Graph;
 use graph::{
     cbrt_maximal, delaunay, grid, hierachical_delaunay, hierachical_disks, highway, nested_grid,
-    tree, voronoi, noise
+    noise, tree, voronoi,
 };
 use separator::Mode::*;
 
 fn main() {
     let g = noise::noise(10_000_000);
     g.inertial_flowcutter("noise_10m");
-
-    // let g = noise::noise_scales(5_000_000, &[4.0, 8.0, 16.0, 32.0]);
-    // g.inertial_flowcutter("noise_low_only");
-    //
-    // let g = noise::noise_scales(5_000_000, &[64.0, 128.0, 256.0, 512.0, 1024.0]);
-    // g.inertial_flowcutter("noise_high_only");
 }
