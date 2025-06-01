@@ -39,6 +39,7 @@ pub mod planar;
 pub mod tree;
 pub mod unit_disk;
 pub mod voronoi;
+pub mod relative_neighborhood;
 
 // representation of bidirectional graph
 // all algorithms assume that if a,b is in the graph, then b,a is also in the graph

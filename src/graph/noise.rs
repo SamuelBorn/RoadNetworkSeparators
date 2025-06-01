@@ -5,7 +5,7 @@ use noise::{NoiseFn, Perlin};
 use rand::{thread_rng, Rng};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
-use crate::library;
+use crate::{graph::relative_neighborhood::relative_neighborhood_points, library};
 
 use super::{
     delaunay::delaunay,
@@ -59,14 +59,15 @@ pub fn noise_scales(n: usize, scales: &[f64]) -> GeometricGraph {
     );
 
     let starttime = std::time::Instant::now();
-    let mut g = delaunay(&p);
+    // let mut g = delaunay(&p);
+    let g = relative_neighborhood_points(&p);
     println!(
         "Delaunay triangulation in {:.2} s",
         starttime.elapsed().as_secs_f64()
     );
 
     let starttime = std::time::Instant::now();
-    prune_graph_parallel(&mut g, 2.5);
+    // prune_graph_parallel(&mut g, 2.5);
     println!(
         "Pruning graph in {:.2} s",
         starttime.elapsed().as_secs_f64()

@@ -26,6 +26,8 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let g = noise::noise(10_000_000);
-    g.inertial_flowcutter("noise_10m");
+    let g = noise::noise(1_000_000);
+    g.inertial_flowcutter("noise_rng");
+    g.graph.info();
+    // g.visualize("noise_rng");
 }
