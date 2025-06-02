@@ -7,6 +7,7 @@ pub mod library;
 pub mod local;
 pub mod random_set;
 pub mod separator;
+pub mod osm;
 
 use geo::Rect;
 use ordered_float::Pow;
@@ -26,7 +27,11 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let g = europe();
-    let hops = g.hop_overview_probabilistic(1000);
-    library::write_text_vec(&hops, Path::new("output/hops_europe.txt"));
+    // let g = europe();
+    // let hops = g.hop_overview(1000);
+    // library::write_text_vec(&hops, Path::new("output/hops_europe.txt"));
+
+    let g = Graph::from_osm_xml(Path::new("../Graphs/karlsruhe-090826.osm")).unwrap();
+    let g = g.largest_connected_component();
+    g.info();
 }

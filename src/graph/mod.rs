@@ -559,7 +559,7 @@ impl Graph {
         result // Return vector with distances (some may still be MAX if unreachable)
     }
 
-    pub fn hop_overview_probabilistic(&self, n: usize) -> Vec<usize> {
+    pub fn hop_overview(&self, n: usize) -> Vec<usize> {
         let hops = (0..n)
             .into_par_iter()
             .flat_map(|_| {
