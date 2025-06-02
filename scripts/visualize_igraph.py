@@ -24,7 +24,7 @@ def visualize() -> None:
 
     ig.plot(
         g,
-        target="large_graph_custom_layout_direct.png",
+        target=f"./output/{base_dir.name}.png",
         layout=layout,
         vertex_size=0,
         edge_width=0.5,
