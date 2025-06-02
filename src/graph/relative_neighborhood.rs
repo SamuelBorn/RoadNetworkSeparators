@@ -1,8 +1,7 @@
-use geo::{Coord, Point};
-use rayon::prelude::*;
+use geo::Point;
 use hashbrown::HashSet;
-use rstar::primitives::GeomWithData;
-use rstar::{PointDistance, RTree};
+use rayon::prelude::*;
+use rstar::PointDistance;
 
 use crate::library;
 
@@ -10,43 +9,30 @@ use super::delaunay::delaunay;
 use super::geometric_graph::GeometricGraph;
 use super::Graph;
 
-type IndexedPoint = GeomWithData<Point, usize>;
-
 pub fn relative_neighborhood(n: usize) -> GeometricGraph {
     let points = library::random_points_in_circle(Point::new(100., 100.), 1., n);
     relative_neighborhood_points(&points)
 }
 
 pub fn relative_neighborhood_points(points: &[Point]) -> GeometricGraph {
-    let indexed_points: Vec<IndexedPoint> = points
-        .iter()
-        .enumerate()
-        .map(|(i, p)| IndexedPoint::new(*p, i))
-        .collect();
-    let rtree = RTree::bulk_load(indexed_points);
-
     let g = delaunay(points);
 
     let edges = g
         .graph
         .get_directed_edges()
-        .into_iter()
-        .filter(|edge| {
-            let p1 = points[edge.0];
-            let p2 = points[edge.1];
-            let dist2 = p1.distance_2(&p2) - 1e-7;
+        .into_par_iter()
+        .filter(|&(u, v)| {
+            let p1 = points[u];
+            let p2 = points[v];
+            let dist2 = p1.distance_2(&p2);
 
-            let l1 = rtree
-                .locate_within_distance(p1, dist2)
-                .map(|e| e.data)
-                .collect::<HashSet<usize>>();
-            let l2 = rtree
-                .locate_within_distance(p2, dist2)
-                .map(|e| e.data)
-                .collect::<HashSet<usize>>();
-
-            let intersection = l1.intersection(&l2);
-            intersection.count() == 0
+            g.graph.data[u]
+                .intersection(&g.graph.data[v])
+                .filter(|&&x| {
+                    p1.distance_2(&points[x]) < dist2 && p2.distance_2(&points[x]) < dist2
+                })
+                .count()
+                == 0
         })
         .collect::<Vec<_>>();
 

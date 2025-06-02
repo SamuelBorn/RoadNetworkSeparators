@@ -62,16 +62,16 @@ pub fn noise_scales(n: usize, scales: &[f64]) -> GeometricGraph {
     // let mut g = delaunay(&p);
     let g = relative_neighborhood_points(&p);
     println!(
-        "Delaunay triangulation in {:.2} s",
+        "Relative Neighborhood in {:.2} s",
         starttime.elapsed().as_secs_f64()
     );
 
-    let starttime = std::time::Instant::now();
+    // let starttime = std::time::Instant::now();
     // prune_graph_parallel(&mut g, 2.5);
-    println!(
-        "Pruning graph in {:.2} s",
-        starttime.elapsed().as_secs_f64()
-    );
+    // println!(
+    //     "Pruning graph in {:.2} s",
+    //     starttime.elapsed().as_secs_f64()
+    // );
     g.largest_connected_component()
 }
 
