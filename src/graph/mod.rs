@@ -1,5 +1,6 @@
 use crate::random_set::RandomSet;
 use hashbrown::{HashMap, HashSet};
+use planar::planarize;
 use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -36,10 +37,10 @@ pub mod nested_grid;
 pub mod nested_sparse;
 pub mod noise;
 pub mod planar;
+pub mod relative_neighborhood;
 pub mod tree;
 pub mod unit_disk;
 pub mod voronoi;
-pub mod relative_neighborhood;
 
 // representation of bidirectional graph
 // all algorithms assume that if a,b is in the graph, then b,a is also in the graph
@@ -377,6 +378,16 @@ impl Graph {
         }
         let sum = distribution.iter().sum::<usize>() as f64;
         distribution.iter().map(|&d| d as f64 / sum).collect()
+    }
+
+    pub fn cummulative_degree_distribution(&self) -> Vec<f64> {
+        let dd = self.degree_distribution();
+        dd.iter()
+            .scan(0., |acc, &x| {
+                *acc += x;
+                Some(*acc)
+            })
+            .collect()
     }
 
     pub fn get_neighbors(&self, u: usize) -> &HashSet<usize> {

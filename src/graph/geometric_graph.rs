@@ -17,6 +17,7 @@ use std::path::Path;
 use std::process::Command;
 use std::thread;
 
+use crate::graph::planar::planarize;
 use crate::library;
 use crate::Graph;
 use ordered_float::OrderedFloat;
@@ -382,6 +383,15 @@ impl GeometricGraph {
             .arg("scripts/visualize_graph.py")
             .arg(g_path)
             .spawn();
+    }
+
+    pub fn meshedness_coefficient(&self) -> f64 {
+        let m = self.graph.get_num_edges() as f64;
+        let n = self.graph.get_num_nodes() as f64;
+        assert!(n >= 3.0);
+        let mut g = self.clone();
+        planarize(&mut g);
+        (m - n + 1.) / (2. * n - 5.)
     }
 }
 

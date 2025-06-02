@@ -26,8 +26,6 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let g = noise::noise(1_000_000);
-    g.inertial_flowcutter("noise_rng");
-    g.graph.info();
-    // g.visualize("noise_rng");
+    let g = geometric_europe();
+    dbg!(g.meshedness_coefficient());
 }
