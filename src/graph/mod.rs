@@ -560,26 +560,22 @@ impl Graph {
     }
 
     pub fn hop_overview_probabilistic(&self, n: usize) -> Vec<usize> {
-        let n = n.isqrt();
-
-        (0..n)
+        let hops = (0..n)
             .into_par_iter()
-            .flat_map(|i| {
-                println!("{} / {}", i, n);
-                let rng = &mut rand::thread_rng();
-                let u = rng.gen_range(0..self.get_num_nodes());
-                let ends = (0..n)
-                    .map(|_| rng.gen_range(0..self.get_num_nodes()))
-                    .collect();
-                self.dijkstra_multi(i, ends)
+            .flat_map(|_| {
+                let v = thread_rng().gen_range(0..self.get_num_nodes());
+                self.bfs(v)
             })
-            .collect::<Vec<_>>()
-    }
+            .collect::<Vec<_>>();
 
-    pub fn normalized_hop_overview(&self, n: usize) -> Vec<usize> {
-        let res = self.hop_overview_probabilistic(n);
-        let max = *res.iter().max().unwrap_or(&1) as f64;
-        res.iter().map(|&d| (d as f64 / max) as usize).collect()
+        let max_hop = hops.iter().max().copied().unwrap_or(1);
+        let mut hop_distribution = vec![0; max_hop + 1];
+        for &hop in &hops {
+            if hop < hop_distribution.len() {
+                hop_distribution[hop] += 1;
+            }
+        }
+        hop_distribution
     }
 
     pub fn largest_connected_component(&self) -> Graph {

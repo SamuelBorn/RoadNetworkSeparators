@@ -26,6 +26,7 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let g = geometric_europe();
-    dbg!(g.meshedness_coefficient());
+    let g = europe();
+    let hops = g.hop_overview_probabilistic(1000);
+    library::write_text_vec(&hops, Path::new("output/hops_europe.txt"));
 }
