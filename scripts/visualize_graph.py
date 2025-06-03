@@ -1,24 +1,17 @@
 #!/bin/python3
 import argparse
-import struct
 from pathlib import Path
-
 from graph_tool.all import Graph, graph_draw, sfdp_layout
-import graph_tool
+import numpy as np
 
 
-def read_node_list(filename: Path) -> list[int]:
-    with open(filename, "r") as f:
-        return [int(line.strip()) for line in f if line.strip()]
+def read_node_list(filename: Path):
+    return np.loadtxt(filename, dtype=int)
 
 
-# format_char: "i", "f"
-def read_binary_vec(filename: Path, format_char: str) -> list[int | float]:
-    with open(filename, "rb") as f:
-        data = f.read()
-    return list(
-        struct.unpack(f"{len(data) // struct.calcsize(format_char)}{format_char}", data)
-    )
+def read_binary_vec(filename: Path, format_char: str):
+    # format_char: "i", "f"
+    return np.fromfile(filename, dtype=format_char)
 
 
 def visualize(args: argparse.Namespace) -> None:
@@ -36,8 +29,8 @@ def visualize(args: argparse.Namespace) -> None:
     if args.auto_layout:
         pos = sfdp_layout(g)
     else:
-        latitude: list[float] = read_binary_vec(args.graphdir / "latitude", "f")
-        longitude: list[float] = read_binary_vec(args.graphdir / "longitude", "f")
+        latitude = read_binary_vec(args.graphdir / "latitude", "f")
+        longitude = read_binary_vec(args.graphdir / "longitude", "f")
         latitude = [-1 * x for x in latitude]
         # longitude = [-1 * x for x in longitude]
         assert len(latitude) == len(longitude) == len(g.get_vertices())
@@ -58,7 +51,7 @@ def visualize(args: argparse.Namespace) -> None:
         vertex_size[v] = 0
     if args.highlight_nodes:
         for file, color in zip(args.highlight_nodes, highlight_colors):
-            highlight_indices: list[int] = read_node_list(Path(file))
+            highlight_indices = read_node_list(Path(file))
             for idx in highlight_indices:
                 vertex_size[idx] = args.size / 50
                 if vertex_color[idx] != [0, 0, 0, 1]:
