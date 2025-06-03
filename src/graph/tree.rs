@@ -57,7 +57,7 @@ mod tests {
         for n in (start_n..=end_n).step_by(step) {
             for _ in 0..iterations {
                 let g = random_tree(n);
-                result.push_str(&format!("{} {}\n", n, g.get_diameter()));
+                result.push_str(&format!("{} {}\n", n, g.get_hop_diameter()));
             }
         }
 

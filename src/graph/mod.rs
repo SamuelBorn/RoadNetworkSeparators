@@ -579,6 +579,31 @@ impl Graph {
         });
     }
 
+    pub fn hop_overview_contracted_bins(&self, n: usize, bins: usize, name: &str) {
+        let mut g = self.clone();
+        g.contract_degree_2_nodes();
+        let mut g = g.largest_connected_component();
+        let diameter = g.get_hop_diameter();
+        let bin_edges = library::get_bin_edges(diameter as f64, bins);
+
+        let hist = (0..n)
+            .into_par_iter()
+            .map(|_| {
+                library::histogram(
+                    g.bfs(thread_rng().gen_range(0..g.get_num_nodes()))
+                        .iter()
+                        .map(|&h| h as f64),
+                    &bin_edges,
+                )
+            })
+            .reduce(
+                || vec![0; &bin_edges.len() - 1],
+                |acc, x| library::add_vecs(&acc, &x),
+            );
+
+        library::write_histogram_to_file(name, &bin_edges, &hist);
+    }
+
     pub fn largest_connected_component(&self) -> Graph {
         let separator = HashSet::new();
         let subgraphs = self.get_subgraphs(&separator);
@@ -602,10 +627,17 @@ impl Graph {
 
     // Diameter Karlsruhe: 323
     // Diameter Germany: 1163
-    pub fn get_diameter(&self) -> usize {
+    pub fn get_hop_diameter(&self) -> usize {
         let (furthest_node, _) = self.get_furthest_node(0);
         let (_, diameter) = self.get_furthest_node(furthest_node);
         diameter
+    }
+
+    pub fn get_diameter_contracted(&self) -> usize {
+        let mut g = self.clone();
+        g.contract_degree_2_nodes();
+        let g = g.largest_connected_component();
+        g.get_hop_diameter()
     }
 
     pub fn recurse_diameter(&self, file: Option<&Path>) {
@@ -613,19 +645,19 @@ impl Graph {
             fs::write(x, "");
         }
         let mut g = self.clone();
-        println!("{} {}", g.get_num_nodes(), g.get_diameter());
+        println!("{} {}", g.get_num_nodes(), g.get_hop_diameter());
         library::optional_append_to_file(
             file,
-            &format!("{} {}\n", g.get_num_nodes(), g.get_diameter()),
+            &format!("{} {}\n", g.get_num_nodes(), g.get_hop_diameter()),
         );
         while g.get_num_nodes() > 100 {
             let sep = g.get_separator_wrapper(separator::Mode::Fast);
             let sub = g.get_subgraphs(&sep);
             sub.par_iter().for_each(|g| {
-                println!("{} {}", g.get_num_nodes(), g.get_diameter());
+                println!("{} {}", g.get_num_nodes(), g.get_hop_diameter());
                 library::optional_append_to_file(
                     file,
-                    &format!("{} {}\n", g.get_num_nodes(), g.get_diameter()),
+                    &format!("{} {}\n", g.get_num_nodes(), g.get_hop_diameter()),
                 );
             });
             g = sub.into_iter().max_by_key(|g| g.get_num_nodes()).unwrap();
@@ -706,6 +738,11 @@ impl Graph {
     }
 
     pub fn visualize(&self, name: &str) {
+        if self.get_num_nodes() > 1_000 {
+            println!("Graph too large to visualize with this method, use GeometricGraph instead.");
+            return;
+        }
+
         let g_path = format!("./output/graphs/{}", name);
         self.save(Path::new(&g_path));
 
@@ -726,6 +763,25 @@ impl Graph {
             .spawn()
             .expect("Failed to execute command")
             .wait();
+    }
+
+    pub fn contract_degree_2_nodes(&mut self) {
+        let mut changed = true;
+        while changed {
+            changed = false;
+            for v in 0..self.get_num_nodes() {
+                if self.get_neighbors(v).len() == 2 {
+                    let mut iter = self.get_neighbors(v).iter();
+                    let u1 = *iter.next().unwrap();
+                    let u2 = *iter.next().unwrap();
+
+                    self.remove_edge(v, u1);
+                    self.remove_edge(v, u2);
+                    self.add_edge(u1, u2);
+                    changed = true;
+                }
+            }
+        }
     }
 }
 
@@ -750,7 +806,7 @@ mod test {
     fn diameter_overview() {
         let cut_off = 100;
         let mut g = europe();
-        println!("{} {}", g.get_num_nodes(), g.get_diameter());
+        println!("{} {}", g.get_num_nodes(), g.get_hop_diameter());
 
         while g.get_num_nodes() > cut_off {
             let sep = g.get_separator_wrapper(crate::separator::Mode::Eco);
@@ -758,7 +814,7 @@ mod test {
             sub.iter()
                 .filter(|g| g.get_num_nodes() > cut_off)
                 .for_each(|g| {
-                    println!("{} {}", g.get_num_nodes(), g.get_diameter());
+                    println!("{} {}", g.get_num_nodes(), g.get_hop_diameter());
                 });
             g = sub.into_iter().max_by_key(|g| g.get_num_nodes()).unwrap();
         }

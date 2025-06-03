@@ -226,7 +226,7 @@ mod tests {
                         })
                         .collect::<Vec<_>>();
                     let mst = get_mst_points(&points);
-                    mst.graph.get_diameter()
+                    mst.graph.get_hop_diameter()
                 })
                 .sum::<usize>() as f64
                 / tries as f64;
@@ -257,7 +257,7 @@ mod tests {
             .map(|i| {
                 let i = 2usize.pow(i);
                 let g = get_mst(i);
-                let diam = g.graph.get_diameter();
+                let diam = g.graph.get_hop_diameter();
                 format!("{} {}\n", i, diam)
             })
             .collect::<String>();
@@ -268,7 +268,7 @@ mod tests {
     fn simple_kruskal_3d() {
         for i in [10_000, 20_000, 50_000, 70_000, 100_000, 500_000, 1_000_000] {
             let g = kruskal3d(i);
-            println!("{} {}", i, g.0.get_diameter());
+            println!("{} {}", i, g.0.get_hop_diameter());
         }
     }
 
@@ -288,7 +288,7 @@ mod tests {
             .into_par_iter()
             .map(|i| {
                 let g = kruskal3d(i).0;
-                let diam = g.get_diameter();
+                let diam = g.get_hop_diameter();
                 format!("{} {}\n", i, diam)
             })
             .collect::<String>();

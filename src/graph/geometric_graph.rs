@@ -7,6 +7,7 @@ use rayon::iter::IntoParallelIterator;
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator};
+use rayon::prelude::*;
 use rayon::slice::ParallelSliceMut;
 use rstar::PointDistance;
 
@@ -334,7 +335,7 @@ impl GeometricGraph {
         false
     }
 
-    pub fn dijsktra(&self, start: usize, end: usize) -> f64 {
+    pub fn dijsktra_one_to_one(&self, start: usize, end: usize) -> f64 {
         let mut distances = vec![f64::INFINITY; self.graph.get_num_nodes()];
         distances[start] = 0.0;
         let mut pq = PriorityQueue::<_, _, DefaultHashBuilder>::with_default_hasher();
@@ -358,7 +359,7 @@ impl GeometricGraph {
         f64::INFINITY
     }
 
-    pub fn dijkstra_all(&self, start: usize) -> Vec<f64> {
+    pub fn dijkstra_one_to_all(&self, start: usize) -> Vec<f64> {
         let mut distances = vec![f64::INFINITY; self.graph.get_num_nodes()];
         distances[start] = 0.0;
         let mut pq = PriorityQueue::<_, _, DefaultHashBuilder>::with_default_hasher();
@@ -381,21 +382,60 @@ impl GeometricGraph {
     pub fn distance_overview(&self, n: usize) -> Vec<f64> {
         (0..n)
             .into_par_iter()
-            .flat_map(|_| self.dijkstra_all(thread_rng().gen_range(0..self.graph.get_num_nodes())))
+            .flat_map(|_| {
+                self.dijkstra_one_to_all(thread_rng().gen_range(0..self.graph.get_num_nodes()))
+            })
             .collect::<Vec<_>>()
+    }
+
+    pub fn get_diameter(&self) -> f64 {
+        let distances = self.dijkstra_one_to_all(0);
+        let max_node = distances
+            .into_par_iter()
+            .enumerate()
+            .max_by_key(|(_, d)| OrderedFloat(*d))
+            .unwrap();
+        let distances = self.dijkstra_one_to_all(max_node.0);
+        let max_node = distances
+            .into_par_iter()
+            .enumerate()
+            .max_by_key(|(_, d)| OrderedFloat(*d))
+            .unwrap();
+        max_node.1
     }
 
     pub fn distance_overview_write(&self, n: usize, file: &Path) {
         let mutex = Arc::new(Mutex::new(0));
         fs::write(file, "").expect("Unable to write file");
         (0..n).into_par_iter().for_each(|_| {
-            let hops = self.dijkstra_all(thread_rng().gen_range(0..self.graph.get_num_nodes()));
+            let hops =
+                self.dijkstra_one_to_all(thread_rng().gen_range(0..self.graph.get_num_nodes()));
             mutex.lock().unwrap();
             library::append_to_file(
                 file,
                 &hops.iter().map(|&h| format!("{}\n", h)).collect::<String>(),
             );
         });
+    }
+
+    pub fn distance_overview_contracted_bins(&self, n: usize, bins: usize, name: &str) {
+        let diameter = self.get_diameter();
+        let bin_edges = library::get_bin_edges(diameter, bins);
+
+        let hist = (0..n)
+            .into_par_iter()
+            .map(|_| {
+                library::histogram(
+                    self.dijkstra_one_to_all(thread_rng().gen_range(0..self.graph.get_num_nodes())),
+                    &bin_edges,
+                )
+            })
+            .reduce(
+                || vec![0; &bin_edges.len() - 1],
+                |acc, x| library::add_vecs(&acc, &x),
+            );
+
+        library::write_histogram_to_file(name, &bin_edges, &hist);
     }
 
     pub fn visualize_igraph(&self, name: &str) {

@@ -231,6 +231,57 @@ where
         .collect()
 }
 
+pub fn histogram<I>(data: I, bin_edges: &[f64]) -> Vec<usize>
+where
+    I: IntoIterator<Item = f64>,
+{
+    let mut counts = vec![0; bin_edges.len() - 1];
+
+    for value in data {
+        for (i, edge) in bin_edges.windows(2).enumerate() {
+            if value > edge[0] && value <= edge[1] {
+                counts[i] += 1;
+                break;
+            }
+        }
+    }
+
+    counts
+}
+
+pub fn write_histogram_to_file(name: &str, bin_edges: &[f64], counts: &[usize]) -> io::Result<()> {
+    assert_eq!(
+        bin_edges.len() - 1,
+        counts.len(),
+        "Bin edges and counts must have compatible lengths"
+    );
+
+    let bin_edges = bin_edges
+        .iter()
+        .map(|edge| format!("{:.4} ", edge))
+        .collect::<String>();
+
+    let counts = counts
+        .iter()
+        .map(|count| format!("{:.4} ", count))
+        .collect::<String>();
+
+    fs::write(
+        format!("./output/histogram/{name}"),
+        format!("{bin_edges}\n{counts}"),
+    )
+}
+
+pub fn get_bin_edges(max: f64, num_bins: usize) -> Vec<f64> {
+    let bin_size = (max + 1e-6) / num_bins as f64;
+    (0..=num_bins).map(|i| i as f64 * bin_size).collect()
+}
+
+pub fn add_vecs<T: std::ops::Add<Output = T> + Copy>(a: &[T], b: &[T]) -> Vec<T> {
+    assert_eq!(a.len(), b.len(), "Vectors must be of the same length");
+    a.iter().zip(b.iter()).map(|(&x, &y)| x + y).collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

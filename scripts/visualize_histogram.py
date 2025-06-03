@@ -5,9 +5,19 @@ import argparse
 from pathlib import Path
 
 
+def histogram_data(args: argparse.Namespace):
+    if args.aggregated:
+        with open(args.file, "r") as f:
+            bin_edges = np.array([float(x) for x in f.readline().strip().split()])
+            hist_values = np.array([float(x) for x in f.readline().strip().split()])
+            return hist_values, bin_edges
+    else:
+        data = np.loadtxt(args.file)
+        return np.histogram(data, bins=args.bins)
+
+
 def main(args: argparse.Namespace):
-    data = np.loadtxt(args.file)
-    hist_values, bin_edges = np.histogram(data, bins=args.bins)
+    hist_values, bin_edges = histogram_data(args)
 
     plt.figure(figsize=(8, 6))
     plt.grid(True, alpha=0.2, linestyle="--")
@@ -30,6 +40,7 @@ def parse_args():
     parser.add_argument("--bins", type=int, default=64)
     parser.add_argument("--x-label", default="Value")
     parser.add_argument("--y-label", default="Frequency")
+    parser.add_argument("--aggregated", action="store_true")
     parser.add_argument("--output")
     args = parser.parse_args()
 

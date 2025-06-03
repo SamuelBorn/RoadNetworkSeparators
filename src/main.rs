@@ -28,8 +28,7 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let g = geometric_europe();
-
-    g.graph.hop_overview_write(10, Path::new("./output/hops/germany"));
-    g.distance_overview_write(10, Path::new("./output/distance/germany"));
+    let mut g = geometric_germany();
+    g.graph.hop_overview_contracted_bins(10_000, 50, "hops_ger");
+    g.distance_overview_contracted_bins(10_000, 50, "distances_ger");
 }
