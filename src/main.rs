@@ -27,4 +27,9 @@ use graph::{
 };
 use separator::Mode::*;
 
-fn main() {}
+fn main() {
+    let g = geometric_europe();
+
+    g.graph.hop_overview_write(10, Path::new("./output/hops/germany"));
+    g.distance_overview_write(10, Path::new("./output/distance/germany"));
+}

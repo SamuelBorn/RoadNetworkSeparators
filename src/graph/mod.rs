@@ -560,22 +560,23 @@ impl Graph {
     }
 
     pub fn hop_overview(&self, n: usize) -> Vec<usize> {
-        let hops = (0..n)
+        (0..n)
             .into_par_iter()
-            .flat_map(|_| {
-                let v = thread_rng().gen_range(0..self.get_num_nodes());
-                self.bfs(v)
-            })
-            .collect::<Vec<_>>();
+            .flat_map(|_| self.bfs(thread_rng().gen_range(0..self.get_num_nodes())))
+            .collect::<Vec<_>>()
+    }
 
-        let max_hop = hops.iter().max().copied().unwrap_or(1);
-        let mut hop_distribution = vec![0; max_hop + 1];
-        for &hop in &hops {
-            if hop < hop_distribution.len() {
-                hop_distribution[hop] += 1;
-            }
-        }
-        hop_distribution
+    pub fn hop_overview_write(&self, n: usize, file: &Path) {
+        let mutex = Arc::new(Mutex::new(0));
+        fs::write(file, "").expect("Unable to write file");
+        (0..n).into_par_iter().for_each(|_| {
+            let hops = self.bfs(thread_rng().gen_range(0..self.get_num_nodes()));
+            mutex.lock().unwrap();
+            library::append_to_file(
+                file,
+                &hops.iter().map(|&h| format!("{}\n", h)).collect::<String>(),
+            );
+        });
     }
 
     pub fn largest_connected_component(&self) -> Graph {

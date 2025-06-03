@@ -1,13 +1,16 @@
 use geo::Rect;
 use geo::{Distance, Euclidean, Point};
+use hashbrown::DefaultHashBuilder;
 use hashbrown::{HashMap, HashSet};
-use rayon::iter::IndexedParallelIterator;
+use priority_queue::PriorityQueue;
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator};
 use rayon::slice::ParallelSliceMut;
 use rstar::PointDistance;
 
+use core::f64;
 use std::borrow::Borrow;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
@@ -15,13 +18,14 @@ use std::fs;
 use std::io;
 use std::path::Path;
 use std::process::Command;
+use std::sync::{Arc, Mutex};
 use std::thread;
 
 use crate::graph::planar::planarize;
 use crate::library;
 use crate::Graph;
 use ordered_float::OrderedFloat;
-use rand::Rng;
+use rand::{thread_rng, Rng};
 
 #[derive(Debug, Clone)]
 pub struct GeometricGraph {
@@ -331,26 +335,22 @@ impl GeometricGraph {
     }
 
     pub fn dijsktra(&self, start: usize, end: usize) -> f64 {
-        let n = self.graph.data.len();
-        let mut distances = vec![f64::INFINITY; n];
+        let mut distances = vec![f64::INFINITY; self.graph.get_num_nodes()];
         distances[start] = 0.0;
-        let mut pq = BinaryHeap::new();
-        pq.push((OrderedFloat(0.0), start));
+        let mut pq = PriorityQueue::<_, _, DefaultHashBuilder>::with_default_hasher();
+        pq.push(start, Reverse(OrderedFloat(0.0)));
 
-        while let Some((OrderedFloat(dist), u)) = pq.pop() {
+        while let Some((u, (Reverse(OrderedFloat(u_dist))))) = pq.pop() {
             if u == end {
-                return dist;
+                return u_dist;
             }
-            if dist > distances[u] {
-                continue;
-            }
-            for &v in &self.graph.data[u] {
-                let weight = self.euclidean_distance(u, v);
-                let new_dist = dist + weight;
 
-                if new_dist < distances[v] {
-                    distances[v] = new_dist;
-                    pq.push((OrderedFloat(new_dist), v));
+            for &v in self.graph.get_neighbors(u) {
+                let uv_weight = self.euclidean_distance(u, v);
+                let v_dist = u_dist + uv_weight;
+                if v_dist < distances[v] {
+                    distances[v] = v_dist;
+                    pq.push_increase(v, Reverse(OrderedFloat(v_dist)));
                 }
             }
         }
@@ -358,21 +358,44 @@ impl GeometricGraph {
         f64::INFINITY
     }
 
+    pub fn dijkstra_all(&self, start: usize) -> Vec<f64> {
+        let mut distances = vec![f64::INFINITY; self.graph.get_num_nodes()];
+        distances[start] = 0.0;
+        let mut pq = PriorityQueue::<_, _, DefaultHashBuilder>::with_default_hasher();
+        pq.push(start, Reverse(OrderedFloat(0.0)));
+
+        while let Some((u, (Reverse(OrderedFloat(u_dist))))) = pq.pop() {
+            for &v in self.graph.get_neighbors(u) {
+                let uv_weight = self.euclidean_distance(u, v);
+                let v_dist = u_dist + uv_weight;
+                if v_dist < distances[v] {
+                    distances[v] = v_dist;
+                    pq.push_increase(v, Reverse(OrderedFloat(v_dist)));
+                }
+            }
+        }
+
+        distances
+    }
+
     pub fn distance_overview(&self, n: usize) -> Vec<f64> {
-        let mut res = (0..n)
+        (0..n)
             .into_par_iter()
-            .map(|_| {
-                let i = rand::thread_rng().gen_range(0..self.graph.get_num_nodes());
-                let j = rand::thread_rng().gen_range(0..self.graph.get_num_nodes());
-                self.dijsktra(i, j)
-            })
-            .collect::<Vec<_>>();
-        let max = *res
-            .iter()
-            .max_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap_or(&1.0);
-        res.iter_mut().for_each(|x| *x /= max);
-        res
+            .flat_map(|_| self.dijkstra_all(thread_rng().gen_range(0..self.graph.get_num_nodes())))
+            .collect::<Vec<_>>()
+    }
+
+    pub fn distance_overview_write(&self, n: usize, file: &Path) {
+        let mutex = Arc::new(Mutex::new(0));
+        fs::write(file, "").expect("Unable to write file");
+        (0..n).into_par_iter().for_each(|_| {
+            let hops = self.dijkstra_all(thread_rng().gen_range(0..self.graph.get_num_nodes()));
+            mutex.lock().unwrap();
+            library::append_to_file(
+                file,
+                &hops.iter().map(|&h| format!("{}\n", h)).collect::<String>(),
+            );
+        });
     }
 
     pub fn visualize(&self, name: &str) {

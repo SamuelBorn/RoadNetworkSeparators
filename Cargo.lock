@@ -541,6 +541,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "priority-queue"
+version = "2.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5676d703dda103cbb035b653a9f11448c0a7216c7926bd35fcb5865475d0c970"
+dependencies = [
+ "autocfg",
+ "equivalent",
+ "indexmap",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -682,6 +693,7 @@ dependencies = [
  "num_cpus",
  "ordered-float",
  "petgraph",
+ "priority-queue",
  "quick-xml",
  "rand",
  "rand_distr",
