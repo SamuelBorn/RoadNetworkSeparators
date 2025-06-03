@@ -398,6 +398,16 @@ impl GeometricGraph {
         });
     }
 
+    pub fn visualize_igraph(&self, name: &str) {
+        let g_path = format!("./output/graphs/{name}");
+        self.save(Path::new(&g_path));
+
+        Command::new("python3")
+            .arg("./scripts/visualize_igraph.py")
+            .arg(g_path)
+            .spawn();
+    }
+
     pub fn visualize(&self, name: &str) {
         let g_path = format!("./output/graphs/{}", name);
         self.save(Path::new(&g_path));
