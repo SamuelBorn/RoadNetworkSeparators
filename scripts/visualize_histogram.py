@@ -12,12 +12,12 @@ def histogram_data(args: argparse.Namespace):
             hist_values = np.fromstring(f.readline(), sep=" ")
             return hist_values, bin_edges
     else:
-        data = np.loadtxt(args.file)
-        return np.histogram(data, bins=args.bins)
+        return np.loadtxt(args.file)
 
 
 def main(args: argparse.Namespace):
     hist_values, bin_edges = histogram_data(args)
+    hist_values_cum, bin_edges_cum = np.cumsum(hist_values), bin_edges
 
     plt.figure(figsize=(8, 6))
     plt.grid(True, alpha=0.2, linestyle="--")
@@ -29,7 +29,18 @@ def main(args: argparse.Namespace):
         width=np.diff(bin_edges),
         color="#009682",
         align="edge",
+        label="Probability Density Function",
     )
+    plt.bar(
+        bin_edges_cum[:-1],
+        hist_values_cum,
+        width=np.diff(bin_edges_cum),
+        color="#009090",
+        alpha=0.2,
+        align="edge",
+        label="Cumulative Distribution Function",
+    )
+    plt.legend(loc="upper left")
     plt.savefig(Path.cwd() / "output" / "histogram" / f"{args.output}.pdf")
     plt.show()
 
@@ -41,6 +52,10 @@ def parse_args():
     parser.add_argument("--x-label", default="Value")
     parser.add_argument("--y-label", default="Frequency")
     parser.add_argument("--aggregated", action="store_true")
+    parser.add_argument(
+        "--prefixsum",
+        action="store_true",
+    )
     parser.add_argument("--output")
     args = parser.parse_args()
 
