@@ -8,8 +8,8 @@ from pathlib import Path
 def histogram_data(args: argparse.Namespace):
     if args.aggregated:
         with open(args.file, "r") as f:
-            bin_edges = np.array([float(x) for x in f.readline().strip().split()])
-            hist_values = np.array([float(x) for x in f.readline().strip().split()])
+            bin_edges = np.fromstring(f.readline(), sep=" ")
+            hist_values = np.fromstring(f.readline(), sep=" ")
             return hist_values, bin_edges
     else:
         data = np.loadtxt(args.file)
@@ -30,7 +30,7 @@ def main(args: argparse.Namespace):
         color="#009682",
         align="edge",
     )
-    plt.savefig(f"./output/histogram/{args.output}.png", dpi=600)
+    plt.savefig(Path.cwd() / "output" / "histogram" / f"{args.output}.pdf")
     plt.show()
 
 
@@ -45,7 +45,7 @@ def parse_args():
     args = parser.parse_args()
 
     if not args.output:
-        args.name = args.file.stem
+        args.output = args.file.stem
 
     main(args)
 
