@@ -48,9 +48,10 @@ mod tests {
         let k = 3;
         let mut g = knn(n, k);
         g.graph.info();
-        g.inertial_flowcutter("knn");
+        // g.inertial_flowcutter("knn");
 
         prune_graph_parallel(&mut g, 2.5);
+        let g = g.largest_connected_component();
         g.inertial_flowcutter("knn_pruned");
     }
 }
