@@ -33,6 +33,7 @@ pub mod grid;
 pub mod hierachical_delaunay;
 pub mod hierachical_disks;
 pub mod highway;
+pub mod knn;
 pub mod nested_grid;
 pub mod nested_sparse;
 pub mod noise;
