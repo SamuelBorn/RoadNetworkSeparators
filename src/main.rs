@@ -29,7 +29,7 @@ use separator::Mode::*;
 
 fn main() {
     let p = noise::get_noise_points(1_000_000);
-    let g = knn::knn_points(&p, 3);
+    let g = knn::knn_points(&p, 5);
     let g = g.largest_connected_component();
     g.inertial_flowcutter("noise_knn");
 }
