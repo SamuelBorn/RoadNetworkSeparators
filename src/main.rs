@@ -22,13 +22,14 @@ use graph::geometric_graph::GeometricGraph;
 use graph::hierachical_delaunay::random_pruned_hierachical_delaunay;
 use graph::Graph;
 use graph::{
-    cbrt_maximal, delaunay, grid, hierachical_delaunay, hierachical_disks, highway, nested_grid,
-    noise, tree, voronoi,
+    cbrt_maximal, delaunay, grid, hierachical_delaunay, hierachical_disks, highway, knn,
+    nested_grid, noise, tree, voronoi,
 };
 use separator::Mode::*;
 
 fn main() {
-    let mut g = geometric_germany();
-    g.graph.hop_overview_contracted_bins(10_000, 50, "hops_ger");
-    g.distance_overview_contracted_bins(10_000, 50, "distances_ger");
+    let p = noise::get_noise_points(1_000_000);
+    let g = knn::knn_points(&p, 3);
+    let g = g.largest_connected_component();
+    g.inertial_flowcutter("noise_knn");
 }

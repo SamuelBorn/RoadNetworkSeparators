@@ -23,7 +23,19 @@ fn should_place_point(p: &Point, perlin: &Perlin, scales: &[f64]) -> bool {
     noise > 0.5f64.powi(scales.len() as i32)
 }
 
-fn should_place_point_fractal_noise(p: &Point, perlin: &Perlin, scales: &[f64]) -> bool {
+fn should_place_point_root_normalized(p: &Point, perlin: &Perlin, scales: &[f64]) -> bool {
+    let noise: f64 = scales
+        .iter()
+        .map(|s| perlin.get([p.x() * s + 3. * s, p.y() * s + 3. * s]) * 0.5 + 0.5)
+        .product();
+
+    let normalized = noise.powf(1.0 / scales.len() as f64);
+    let random = thread_rng().gen_range(0.0..1.0);
+
+    normalized > random
+}
+
+fn should_place_point_pink_noise(p: &Point, perlin: &Perlin, scales: &[f64]) -> bool {
     let noise = scales
         .iter()
         .enumerate()
@@ -34,6 +46,26 @@ fn should_place_point_fractal_noise(p: &Point, perlin: &Perlin, scales: &[f64]) 
         .sum::<f64>();
 
     thread_rng().gen_bool(noise)
+}
+
+pub fn get_noise_points(n: usize) -> Vec<Point> {
+    let scales = [8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0];
+    get_noise_points_scales(n, &scales)
+}
+
+pub fn get_noise_points_scales(n: usize, scales: &[f64]) -> Vec<Point> {
+    let mut p = Vec::with_capacity(n);
+    let mut perlin = Perlin::new(rand::thread_rng().gen());
+
+    let starttime = std::time::Instant::now();
+    while p.len() < n {
+        let option = library::random_point_in_circle(Point::new(0., 0.), 1.);
+        if should_place_point(&option, &perlin, scales) {
+            p.push(option);
+        }
+    }
+
+    p
 }
 
 pub fn noise(n: usize) -> GeometricGraph {
