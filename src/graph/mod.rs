@@ -39,6 +39,7 @@ pub mod nested_sparse;
 pub mod noise;
 pub mod planar;
 pub mod relative_neighborhood;
+pub mod gabriel_graph;
 pub mod tree;
 pub mod unit_disk;
 pub mod voronoi;

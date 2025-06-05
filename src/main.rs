@@ -10,6 +10,7 @@ pub mod random_set;
 pub mod separator;
 
 use geo::{Point, Rect};
+use graph::voronoi::prune_graph;
 use ordered_float::Pow;
 use rand::{thread_rng, Rng};
 use rayon::prelude::*;
@@ -23,13 +24,19 @@ use graph::hierachical_delaunay::random_pruned_hierachical_delaunay;
 use graph::Graph;
 use graph::{
     cbrt_maximal, delaunay, grid, hierachical_delaunay, hierachical_disks, highway, knn,
-    nested_grid, noise, tree, voronoi,
+    nested_grid, noise, tree, voronoi, relative_neighborhood, gabriel_graph,
 };
 use separator::Mode::*;
 
 fn main() {
-    let p = noise::get_noise_points(1_000_000);
-    let g = knn::knn_points(&p, 5);
-    let g = g.largest_connected_component();
-    g.inertial_flowcutter("noise_knn");
+    let p = library::random_points_in_circle(Point::new(100., 100.), 1., 1_000);
+
+    let g = gabriel_graph::gabriel_graph_points(&p);
+    g.visualize("gabriel_graph");
+
+    let g = delaunay::delaunay(&p);
+    g.visualize("delaunay");
+
+    let g = relative_neighborhood::relative_neighborhood_points(&p);
+    g.visualize("relative_neighborhood");
 }
