@@ -23,20 +23,12 @@ use graph::geometric_graph::GeometricGraph;
 use graph::hierachical_delaunay::random_pruned_hierachical_delaunay;
 use graph::Graph;
 use graph::{
-    cbrt_maximal, delaunay, grid, hierachical_delaunay, hierachical_disks, highway, knn,
-    nested_grid, noise, tree, voronoi, relative_neighborhood, gabriel_graph,
+    cbrt_maximal, delaunay, gabriel_graph, grid, hierachical_delaunay, hierachical_disks, highway,
+    knn, nested_grid, noise, relative_neighborhood, tree, voronoi,
 };
 use separator::Mode::*;
 
 fn main() {
-    let p = library::random_points_in_circle(Point::new(100., 100.), 1., 1_000);
-
-    let g = gabriel_graph::gabriel_graph_points(&p);
-    g.visualize("gabriel_graph");
-
-    let g = delaunay::delaunay(&p);
-    g.visualize("delaunay");
-
-    let g = relative_neighborhood::relative_neighborhood_points(&p);
-    g.visualize("relative_neighborhood");
+    let p = noise::get_noise_points(2usize.pow(22));
+    let g = knn::knn_points(&p, 5);
 }
