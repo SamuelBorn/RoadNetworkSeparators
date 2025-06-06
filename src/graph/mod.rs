@@ -881,7 +881,8 @@ impl Graph {
             nodes_by_level[dist].push(node);
         }
 
-        for i in (1..=ecc_u).rev() {
+        for i in (1..=ecc_u).rev().take(10) {
+        // for i in (1..=ecc_u).rev() {
             println!("Checking level {}: lb={}, ub={}", i, lb, ub);
             if ub <= lb {
                 break;
