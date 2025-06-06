@@ -9,34 +9,24 @@ pub mod osm;
 pub mod random_set;
 pub mod separator;
 
-use geo::{Point, Rect};
-use graph::voronoi::prune_graph;
-use itertools::Itertools;
-use ordered_float::Pow;
+use geo::Point;
 use rand::{thread_rng, Rng};
 use rayon::prelude::*;
 use std::fs;
 use std::path::Path;
 
-use cch::{compute_separator_sizes_from_order, get_top_level_separator};
-use graph::example::{self, *};
+use graph::example::*;
 use graph::geometric_graph::GeometricGraph;
-use graph::hierachical_delaunay::random_pruned_hierachical_delaunay;
+use graph::voronoi::prune_graph;
 use graph::Graph;
 use graph::{
     cbrt_maximal, delaunay, gabriel_graph, grid, hierachical_delaunay, hierachical_disks, highway,
     knn, nested_grid, noise, relative_neighborhood, tree, voronoi,
 };
-use separator::Mode::*;
 
 fn main() {
     let mut g = germany();
     g.contract_degree_2_nodes();
     let g = g.largest_connected_component();
-    println!("finished building");
-
-    // let diam = g.get_hop_diameter_primitive();
-    // let diam_approx = g.get_hop_diameter_approx();
-    let diam = g.diameter_ifub().unwrap();
-    // println!("Diameter: {}, Approx: {}", diam, diam_approx);
+    g.recurse_diameter(Some(Path::new("./output/diameter/germany_ifub")));
 }

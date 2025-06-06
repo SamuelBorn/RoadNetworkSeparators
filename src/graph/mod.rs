@@ -680,10 +680,11 @@ impl Graph {
             let sep = g.get_separator_wrapper(separator::Mode::Fast);
             let sub = g.get_subgraphs(&sep);
             sub.par_iter().for_each(|g| {
-                println!("{} {}", g.get_num_nodes(), g.get_hop_diameter_approx());
+                let diam = g.diameter_ifub().unwrap_or(0);
+                println!("{} {}", g.get_num_nodes(), diam);
                 library::optional_append_to_file(
                     file,
-                    &format!("{} {}\n", g.get_num_nodes(), g.get_hop_diameter_approx()),
+                    &format!("{} {}\n", g.get_num_nodes(), diam),
                 );
             });
             g = sub.into_iter().max_by_key(|g| g.get_num_nodes()).unwrap();
@@ -881,8 +882,11 @@ impl Graph {
             nodes_by_level[dist].push(node);
         }
 
-        for i in (1..=ecc_u).rev().take(10) {
-        // for i in (1..=ecc_u).rev() {
+        // warning: this is just an approximation (but a very good one)
+        // normally we need to checkk all levels, but this is a good heuristic and got all the
+        // optimal values we checked
+        for i in (1..=ecc_u).rev().take(8) {
+            // for i in (1..=ecc_u).rev() {
             println!("Checking level {}: lb={}, ub={}", i, lb, ub);
             if ub <= lb {
                 break;
