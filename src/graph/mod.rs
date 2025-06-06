@@ -810,113 +810,106 @@ impl Graph {
         }
     }
 
+    fn get_path(&self, start: usize, end: usize) -> Vec<usize> {
+        let distances = self.bfs(start);
+        let mut path = Vec::new();
+        if distances[end] == usize::MAX {
+            return path;
+        }
+
+        let mut curr = end;
+        path.push(curr);
+
+        while curr != start {
+            for &neighbor in self.get_neighbors(curr) {
+                if distances[neighbor] == distances[curr] - 1 {
+                    curr = neighbor;
+                    path.push(curr);
+                    break;
+                }
+            }
+        }
+        path.reverse();
+        path
+    }
+
+    fn get_midpoint(&self, start: usize, end: usize) -> usize {
+        let path = self.get_path(start, end);
+        if path.is_empty() {
+            return start;
+        }
+        path[path.len() / 2]
+    }
+
     pub fn diameter_ifub(&self) -> Option<usize> {
         if self.get_num_nodes() <= 1 {
             return Some(0);
         }
 
-        let (u, dist_from_start) = self.get_furthest_node(0);
-        if dist_from_start == usize::MAX {
+        let (r1, _) = self.get_furthest_node(0);
+        if self.get_degree(r1) == 0 {
+            return None;
+        }
+        let (a1, ecc_a1) = self.get_furthest_node(r1);
+        let (b1, _) = self.get_furthest_node(a1);
+        let r2 = self.get_midpoint(a1, b1);
+        let (a2, ecc_a2) = self.get_furthest_node(r2);
+        let (b2, _) = self.get_furthest_node(a2);
+        let u = self.get_midpoint(a2, b2);
+
+        let initial_lb = ecc_a1.max(ecc_a2);
+
+        let dists_from_u = self.bfs(u);
+        let ecc_u = match dists_from_u.iter().filter(|&&d| d != usize::MAX).max() {
+            Some(&max_dist) => max_dist,
+            None => return None,
+        };
+
+        if dists_from_u.iter().any(|&d| d == usize::MAX) {
             return None;
         }
 
-        let mut current_dists = self.bfs(u);
-        let mut lower_bound = 0;
-        for &d in &current_dists {
-            if d == usize::MAX {
-                return None;
+        let mut lb = initial_lb.max(ecc_u);
+        let mut ub = 2 * ecc_u;
+
+        if ub <= lb {
+            return Some(lb);
+        }
+
+        let mut nodes_by_level: Vec<Vec<usize>> = vec![Vec::new(); ecc_u + 1];
+        for (node, &dist) in dists_from_u.iter().enumerate() {
+            nodes_by_level[dist].push(node);
+        }
+
+        for i in (1..=ecc_u).rev() {
+            println!("Checking level {}: lb={}, ub={}", i, lb, ub);
+            if ub <= lb {
+                break;
             }
-            lower_bound = lower_bound.max(d);
-        }
 
-        if lower_bound <= 1 {
-            return Some(lower_bound);
-        }
-
-        let (mut upper_bound, mut ecc_lower_bounds) = self.calculate_fringe_bounds(&current_dists);
-
-        while upper_bound > lower_bound {
-            let p = self.select_next_node(&current_dists, &ecc_lower_bounds);
-            let new_dists = self.bfs(p);
-
-            let ecc_p = new_dists
-                .iter()
-                .filter(|&&d| d != usize::MAX)
+            let fringe_nodes = &nodes_by_level[i];
+            let max_ecc_in_fringe = fringe_nodes
+                .par_iter()
+                .map(|&node| {
+                    self.bfs(node)
+                        .into_iter()
+                        .filter(|&d| d != usize::MAX)
+                        .max()
+                        .unwrap_or(0)
+                })
                 .max()
-                .cloned()
                 .unwrap_or(0);
 
-            if ecc_p > lower_bound {
-                lower_bound = ecc_p;
-            }
+            lb = lb.max(max_ecc_in_fringe);
 
-            if upper_bound > lower_bound {
-                let (new_ub, new_ecc_lbs) = self.calculate_fringe_bounds(&new_dists);
-                if new_ub < upper_bound {
-                    upper_bound = new_ub;
-                    current_dists = new_dists;
-                    ecc_lower_bounds = new_ecc_lbs;
-                }
+            if lb > 2 * (i - 1) {
+                return Some(lb);
+            } else {
+                ub = 2 * (i - 1);
             }
         }
 
-        Some(lower_bound)
-    }
-
-    fn calculate_fringe_bounds(&self, dists: &[usize]) -> (usize, Vec<usize>) {
-        let max_depth = dists
-            .iter()
-            .filter(|&&d| d != usize::MAX)
-            .max()
-            .cloned()
-            .unwrap_or(0);
-
-        let mut nodes_by_level: Vec<Vec<usize>> = vec![Vec::new(); max_depth + 1];
-        for (node, &dist) in dists.iter().enumerate() {
-            if dist <= max_depth {
-                nodes_by_level[dist].push(node);
-            }
-        }
-
-        let mut children: Vec<Vec<usize>> = vec![Vec::new(); self.get_num_nodes()];
-        for level in (1..=max_depth).rev() {
-            for &node in &nodes_by_level[level] {
-                for &neighbor in self.get_neighbors(node) {
-                    if dists[neighbor] == level - 1 {
-                        children[neighbor].push(node);
-                        break;
-                    }
-                }
-            }
-        }
-
-        let mut f = vec![0; self.get_num_nodes()];
-        let mut ecc_lower_bounds = vec![0; self.get_num_nodes()];
-        let mut upper_bound = 0;
-
-        for level in (0..=max_depth).rev() {
-            for &node in &nodes_by_level[level] {
-                if !children[node].is_empty() {
-                    let max_f_child = children[node].iter().map(|&c| f[c]).max().unwrap_or(0);
-                    f[node] = 1 + max_f_child;
-                }
-                let dist_from_root = dists[node];
-                ecc_lower_bounds[node] = dist_from_root.max(f[node]);
-                upper_bound = upper_bound.max(dist_from_root + f[node]);
-            }
-        }
-
-        (upper_bound, ecc_lower_bounds)
-    }
-
-    fn select_next_node(&self, dists: &[usize], ecc_lbs: &[usize]) -> usize {
-        dists
-            .iter()
-            .enumerate()
-            .filter(|(_, &d)| d != usize::MAX)
-            .max_by_key(|(i, &d)| d + ecc_lbs[*i])
-            .map(|(i, _)| i)
-            .unwrap_or(0)
+        Some(lb)
     }
 }
 
