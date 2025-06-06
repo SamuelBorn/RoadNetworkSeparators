@@ -25,8 +25,11 @@ use graph::{
 };
 
 fn main() {
-    let mut g = germany();
-    g.contract_degree_2_nodes();
-    let g = g.largest_connected_component();
-    g.recurse_diameter(Some(Path::new("./output/diameter/germany_ifub")));
+    let mut g = geometric_germany();
+    fs::write("./output/germany_pos", g.positions.iter().map(|p| format!("{} {}\n", p.x(), p.y())).collect::<String>())
+        .expect("Unable to write file");
+
+    // g.contract_degree_2_nodes();
+    // let g = g.largest_connected_component();
+    // g.recurse_diameter(Some(Path::new("./output/diameter/germany_ifub")));
 }
