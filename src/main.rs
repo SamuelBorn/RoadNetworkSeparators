@@ -29,21 +29,15 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let p = library::random_points_in_circle(Point::new(100., 100.), 1., 2usize.pow(22));
+    let mut g = karlsruhe();
+    g.contract_degree_2_nodes();
 
-    let g = gabriel_graph::gabriel_graph_points(&p);
-    g.inertial_flowcutter("gabriel_graph");
+    let diam = (0..g.get_num_nodes())
+        .into_par_iter()
+        .map(|n| g.bfs(n).iter().max().cloned().unwrap_or(0))
+        .max()
+        .unwrap();
 
-    let mut g = delaunay::delaunay(&p);
-    g.inertial_flowcutter("delaunay");
-
-    let wanted_edges = (g.graph.get_num_nodes() as f64 * 3. / 2.0) as usize;
-    let edges_to_delete = g.graph.get_num_edges() - wanted_edges;
-    g.graph.remove_random_edges(edges_to_delete);
-    let g = g.largest_connected_component();
-    g.inertial_flowcutter("delaunay_random_delete");
-
-    let g = relative_neighborhood::relative_neighborhood_points(&p);
-    g.inertial_flowcutter("relative_neighborhood");
+    let diam_approx = g.get_hop_diameter();
+    println!("Diameter: {}, Approx: {}", diam, diam_approx);
 }
-
