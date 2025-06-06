@@ -11,6 +11,7 @@ pub mod separator;
 
 use geo::{Point, Rect};
 use graph::voronoi::prune_graph;
+use itertools::Itertools;
 use ordered_float::Pow;
 use rand::{thread_rng, Rng};
 use rayon::prelude::*;
@@ -29,15 +30,10 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let mut g = karlsruhe();
+    let mut g = germany();
     g.contract_degree_2_nodes();
-
-    let diam = (0..g.get_num_nodes())
-        .into_par_iter()
-        .map(|n| g.bfs(n).iter().max().cloned().unwrap_or(0))
-        .max()
-        .unwrap();
-
+    let g = g.largest_connected_component();
+    let diam = g.get_hop_diameter_all();
     let diam_approx = g.get_hop_diameter();
     println!("Diameter: {}, Approx: {}", diam, diam_approx);
 }

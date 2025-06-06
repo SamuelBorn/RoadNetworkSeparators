@@ -28,6 +28,7 @@ pub mod cbrt_grid;
 pub mod cbrt_maximal;
 pub mod delaunay;
 pub mod example;
+pub mod gabriel_graph;
 pub mod geometric_graph;
 pub mod grid;
 pub mod hierachical_delaunay;
@@ -39,7 +40,6 @@ pub mod nested_sparse;
 pub mod noise;
 pub mod planar;
 pub mod relative_neighborhood;
-pub mod gabriel_graph;
 pub mod tree;
 pub mod unit_disk;
 pub mod voronoi;
@@ -633,6 +633,30 @@ impl Graph {
         let (furthest_node, _) = self.get_furthest_node(0);
         let (_, diameter) = self.get_furthest_node(furthest_node);
         diameter
+    }
+
+    pub fn get_hop_diameter_all(&self) -> usize {
+        let chunksize = 10_000;
+        let starttime = std::time::Instant::now();
+
+        (0..self.get_num_nodes())
+            .collect::<Vec<_>>()
+            .chunks(chunksize)
+            .enumerate()
+            .map(|(i, chunk)| {
+                println!(
+                    "Computing diameter: {}% ({:.2} seconds)",
+                    (i * chunksize) as f64 / self.get_num_nodes() as f64 * 100.0,
+                    starttime.elapsed().as_secs_f64()
+                );
+                chunk
+                    .into_par_iter()
+                    .map(|&n| self.bfs(n).iter().max().cloned().unwrap_or(0))
+                    .max()
+                    .unwrap_or(0)
+            })
+            .max()
+            .unwrap()
     }
 
     pub fn get_diameter_contracted(&self) -> usize {
