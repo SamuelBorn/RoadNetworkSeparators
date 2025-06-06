@@ -181,9 +181,9 @@ mod tests {
             let g1 = no_locality(n, (1.25 * n as f32) as usize);
             let g2 = no_locality(n, (1.25 * n as f32) as usize);
             let g3 = no_locality(n, (1.25 * n as f32) as usize);
-            let d1 = g1.get_hop_diameter();
-            let d2 = g2.get_hop_diameter();
-            let d3 = g3.get_hop_diameter();
+            let d1 = g1.get_hop_diameter_approx();
+            let d2 = g2.get_hop_diameter_approx();
+            let d3 = g3.get_hop_diameter_approx();
             let avg = (d1 + d2 + d3) / 3;
             println!("{} {}", n, avg);
         }

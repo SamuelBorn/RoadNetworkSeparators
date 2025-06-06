@@ -30,10 +30,11 @@ use graph::{
 use separator::Mode::*;
 
 fn main() {
-    let mut g = germany();
+    let mut g = karlsruhe();
     g.contract_degree_2_nodes();
     let g = g.largest_connected_component();
-    let diam = g.get_hop_diameter_all();
-    let diam_approx = g.get_hop_diameter();
+    let diam = g.get_hop_diameter_primitive();
+    let diam_approx = g.get_hop_diameter_approx();
+    let diam = g.diameter_ifub().unwrap();
     println!("Diameter: {}, Approx: {}", diam, diam_approx);
 }

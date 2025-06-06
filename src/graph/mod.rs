@@ -585,7 +585,7 @@ impl Graph {
         let mut g = self.clone();
         g.contract_degree_2_nodes();
         let mut g = g.largest_connected_component();
-        let diameter = g.get_hop_diameter();
+        let diameter = g.get_hop_diameter_approx();
         let bin_edges = library::get_bin_edges(diameter as f64, bins);
 
         let hist = (0..n)
@@ -629,14 +629,14 @@ impl Graph {
 
     // Diameter Karlsruhe: 323
     // Diameter Germany: 1163
-    pub fn get_hop_diameter(&self) -> usize {
+    pub fn get_hop_diameter_approx(&self) -> usize {
         let (furthest_node, _) = self.get_furthest_node(0);
         let (_, diameter) = self.get_furthest_node(furthest_node);
         diameter
     }
 
-    pub fn get_hop_diameter_all(&self) -> usize {
-        let chunksize = 10_000;
+    pub fn get_hop_diameter_primitive(&self) -> usize {
+        let chunksize = 3_000;
         let starttime = std::time::Instant::now();
 
         (0..self.get_num_nodes())
@@ -659,11 +659,11 @@ impl Graph {
             .unwrap()
     }
 
-    pub fn get_diameter_contracted(&self) -> usize {
+    pub fn get_hop_diameter_contracted_approx(&self) -> usize {
         let mut g = self.clone();
         g.contract_degree_2_nodes();
         let g = g.largest_connected_component();
-        g.get_hop_diameter()
+        g.get_hop_diameter_approx()
     }
 
     pub fn recurse_diameter(&self, file: Option<&Path>) {
@@ -671,19 +671,19 @@ impl Graph {
             fs::write(x, "");
         }
         let mut g = self.clone();
-        println!("{} {}", g.get_num_nodes(), g.get_hop_diameter());
+        println!("{} {}", g.get_num_nodes(), g.get_hop_diameter_approx());
         library::optional_append_to_file(
             file,
-            &format!("{} {}\n", g.get_num_nodes(), g.get_hop_diameter()),
+            &format!("{} {}\n", g.get_num_nodes(), g.get_hop_diameter_approx()),
         );
         while g.get_num_nodes() > 100 {
             let sep = g.get_separator_wrapper(separator::Mode::Fast);
             let sub = g.get_subgraphs(&sep);
             sub.par_iter().for_each(|g| {
-                println!("{} {}", g.get_num_nodes(), g.get_hop_diameter());
+                println!("{} {}", g.get_num_nodes(), g.get_hop_diameter_approx());
                 library::optional_append_to_file(
                     file,
-                    &format!("{} {}\n", g.get_num_nodes(), g.get_hop_diameter()),
+                    &format!("{} {}\n", g.get_num_nodes(), g.get_hop_diameter_approx()),
                 );
             });
             g = sub.into_iter().max_by_key(|g| g.get_num_nodes()).unwrap();
@@ -809,6 +809,115 @@ impl Graph {
             }
         }
     }
+
+    pub fn diameter_ifub(&self) -> Option<usize> {
+        if self.get_num_nodes() <= 1 {
+            return Some(0);
+        }
+
+        let (u, dist_from_start) = self.get_furthest_node(0);
+        if dist_from_start == usize::MAX {
+            return None;
+        }
+
+        let mut current_dists = self.bfs(u);
+        let mut lower_bound = 0;
+        for &d in &current_dists {
+            if d == usize::MAX {
+                return None;
+            }
+            lower_bound = lower_bound.max(d);
+        }
+
+        if lower_bound <= 1 {
+            return Some(lower_bound);
+        }
+
+        let (mut upper_bound, mut ecc_lower_bounds) = self.calculate_fringe_bounds(&current_dists);
+
+        while upper_bound > lower_bound {
+            let p = self.select_next_node(&current_dists, &ecc_lower_bounds);
+            let new_dists = self.bfs(p);
+
+            let ecc_p = new_dists
+                .iter()
+                .filter(|&&d| d != usize::MAX)
+                .max()
+                .cloned()
+                .unwrap_or(0);
+
+            if ecc_p > lower_bound {
+                lower_bound = ecc_p;
+            }
+
+            if upper_bound > lower_bound {
+                let (new_ub, new_ecc_lbs) = self.calculate_fringe_bounds(&new_dists);
+                if new_ub < upper_bound {
+                    upper_bound = new_ub;
+                    current_dists = new_dists;
+                    ecc_lower_bounds = new_ecc_lbs;
+                }
+            }
+        }
+
+        Some(lower_bound)
+    }
+
+    fn calculate_fringe_bounds(&self, dists: &[usize]) -> (usize, Vec<usize>) {
+        let max_depth = dists
+            .iter()
+            .filter(|&&d| d != usize::MAX)
+            .max()
+            .cloned()
+            .unwrap_or(0);
+
+        let mut nodes_by_level: Vec<Vec<usize>> = vec![Vec::new(); max_depth + 1];
+        for (node, &dist) in dists.iter().enumerate() {
+            if dist <= max_depth {
+                nodes_by_level[dist].push(node);
+            }
+        }
+
+        let mut children: Vec<Vec<usize>> = vec![Vec::new(); self.get_num_nodes()];
+        for level in (1..=max_depth).rev() {
+            for &node in &nodes_by_level[level] {
+                for &neighbor in self.get_neighbors(node) {
+                    if dists[neighbor] == level - 1 {
+                        children[neighbor].push(node);
+                        break;
+                    }
+                }
+            }
+        }
+
+        let mut f = vec![0; self.get_num_nodes()];
+        let mut ecc_lower_bounds = vec![0; self.get_num_nodes()];
+        let mut upper_bound = 0;
+
+        for level in (0..=max_depth).rev() {
+            for &node in &nodes_by_level[level] {
+                if !children[node].is_empty() {
+                    let max_f_child = children[node].iter().map(|&c| f[c]).max().unwrap_or(0);
+                    f[node] = 1 + max_f_child;
+                }
+                let dist_from_root = dists[node];
+                ecc_lower_bounds[node] = dist_from_root.max(f[node]);
+                upper_bound = upper_bound.max(dist_from_root + f[node]);
+            }
+        }
+
+        (upper_bound, ecc_lower_bounds)
+    }
+
+    fn select_next_node(&self, dists: &[usize], ecc_lbs: &[usize]) -> usize {
+        dists
+            .iter()
+            .enumerate()
+            .filter(|(_, &d)| d != usize::MAX)
+            .max_by_key(|(i, &d)| d + ecc_lbs[*i])
+            .map(|(i, _)| i)
+            .unwrap_or(0)
+    }
 }
 
 #[cfg(test)]
@@ -832,7 +941,7 @@ mod test {
     fn diameter_overview() {
         let cut_off = 100;
         let mut g = europe();
-        println!("{} {}", g.get_num_nodes(), g.get_hop_diameter());
+        println!("{} {}", g.get_num_nodes(), g.get_hop_diameter_approx());
 
         while g.get_num_nodes() > cut_off {
             let sep = g.get_separator_wrapper(crate::separator::Mode::Eco);
@@ -840,7 +949,7 @@ mod test {
             sub.iter()
                 .filter(|g| g.get_num_nodes() > cut_off)
                 .for_each(|g| {
-                    println!("{} {}", g.get_num_nodes(), g.get_hop_diameter());
+                    println!("{} {}", g.get_num_nodes(), g.get_hop_diameter_approx());
                 });
             g = sub.into_iter().max_by_key(|g| g.get_num_nodes()).unwrap();
         }
