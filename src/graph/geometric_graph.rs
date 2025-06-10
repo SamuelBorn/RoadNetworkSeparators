@@ -459,11 +459,10 @@ impl GeometricGraph {
     }
 
     pub fn meshedness_coefficient(&self) -> f64 {
-        let m = self.graph.get_num_edges() as f64;
-        let n = self.graph.get_num_nodes() as f64;
-        assert!(n >= 3.0);
         let mut g = self.clone();
         planarize(&mut g);
+        let m = self.graph.get_num_edges() as f64;
+        let n = self.graph.get_num_nodes() as f64;
         (m - n + 1.) / (2. * n - 5.)
     }
 }

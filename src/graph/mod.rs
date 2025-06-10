@@ -842,6 +842,12 @@ impl Graph {
         path[path.len() / 2]
     }
 
+    pub fn meshedness_coefficient(&self) -> f64 {
+        let m = self.get_num_edges() as f64;
+        let n = self.get_num_nodes() as f64;
+        (m - n + 1.) / (2. * n - 5.)
+    }
+
     pub fn diameter_ifub(&self) -> Option<usize> {
         if self.get_num_nodes() <= 1 {
             return Some(0);

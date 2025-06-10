@@ -10,6 +10,7 @@ pub mod random_set;
 pub mod separator;
 
 use geo::Point;
+use graph::knn::knn;
 use rand::{thread_rng, Rng};
 use rayon::prelude::*;
 use std::fs;
@@ -25,11 +26,7 @@ use graph::{
 };
 
 fn main() {
-    let mut g = geometric_germany();
-    fs::write("./output/germany_pos", g.positions.iter().map(|p| format!("{} {}\n", p.x(), p.y())).collect::<String>())
-        .expect("Unable to write file");
-
-    // g.contract_degree_2_nodes();
-    // let g = g.largest_connected_component();
-    // g.recurse_diameter(Some(Path::new("./output/diameter/germany_ifub")));
+    let p = noise::get_noise_points(1_000_000);
+    let g = knn::knn_points(&p, 10);
+    g.inertial_flowcutter("noise_knn_10_1m");
 }
