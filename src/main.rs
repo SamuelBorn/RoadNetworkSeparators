@@ -26,7 +26,9 @@ use graph::{
 };
 
 fn main() {
-    let p = noise::get_noise_points(1_000_000);
-    let g = knn::knn_points(&p, 10);
-    g.inertial_flowcutter("noise_knn_10_1m");
+    let mut g = europe();
+    g.contract_degree_2_nodes();
+    let g = g.largest_connected_component();
+    let diam = g.diameter_ifub();
+    println!("Diameter: {}", diam.unwrap_or(1234567));
 }
