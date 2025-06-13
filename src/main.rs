@@ -26,9 +26,7 @@ use graph::{
 };
 
 fn main() {
-    let mut g = europe();
-    g.contract_degree_2_nodes();
-    let g = g.largest_connected_component();
-    let diam = g.diameter_ifub();
-    println!("Diameter: {}", diam.unwrap_or(1234567));
+    let n = 100_000;
+    let m = 200_000;
+    let g = local::tree_locality(n, m, |x| (x as f64).powf(3.3));
 }
