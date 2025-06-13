@@ -48,6 +48,8 @@ where
     let mut g = tree::random_tree(n);
     let edges_to_add = m - (n - 1);
 
+    let processed = std::sync::atomic::AtomicUsize::new(0);
+
     let mut edges = (0..edges_to_add)
         .into_par_iter()
         .map(|_| {
@@ -58,6 +60,15 @@ where
                 .map(|d| if d > 1 { d } else { usize::MAX });
             let weights = WeightedIndex::new(distances.into_iter().map(f)).unwrap();
             let v = weights.sample(&mut rand::thread_rng());
+
+            let current = processed.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            if current % 1000 == 0 {
+                println!(
+                    "Processed {:.2}%",
+                    current as f64 * 100. / edges_to_add as f64
+                );
+            }
+
             (u, v)
         })
         .collect::<Vec<_>>();
