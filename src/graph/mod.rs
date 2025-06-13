@@ -623,7 +623,7 @@ impl Graph {
             .filter(|&&d| d != usize::MAX)
             .enumerate()
             .max_by_key(|&(_, d)| d)
-            .unwrap();
+            .unwrap_or((start, &0));
         (furthest_node.0, *furthest_node.1)
     }
 
@@ -633,6 +633,19 @@ impl Graph {
         let (furthest_node, _) = self.get_furthest_node(0);
         let (_, diameter) = self.get_furthest_node(furthest_node);
         diameter
+    }
+
+    pub fn get_hop_diameter_approx_n(&self, n: usize) -> usize {
+        (0..n)
+            .into_par_iter()
+            .map(|_| {
+                let (furthest_node, _) =
+                    self.get_furthest_node(thread_rng().gen_range(0..self.get_num_nodes()));
+                let (_, diameter) = self.get_furthest_node(furthest_node);
+                diameter
+            })
+            .max()
+            .unwrap_or(0)
     }
 
     pub fn get_hop_diameter_primitive(&self) -> usize {
