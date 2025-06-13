@@ -27,6 +27,6 @@ use graph::{
 
 fn main() {
     let n = 100_000;
-    let m = 200_000;
-    let g = local::tree_locality(n, m, |x| (x as f64).powf(-3.3));
+    let m = 155_000;
+    let g = local::tree_locality(n, m, |x| (x as f64).powf(-3.35));
 }
