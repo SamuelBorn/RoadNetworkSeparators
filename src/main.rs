@@ -26,7 +26,16 @@ use graph::{
 };
 
 fn main() {
-    let n = 100_000;
-    let m = 155_000;
+    let n = 200_000;
+    let m = (n as f64 * 1.55) as usize;
     let g = local::tree_locality(n, m, |x| (x as f64).powf(-3.35));
+
+    [-2.9, -3.0, -3.1, -3.2, -3.3, -3.4, -3.5, -3.6]
+        .par_iter()
+        .for_each(|&pow| {
+            let g = local::tree_locality(n, m, |x| (x as f64).powf(pow));
+            println!("finished building {pow}");
+            g.flowcutter(&format!("tree_locality_new_{pow}.json"));
+            println!("finished flowcutter {pow}");
+        });
 }
