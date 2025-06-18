@@ -57,7 +57,6 @@ pub fn get_noise_points_scales(n: usize, scales: &[f64]) -> Vec<Point> {
     let mut p = Vec::with_capacity(n);
     let mut perlin = Perlin::new(rand::thread_rng().gen());
 
-    let starttime = std::time::Instant::now();
     while p.len() < n {
         let option = library::random_point_in_circle(Point::new(0., 0.), 1.);
         if should_place_point(&option, &perlin, scales) {

@@ -26,16 +26,15 @@ use graph::{
 };
 
 fn main() {
-    let n = 200_000;
-    let m = (n as f64 * 1.55) as usize;
-    let g = local::tree_locality(n, m, |x| (x as f64).powf(-3.35));
-
-    [-2.9, -3.0, -3.1, -3.2, -3.3, -3.4, -3.5, -3.6]
-        .par_iter()
-        .for_each(|&pow| {
-            let g = local::tree_locality(n, m, |x| (x as f64).powf(pow));
-            println!("finished building {pow}");
-            g.flowcutter(&format!("tree_locality_new_{pow}.json"));
-            println!("finished flowcutter {pow}");
-        });
+    let p = noise::get_noise_points_scales(
+        2usize.pow(32),
+        &[
+            4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0, 8192.0,
+            16384.0, 32768.0, 65536.0,
+        ],
+    );
+    println!("Generated points");
+    let g = relative_neighborhood::relative_neighborhood_points(&p);
+    println!("Generated relative neighborhood graph");
+    g.inertial_flowcutter("noise_2pow30");
 }
