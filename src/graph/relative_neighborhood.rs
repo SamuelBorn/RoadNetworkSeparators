@@ -16,6 +16,7 @@ pub fn relative_neighborhood(n: usize) -> GeometricGraph {
 
 pub fn relative_neighborhood_points(points: &[Point]) -> GeometricGraph {
     let g = delaunay(points);
+    println!("Delaunay triangulation done");
 
     let edges = g
         .graph

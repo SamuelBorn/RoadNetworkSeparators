@@ -1,9 +1,10 @@
-use std::path::Path;
+use std::{iter, path::Path};
 
 use geo::Point;
 use noise::{NoiseFn, Perlin};
 use rand::{thread_rng, Rng};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use rayon::prelude::*;
 
 use crate::{graph::relative_neighborhood::relative_neighborhood_points, library};
 
@@ -54,17 +55,20 @@ pub fn get_noise_points(n: usize) -> Vec<Point> {
 }
 
 pub fn get_noise_points_scales(n: usize, scales: &[f64]) -> Vec<Point> {
-    let mut p = Vec::with_capacity(n);
-    let mut perlin = Perlin::new(rand::thread_rng().gen());
+    iter::repeat(())
+        .par_bridge()
+        .filter_map(|()| {
+            let perlin = Perlin::new(rand::thread_rng().gen());
+            let candidate = library::random_point_in_circle(Point::new(0., 0.), 10000.);
 
-    while p.len() < n {
-        let option = library::random_point_in_circle(Point::new(0., 0.), 1.);
-        if should_place_point(&option, &perlin, scales) {
-            p.push(option);
-        }
-    }
-
-    p
+            if should_place_point(&candidate, &perlin, scales) {
+                Some(candidate)
+            } else {
+                None
+            }
+        })
+        .take_any(n)
+        .collect()
 }
 
 pub fn noise(n: usize) -> GeometricGraph {
