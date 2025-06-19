@@ -31,16 +31,17 @@ def main(args: argparse.Namespace):
         align="edge",
         label="Probability Density Function",
     )
-    plt.bar(
-        bin_edges_cum[:-1],
-        hist_values_cum,
-        width=np.diff(bin_edges_cum),
-        color="#009090",
-        alpha=0.2,
-        align="edge",
-        label="Cumulative Distribution Function",
-    )
-    plt.legend(loc="upper left")
+    if args.prefixsum:
+        plt.bar(
+            bin_edges_cum[:-1],
+            hist_values_cum,
+            width=np.diff(bin_edges_cum),
+            color="#009090",
+            alpha=0.2,
+            align="edge",
+            label="Cumulative Distribution Function",
+        )
+    plt.legend(loc="upper right")
     plt.savefig(Path.cwd() / "output" / "histogram" / f"{args.output}.pdf")
     plt.show()
 
