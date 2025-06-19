@@ -12,10 +12,10 @@ use super::Graph;
 
 pub fn relative_neighborhood(n: usize) -> GeometricGraph {
     let points = library::random_points_in_circle(Point::new(100., 100.), 1., n);
-    relative_neighborhood_points(&points)
+    relative_neighborhood_points(points)
 }
 
-pub fn relative_neighborhood_points(points: &[Point]) -> GeometricGraph {
+pub fn relative_neighborhood_points(points: Vec<Point>) -> GeometricGraph {
     let edges = {
         let triangulation: DelaunayTriangulation<_> = DelaunayTriangulation::bulk_load_stable(
             points
@@ -62,7 +62,7 @@ pub fn relative_neighborhood_points(points: &[Point]) -> GeometricGraph {
 
     let g = Graph::from_edge_list(edges);
     println!("Graph created");
-    GeometricGraph::new(g, points.to_vec())
+    GeometricGraph::new(g, points)
 }
 
 #[cfg(test)]

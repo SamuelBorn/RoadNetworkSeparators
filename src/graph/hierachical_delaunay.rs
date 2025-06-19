@@ -76,7 +76,7 @@ pub fn generate_hierachical_relative_neighborhood(
     radii: &[f64],
 ) -> GeometricGraph {
     let points = generate_hierachical_points(city_percentage, points_per_level, radii);
-    relative_neighborhood_points(&points)
+    relative_neighborhood_points(points)
 }
 
 pub fn generate_hierachical_delaunay(

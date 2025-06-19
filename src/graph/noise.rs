@@ -95,7 +95,7 @@ pub fn noise_scales(n: usize, scales: &[f64]) -> GeometricGraph {
 
     let starttime = std::time::Instant::now();
     // let mut g = delaunay(&p);
-    let g = relative_neighborhood_points(&p);
+    let g = relative_neighborhood_points(p);
     println!(
         "Relative Neighborhood in {:.2} s",
         starttime.elapsed().as_secs_f64()
