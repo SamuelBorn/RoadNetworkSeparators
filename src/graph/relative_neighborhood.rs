@@ -16,46 +16,49 @@ pub fn relative_neighborhood(n: usize) -> GeometricGraph {
 }
 
 pub fn relative_neighborhood_points(points: &[Point]) -> GeometricGraph {
-    let triangulation: DelaunayTriangulation<_> = DelaunayTriangulation::bulk_load_stable(
-        points
-            .par_iter()
-            .map(|p| Point2::new(p.x(), p.y()))
-            .collect(),
-    )
-    .unwrap();
-    println!("Delaunay triangulation done");
+    let edges = {
+        let triangulation: DelaunayTriangulation<_> = DelaunayTriangulation::bulk_load_stable(
+            points
+                .par_iter()
+                .map(|p| Point2::new(p.x(), p.y()))
+                .collect(),
+        )
+        .unwrap();
+        println!("Delaunay triangulation done");
 
-    let edges = triangulation
-        .undirected_edges()
-        .par_bridge()
-        .filter_map(|edge| {
-            let length = edge.length_2();
-            let [u, v] = edge.vertices();
-            let p_u = points[u.index()];
-            let p_v = points[v.index()];
+        let edges_vec = triangulation
+            .undirected_edges()
+            .par_bridge()
+            .filter_map(|edge| {
+                let length = edge.length_2();
+                let [u, v] = edge.vertices();
+                let p_u = points[u.index()];
+                let p_v = points[v.index()];
 
-            let witness_exists = u.out_edges().any(|u_edge| {
-                let n_u = u_edge.to();
-                v.out_edges().any(|v_edge| {
-                    let n_v = v_edge.to();
-                    if n_u == n_v {
-                        let p_n = &points[n_u.index()];
-                        p_u.distance_2(p_n) < length && p_v.distance_2(p_n) < length
-                    } else {
-                        false
-                    }
-                })
-            });
+                let witness_exists = u.out_edges().any(|u_edge| {
+                    let n_u = u_edge.to();
+                    v.out_edges().any(|v_edge| {
+                        let n_v = v_edge.to();
+                        if n_u == n_v {
+                            let p_n = &points[n_u.index()];
+                            p_u.distance_2(p_n) < length && p_v.distance_2(p_n) < length
+                        } else {
+                            false
+                        }
+                    })
+                });
 
-            if witness_exists {
-                None
-            } else {
-                Some((u.index(), v.index()))
-            }
-        })
-        .collect::<Vec<_>>();
-    println!("Edges filtered");
+                if witness_exists {
+                    None
+                } else {
+                    Some((u.index(), v.index()))
+                }
+            })
+            .collect::<Vec<_>>();
+        println!("Edges filtered");
 
+        edges_vec
+    }; // <-- 'triangulation' is dropped here, freeing its memory.
 
     let g = Graph::from_edge_list(edges);
     println!("Graph created");
