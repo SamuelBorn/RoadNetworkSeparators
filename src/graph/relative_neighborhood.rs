@@ -24,7 +24,7 @@ pub fn relative_neighborhood_points(points: Vec<Point>) -> GeometricGraph {
                 .collect(),
         )
         .unwrap();
-        println!("Delaunay triangulation done");
+        println!("{}\tDelaunay triangulation done", chrono::Local::now());
 
         let edges_vec = triangulation
             .undirected_edges()
@@ -55,13 +55,13 @@ pub fn relative_neighborhood_points(points: Vec<Point>) -> GeometricGraph {
                 }
             })
             .collect::<Vec<_>>();
-        println!("Edges filtered");
+        println!("{}\tEdges filtered", chrono::Local::now());
 
         edges_vec
     }; // <-- 'triangulation' is dropped here, freeing its memory.
 
     let g = Graph::from_edge_list(edges);
-    println!("Graph created");
+    println!("{}\tGraph created", chrono::Local::now());
     GeometricGraph::new(g, points)
 }
 
