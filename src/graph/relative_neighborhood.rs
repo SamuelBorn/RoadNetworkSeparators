@@ -2,6 +2,7 @@ use geo::Point;
 use hashbrown::HashSet;
 use rayon::prelude::*;
 use rstar::PointDistance;
+use spade::{DelaunayTriangulation, Point2, Triangulation};
 
 use crate::library;
 
@@ -15,30 +16,49 @@ pub fn relative_neighborhood(n: usize) -> GeometricGraph {
 }
 
 pub fn relative_neighborhood_points(points: &[Point]) -> GeometricGraph {
-    let g = delaunay(points);
+    let triangulation: DelaunayTriangulation<_> = DelaunayTriangulation::bulk_load_stable(
+        points
+            .par_iter()
+            .map(|p| Point2::new(p.x(), p.y()))
+            .collect(),
+    )
+    .unwrap();
     println!("Delaunay triangulation done");
 
-    let edges = g
-        .graph
-        .get_directed_edges()
-        .into_par_iter()
-        .filter(|&(u, v)| {
-            let p1 = points[u];
-            let p2 = points[v];
-            let dist2 = p1.distance_2(&p2);
+    let edges = triangulation
+        .undirected_edges()
+        .par_bridge()
+        .filter_map(|edge| {
+            let length = edge.length_2();
+            let [u, v] = edge.vertices();
+            let p_u = points[u.index()];
+            let p_v = points[v.index()];
 
-            g.graph.data[u]
-                .intersection(&g.graph.data[v])
-                .filter(|&&x| {
-                    p1.distance_2(&points[x]) < dist2 && p2.distance_2(&points[x]) < dist2
+            let witness_exists = u.out_edges().any(|u_edge| {
+                let n_u = u_edge.to();
+                v.out_edges().any(|v_edge| {
+                    let n_v = v_edge.to();
+                    if n_u == n_v {
+                        let p_n = &points[n_u.index()];
+                        p_u.distance_2(p_n) < length && p_v.distance_2(p_n) < length
+                    } else {
+                        false
+                    }
                 })
-                .count()
-                == 0
+            });
+
+            if witness_exists {
+                None
+            } else {
+                Some((u.index(), v.index()))
+            }
         })
         .collect::<Vec<_>>();
+    println!("Edges filtered");
+
 
     let g = Graph::from_edge_list(edges);
-
+    println!("Graph created");
     GeometricGraph::new(g, points.to_vec())
 }
 

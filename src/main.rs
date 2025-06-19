@@ -27,14 +27,14 @@ use graph::{
 
 fn main() {
     let p = noise::get_noise_points_scales(
-        2usize.pow(30),
+        710_000_000,
         &[
-            4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0, 8192.0,
+            2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0, 8192.0,
             16384.0, 32768.0, 65536.0,
         ],
     );
     println!("Generated points");
     let g = relative_neighborhood::relative_neighborhood_points(&p);
     println!("Generated relative neighborhood graph");
-    g.inertial_flowcutter("noise_2pow30");
+    g.inertial_flowcutter("noise_710m");
 }

@@ -55,11 +55,11 @@ pub fn get_noise_points(n: usize) -> Vec<Point> {
 }
 
 pub fn get_noise_points_scales(n: usize, scales: &[f64]) -> Vec<Point> {
+    let perlin = Perlin::new(rand::thread_rng().gen());
     iter::repeat(())
         .par_bridge()
         .filter_map(|()| {
-            let perlin = Perlin::new(rand::thread_rng().gen());
-            let candidate = library::random_point_in_circle(Point::new(0., 0.), 10000.);
+            let candidate = library::random_point_in_circle(Point::new(0., 0.), 1.);
 
             if should_place_point(&candidate, &perlin, scales) {
                 Some(candidate)
