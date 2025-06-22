@@ -27,10 +27,17 @@ use graph::{
 };
 
 fn main() {
-    let p = noise::get_noise_points_scales(350_000_000, &[8.0, 16.0, 32.0, 64.0]);
-    println!("{}\tGenerated points", Local::now());
-    let g = relative_neighborhood::relative_neighborhood_points(p);
-    println!("{}\tGenerated relative neighborhood graph", Local::now());
-    g.inertial_flowcutter("noise_low_only_350m");
-    println!("{}\tInertial flowcutter", Local::now());
+    let g = geometric_europe();
+    println!("{}\teurope", Local::now());
+    g.distance_overview_contracted_bins(10_000, 100, "geometric_europe_distance_overview_contracted_bins");
+    println!("{}\teurope distance", Local::now());
+    g.graph.hop_overview_contracted_bins(10_000, 100, "geometric_europe_hop_overview_contracted_bins");
+    println!("{}\teurope hop", Local::now());
+
+    let g = noise::noise(g.graph.get_num_nodes());
+    println!("{}\tnoise", Local::now());
+    g.distance_overview_contracted_bins(10_000, 100, "noise_18m_distance_overview_contracted_bins");
+    println!("{}\tnoise distance", Local::now());
+    g.graph.hop_overview_contracted_bins(10_000, 100, "noise_18m_hop_overview_contracted_bins");
+    println!("{}\tnoise hop", Local::now());
 }

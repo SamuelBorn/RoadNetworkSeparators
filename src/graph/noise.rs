@@ -72,7 +72,7 @@ pub fn get_noise_points_scales(n: usize, scales: &[f64]) -> Vec<Point> {
 }
 
 pub fn noise(n: usize) -> GeometricGraph {
-    let scales = [8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0];
+    let scales = [4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0];
     noise_scales(n, &scales)
 }
 

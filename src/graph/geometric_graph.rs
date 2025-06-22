@@ -404,6 +404,18 @@ impl GeometricGraph {
         max_node.1
     }
 
+    pub fn get_diameter_multi_threaded(&self, n: usize) -> f64 {
+        (0..n)
+            .into_par_iter()
+            .map(|_| {
+                let start_node = thread_rng().gen_range(0..self.graph.get_num_nodes());
+                let distances = self.dijkstra_one_to_all(start_node);
+                distances.into_par_iter().max_by_key(|&d| OrderedFloat(d)).unwrap_or(0.0)
+            })
+            .max_by_key(|&d| OrderedFloat(d))
+            .unwrap_or(0.0)
+    }
+
     pub fn distance_overview_write(&self, n: usize, file: &Path) {
         let mutex = Arc::new(Mutex::new(0));
         fs::write(file, "").expect("Unable to write file");
@@ -419,7 +431,7 @@ impl GeometricGraph {
     }
 
     pub fn distance_overview_contracted_bins(&self, n: usize, bins: usize, name: &str) {
-        let diameter = self.get_diameter();
+        let diameter = self.get_diameter_multi_threaded(480);
         let bin_edges = library::get_bin_edges(diameter, bins);
 
         let hist = (0..n)
