@@ -585,7 +585,7 @@ impl Graph {
         let mut g = self.clone();
         g.contract_degree_2_nodes();
         let mut g = g.largest_connected_component();
-        let diameter = g.get_hop_diameter_approx();
+        let diameter = g.get_hop_diameter_approx_n(96);
         let bin_edges = library::get_bin_edges(diameter as f64, bins);
 
         let hist = (0..n)

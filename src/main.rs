@@ -28,16 +28,7 @@ use graph::{
 
 fn main() {
     let scales = &[4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0];
-
-    let g = noise::noise_scales(10_000, scales);
-    g.inertial_flowcutter("noise_10k");
-
-    let g = noise::noise_scales(100_000, scales);
-    g.inertial_flowcutter("noise_100k");
-
-    let g = noise::noise_scales(1_000_000, scales);
-    g.inertial_flowcutter("noise_1m");
-
-    let g = noise::noise_scales(10_000_000, scales);
-    g.inertial_flowcutter("noise_10m");
+    let p = noise::get_noise_points_scales(18_000_000, scales);
+    let g = delaunay::delaunay(&p);
+    g.graph.hop_overview_contracted_bins(1000, 100, "noise_18m_hops_full_delaunay");
 }
