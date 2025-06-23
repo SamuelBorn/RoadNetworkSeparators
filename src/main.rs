@@ -27,12 +27,17 @@ use graph::{
 };
 
 fn main() {
-    let g = noise::noise_scales(10_000, &[4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0, 8192.0, 16384.0]);
-    g.inertial_flowcutter("noise_10k_including_16k_scale");
+    let scales = &[4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0];
 
-    let g = noise::noise_scales(100_000, &[4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0, 8192.0, 16384.0]);
-    g.inertial_flowcutter("noise_100k_including_16k_scale");
+    let g = noise::noise_scales(10_000, scales);
+    g.inertial_flowcutter("noise_10k");
 
-    let g = noise::noise_scales(1_000_000, &[4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0, 8192.0, 16384.0]);
-    g.inertial_flowcutter("noise_1m_including_16k_scale");
+    let g = noise::noise_scales(100_000, scales);
+    g.inertial_flowcutter("noise_100k");
+
+    let g = noise::noise_scales(1_000_000, scales);
+    g.inertial_flowcutter("noise_1m");
+
+    let g = noise::noise_scales(10_000_000, scales);
+    g.inertial_flowcutter("noise_10m");
 }
