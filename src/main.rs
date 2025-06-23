@@ -27,5 +27,6 @@ use graph::{
 };
 
 fn main() {
-
+    let g = noise::noise_scales(5_000_000, &[4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0, 8192.0, 16384.0]);
+    g.inertial_flowcutter("noise_5m_including_16k_scale");
 }
