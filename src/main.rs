@@ -27,17 +27,5 @@ use graph::{
 };
 
 fn main() {
-    let g = geometric_europe();
-    println!("{}\teurope", Local::now());
-    g.distance_overview_contracted_bins(10_000, 100, "geometric_europe_distance_overview_contracted_bins");
-    println!("{}\teurope distance", Local::now());
-    g.graph.hop_overview_contracted_bins(10_000, 100, "geometric_europe_hop_overview_contracted_bins");
-    println!("{}\teurope hop", Local::now());
 
-    let g = noise::noise(g.graph.get_num_nodes());
-    println!("{}\tnoise", Local::now());
-    g.distance_overview_contracted_bins(10_000, 100, "noise_18m_distance_overview_contracted_bins");
-    println!("{}\tnoise distance", Local::now());
-    g.graph.hop_overview_contracted_bins(10_000, 100, "noise_18m_hop_overview_contracted_bins");
-    println!("{}\tnoise hop", Local::now());
 }
