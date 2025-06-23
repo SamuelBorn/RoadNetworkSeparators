@@ -9,6 +9,10 @@ use rayon::prelude::*;
 
 use crate::{graph::relative_neighborhood::relative_neighborhood_points, library};
 
+const SCALES: [f64; 10] = [
+    8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0,
+];
+
 use super::{
     delaunay::delaunay,
     example::example_c4,
@@ -51,8 +55,7 @@ fn should_place_point_pink_noise(p: &Point, perlin: &Perlin, scales: &[f64]) -> 
 }
 
 pub fn get_noise_points(n: usize) -> Vec<Point> {
-    let scales = [8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0];
-    get_noise_points_scales(n, &scales)
+    get_noise_points_scales(n, &SCALES)
 }
 
 pub fn get_noise_points_scales(n: usize, scales: &[f64]) -> Vec<Point> {
@@ -73,10 +76,7 @@ pub fn get_noise_points_scales(n: usize, scales: &[f64]) -> Vec<Point> {
 }
 
 pub fn noise(n: usize) -> GeometricGraph {
-    let scales = [
-        4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0,
-    ];
-    noise_scales(n, &scales)
+    noise_scales(n, &SCALES)
 }
 
 pub fn noise_scales(n: usize, scales: &[f64]) -> GeometricGraph {
@@ -85,14 +85,4 @@ pub fn noise_scales(n: usize, scales: &[f64]) -> GeometricGraph {
     let g = relative_neighborhood_points(p);
     println!("{}\tRelative Neighborhood generated", Local::now());
     g
-}
-
-mod tests {
-    use super::*;
-
-    #[test]
-    fn noise_test() {
-        let g = noise(1_000_000);
-        // g.inertial_flowcutter("tmp");
-    }
 }
