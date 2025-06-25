@@ -13,7 +13,7 @@ use voronoice::{BoundingBox, Voronoi, VoronoiBuilder};
 
 use crate::bidirectional;
 
-use super::{geometric_graph::GeometricGraph, Graph};
+use super::{delaunay, geometric_graph::GeometricGraph, Graph};
 
 const SCALE: f64 = 1e8;
 const EPS: f64 = 1e-8;
@@ -198,6 +198,13 @@ pub fn prune_graph_parallel(g: &mut GeometricGraph, dist_multiplier: f64) {
             g.graph.remove_edge(*u, *v);
         });
     }
+}
+
+pub fn pruned_delaunay(points: &[Point], dist_multiplier: f64) -> GeometricGraph {
+    let mut g = delaunay::delaunay(&points);
+    prune_graph_parallel(&mut g, dist_multiplier);
+    g.graph.info();
+    g
 }
 
 // compute a sparse graph spanner of the graph computed in phase one. Given a graph G a graph spanner H of G with stretch t is

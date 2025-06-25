@@ -5,6 +5,7 @@ use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use rand::Rng;
+use rayon::collections::binary_heap;
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelBridge;
 use rayon::iter::ParallelIterator;
@@ -561,38 +562,16 @@ impl Graph {
         result // Return vector with distances (some may still be MAX if unreachable)
     }
 
-    pub fn hop_overview(&self, n: usize) -> Vec<usize> {
-        (0..n)
-            .into_par_iter()
-            .flat_map(|_| self.bfs(thread_rng().gen_range(0..self.get_num_nodes())))
-            .collect::<Vec<_>>()
-    }
-
-    pub fn hop_overview_write(&self, n: usize, file: &Path) {
-        let mutex = Arc::new(Mutex::new(0));
-        fs::write(file, "").expect("Unable to write file");
-        (0..n).into_par_iter().for_each(|_| {
-            let hops = self.bfs(thread_rng().gen_range(0..self.get_num_nodes()));
-            mutex.lock().unwrap();
-            library::append_to_file(
-                file,
-                &hops.iter().map(|&h| format!("{}\n", h)).collect::<String>(),
-            );
-        });
-    }
-
-    pub fn hop_overview_contracted_bins(&self, n: usize, bins: usize, name: &str) {
-        let mut g = self.clone();
-        g.contract_degree_2_nodes();
-        let mut g = g.largest_connected_component();
-        let diameter = g.get_hop_diameter_approx_n(96);
-        let bin_edges = library::get_bin_edges(diameter as f64, bins);
+    pub fn hop_overview(&self, n: usize, name: &str) {
+        let diameter = self.get_hop_diameter_approx_n(100);
+        // let bin_edges = library::get_bin_edges(diameter as f64, bins);
+        let bin_edges = (0..diameter).map(|x| x as f64).collect::<Vec<_>>();
 
         let hist = (0..n)
             .into_par_iter()
             .map(|_| {
                 library::histogram(
-                    g.bfs(thread_rng().gen_range(0..g.get_num_nodes()))
+                    self.bfs(thread_rng().gen_range(0..self.get_num_nodes()))
                         .iter()
                         .map(|&h| h as f64),
                     &bin_edges,
@@ -822,6 +801,12 @@ impl Graph {
                 }
             }
         }
+    }
+
+    pub fn contract_and_llc(&mut self) {
+        self.contract_degree_2_nodes();
+        let mut g = self.largest_connected_component();
+        self.data = g.data;
     }
 
     fn get_path(&self, start: usize, end: usize) -> Vec<usize> {

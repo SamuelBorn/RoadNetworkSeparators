@@ -9,8 +9,8 @@ use rayon::prelude::*;
 
 use crate::{graph::relative_neighborhood::relative_neighborhood_points, library};
 
-const SCALES: [f64; 10] = [
-    8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0,
+const SCALES: [f64; 11] = [
+    4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0,
 ];
 
 use super::{
