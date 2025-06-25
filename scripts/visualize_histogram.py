@@ -8,6 +8,8 @@ from pathlib import Path
 colors = list(plt.get_cmap("tab10").colors)
 colors = colors * 50
 colors[0] = "#009682"
+colors[1] = "#ff7f0e"
+colors[2] = "#7f7f7f"
 
 
 def histogram_data(file_path: Path, aggregated: bool):
@@ -44,7 +46,7 @@ def main(args: argparse.Namespace):
             color=color,
             align="edge",
             label=args.labels[i] if args.labels else file.stem,
-            alpha=0.7,
+            alpha=0.6,
         )
         if args.prefixsum:
             cdf_values = np.cumsum(normalized_values * bin_widths)
