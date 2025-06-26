@@ -75,9 +75,10 @@ pub fn generate_circle_center_graph_v2(
             let mut points =
                 library::random_points_in_circle(center, radii[i], points_per_level[i]);
             points.push(center);
-            edges.append(&mut delaunay::dynamic_length_restriced_delaunay(
-                &points, 0.95,
-            ));
+            // edges.append(&mut delaunay::dynamic_length_restriced_delaunay(
+            //     &points, 0.95,
+            // ));
+            unimplemented!("not working becuase of refactor");
             centers.append(&mut points);
         });
     }

@@ -11,7 +11,7 @@ pub mod separator;
 
 use chrono::Local;
 use geo::Point;
-use graph::delaunay::delaunay_points;
+use graph::delaunay::{delaunay_points, dynamic_length_restriced_delaunay};
 use graph::knn::knn;
 use graph::noise::noise;
 use graph::relative_neighborhood::relative_neighborhood;
@@ -37,8 +37,11 @@ fn main() {
         ],
     );
 
-    let mut g = delaunay_points(&p);
+    let mut g = delaunay::length_restricted_delaunay(p, 0.035);
     prune_graph_spanner(&mut g, 10.0);
     g.graph.contract_and_llc();
     g.graph.hop_overview(100, "hops_rng_europe");
+
+    g.visualize("europe_spanner");
+
 }
