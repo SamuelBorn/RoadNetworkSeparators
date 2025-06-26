@@ -6,7 +6,7 @@ use spade::{DelaunayTriangulation, Point2, Triangulation};
 
 use crate::library;
 
-use super::delaunay::delaunay;
+use super::delaunay::delaunay_points;
 use super::geometric_graph::GeometricGraph;
 use super::Graph;
 

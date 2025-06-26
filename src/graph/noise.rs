@@ -14,7 +14,7 @@ const SCALES: [f64; 11] = [
 ];
 
 use super::{
-    delaunay::delaunay,
+    delaunay::delaunay_points,
     example::example_c4,
     geometric_graph::GeometricGraph,
     voronoi::{prune_graph, prune_graph_parallel},

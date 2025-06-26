@@ -201,7 +201,7 @@ pub fn prune_graph_parallel(g: &mut GeometricGraph, dist_multiplier: f64) {
 }
 
 pub fn pruned_delaunay(points: &[Point], dist_multiplier: f64) -> GeometricGraph {
-    let mut g = delaunay::delaunay(&points);
+    let mut g = delaunay::delaunay_points(&points);
     prune_graph_parallel(&mut g, dist_multiplier);
     g.graph.info();
     g
@@ -214,37 +214,30 @@ pub fn prune_graph_spanner(g: &mut GeometricGraph, spanning_parameter: f64) {
     let mut uf: UnionFind<usize> = UnionFind::new(g.graph.get_num_nodes() + 1);
     let edge_lengths = g.get_edge_lengths();
     let directed_edge_lengths = g.get_edge_lengths_unidirectional(); // only half of the edges
-    let mut sorted = directed_edge_lengths.iter().collect::<Vec<_>>();
-    // sorted.shuffle(&mut rand::thread_rng());
-    // sorted.par_sort_by(|(_, l1), (_, l2)| l1.partial_cmp(l2).unwrap());
-    sorted.par_sort_by(|(_, l1), (_, l2)| l2.partial_cmp(l1).unwrap());
+    let mut edges = directed_edge_lengths.iter().collect::<Vec<_>>();
+    edges.par_sort_by(|(_, l1), (_, l2)| l2.partial_cmp(l1).unwrap());
 
     let mut h = GeometricGraph::new(
         Graph::with_node_count(g.graph.get_num_nodes()),
         g.positions.clone(),
     );
 
-    for (i, &(&(u, v), length)) in sorted.iter().enumerate() {
-        if i % 1000 == 0 {
-            println!("{} / {}", i, sorted.len());
+    for (i, &(&(u, v), length)) in edges.iter().enumerate() {
+        if i % 10000 == 0 {
+            println!("{} / {}", i, edges.len());
         }
-        //
-        // if uf.find(*u) != uf.find(*v) {
-        //     uf.union(*u, *v);
-        //     continue;
-        // }
-
-        // g.graph.remove_edge(*u, *v);
-        // if !g.connected_with_prune_distance(*u, *v, length * spanning_parameter, &edge_lengths) {
-        //     g.graph.add_edge(*u, *v);
-        // }
 
         if uf.union(u, v) || !h.dijkstra_less_than(u, v, spanning_parameter * length, &edge_lengths)
         {
             h.graph.add_edge(u, v);
         }
     }
+
+    // swap g and h
+    g.graph = h.graph;
+    g.positions = h.positions;
 }
+
 
 pub fn build_voronoi_road_network(
     poly: Polygon,

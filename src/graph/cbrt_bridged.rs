@@ -11,7 +11,7 @@ use rstar::PointDistance;
 
 use crate::graph::geometric_graph::quantize;
 
-use super::{delaunay::delaunay, geometric_graph::GeometricGraph, Graph};
+use super::{delaunay::delaunay_points, geometric_graph::GeometricGraph, Graph};
 
 struct Subgraph {
     center: Point,
@@ -49,7 +49,7 @@ fn generate_random_blobs(n: usize, width: f64, height: f64) -> Vec<Subgraph> {
             Subgraph {
                 center: p,
                 node_count: points.len(),
-                edges: super::delaunay::delaunay(&points).get_edges_points(),
+                edges: super::delaunay::delaunay_points(&points).get_edges_points(),
                 hull: MultiPoint(points.clone()).concave_hull(2.0),
             }
         })
@@ -115,7 +115,7 @@ pub fn build_cbrt_bridged(n: usize, width: f64, height: f64) -> GeometricGraph {
     let mut subgraphs = generate_random_blobs(n, width, height);
     let centers = subgraphs.par_iter().map(|s| s.center).collect::<Vec<_>>();
 
-    let delaunay = delaunay(&centers);
+    let delaunay = delaunay_points(&centers);
     let mut edges = delaunay.graph.get_edges();
     edges.par_sort_unstable_by_key(|&(u, v)| {
         OrderedFloat(delaunay.positions[u].distance_2(&delaunay.positions[v]))

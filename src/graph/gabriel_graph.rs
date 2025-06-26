@@ -5,7 +5,7 @@ use rstar::PointDistance;
 
 use crate::library;
 
-use super::delaunay::delaunay;
+use super::delaunay::delaunay_points;
 use super::geometric_graph::GeometricGraph;
 use super::Graph;
 
@@ -15,7 +15,7 @@ pub fn gabriel_graph(n: usize) -> GeometricGraph {
 }
 
 pub fn gabriel_graph_points(points: &[Point]) -> GeometricGraph {
-    let g = delaunay(points);
+    let g = delaunay_points(points);
 
     let edges = g
         .graph

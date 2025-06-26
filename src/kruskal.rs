@@ -77,7 +77,7 @@ impl GeometricGraph {
 }
 
 pub fn get_mst_points(points: &[Point]) -> GeometricGraph {
-    let g = crate::graph::delaunay::delaunay(points);
+    let g = crate::graph::delaunay::delaunay_points(points);
     g.get_mst()
 }
 

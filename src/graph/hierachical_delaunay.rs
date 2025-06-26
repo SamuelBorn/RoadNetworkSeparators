@@ -85,7 +85,7 @@ pub fn generate_hierachical_delaunay(
     radii: &[f64],
 ) -> GeometricGraph {
     let points = generate_hierachical_points(city_percentage, points_per_level, radii);
-    delaunay::delaunay(&points)
+    delaunay::delaunay_points(&points)
 }
 
 pub fn example() -> GeometricGraph {
