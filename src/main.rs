@@ -37,8 +37,8 @@ fn main() {
         ],
     );
 
-    let mut g = relative_neighborhood::relative_neighborhood_points(p);
+    let mut g = delaunay_points(&p);
+    prune_graph_spanner(&mut g, 10.0);
     g.graph.contract_and_llc();
-    g.graph.hop_overview(1000, "hops_rng_europe");
-    g.inertial_flowcutter("rng_europe");
+    g.graph.hop_overview(100, "hops_rng_europe");
 }

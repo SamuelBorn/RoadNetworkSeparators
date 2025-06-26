@@ -201,7 +201,7 @@ pub fn prune_graph_parallel(g: &mut GeometricGraph, dist_multiplier: f64) {
 }
 
 pub fn pruned_delaunay(points: &[Point], dist_multiplier: f64) -> GeometricGraph {
-    let mut g = delaunay::delaunay_points(&points);
+    let mut g = delaunay::delaunay_points(points);
     prune_graph_parallel(&mut g, dist_multiplier);
     g.graph.info();
     g
@@ -213,8 +213,8 @@ pub fn pruned_delaunay(points: &[Point], dist_multiplier: f64) -> GeometricGraph
 pub fn prune_graph_spanner(g: &mut GeometricGraph, spanning_parameter: f64) {
     let mut uf: UnionFind<usize> = UnionFind::new(g.graph.get_num_nodes() + 1);
     let edge_lengths = g.get_edge_lengths();
-    let directed_edge_lengths = g.get_edge_lengths_unidirectional(); // only half of the edges
-    let mut edges = directed_edge_lengths.iter().collect::<Vec<_>>();
+    let directed_edges = g.get_edge_lengths_unidirectional();
+    let mut edges = directed_edges.iter().collect::<Vec<_>>();
     edges.par_sort_by(|(_, l1), (_, l2)| l2.partial_cmp(l1).unwrap());
 
     let mut h = GeometricGraph::new(
@@ -224,7 +224,7 @@ pub fn prune_graph_spanner(g: &mut GeometricGraph, spanning_parameter: f64) {
 
     for (i, &(&(u, v), length)) in edges.iter().enumerate() {
         if i % 10000 == 0 {
-            println!("{} / {}", i, edges.len());
+            println!("Pruning progress\t{:.2}%", i as f64 / edges.len() as f64 * 100.);
         }
 
         if uf.union(u, v) || !h.dijkstra_less_than(u, v, spanning_parameter * length, &edge_lengths)

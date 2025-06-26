@@ -294,40 +294,31 @@ impl GeometricGraph {
 
     pub fn dijkstra_less_than(
         &self,
-        u: usize,
-        v: usize,
-        prune_distance: f64,
-        edge_lengths: &HashMap<(usize, usize), f64>,
+        start: usize,
+        end: usize,
+        distance: f64,
+        edge_weights: &HashMap<(usize, usize), f64>,
     ) -> bool {
-        let mut distances = HashMap::new();
-        let mut heap = BinaryHeap::new();
-        distances.insert(u, 0.0);
-        heap.push(Reverse((OrderedFloat(0.0), u))); // (distance, vertex)
+        let mut distances = vec![f64::INFINITY; self.graph.get_num_nodes()];
+        distances[start] = 0.0;
+        let mut pq = PriorityQueue::<_, _, DefaultHashBuilder>::with_default_hasher();
+        pq.push(start, Reverse(OrderedFloat(0.0)));
 
-        while let Some(Reverse((OrderedFloat(dist), current))) = heap.pop() {
-            if dist >= prune_distance {
+        while let Some((u, (Reverse(OrderedFloat(u_dist))))) = pq.pop() {
+            if u == end {
+                return true;
+            }
+
+            if u_dist >= distance {
                 return false;
             }
 
-            if current == v {
-                return dist <= prune_distance;
-            }
-
-            let current_best = *distances.get(&current).unwrap();
-            if dist > current_best || dist >= prune_distance {
-                continue;
-            }
-
-            for &neighbor in self.graph.get_neighbors(current) {
-                let weight = *edge_lengths.get(&(current, neighbor)).unwrap();
-                let new_dist = dist + weight;
-
-                // Only process if the new distance is better and less than prune_distance
-                if new_dist < *distances.get(&neighbor).unwrap_or(&f64::INFINITY)
-                    && new_dist <= prune_distance
-                {
-                    distances.insert(neighbor, new_dist);
-                    heap.push(Reverse((OrderedFloat(new_dist), neighbor)));
+            for &v in self.graph.get_neighbors(u) {
+                let uv_weight = edge_weights.get(&(u, v)).unwrap();
+                let v_dist = u_dist + uv_weight;
+                if v_dist < distances[v] {
+                    distances[v] = v_dist;
+                    pq.push_increase(v, Reverse(OrderedFloat(v_dist)));
                 }
             }
         }
@@ -410,7 +401,10 @@ impl GeometricGraph {
             .map(|_| {
                 let start_node = thread_rng().gen_range(0..self.graph.get_num_nodes());
                 let distances = self.dijkstra_one_to_all(start_node);
-                distances.into_par_iter().max_by_key(|&d| OrderedFloat(d)).unwrap_or(0.0)
+                distances
+                    .into_par_iter()
+                    .max_by_key(|&d| OrderedFloat(d))
+                    .unwrap_or(0.0)
             })
             .max_by_key(|&d| OrderedFloat(d))
             .unwrap_or(0.0)

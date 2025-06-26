@@ -1,4 +1,5 @@
 use crate::random_set::RandomSet;
+use chrono::Local;
 use hashbrown::{HashMap, HashSet};
 use planar::planarize;
 use rand::seq::IteratorRandom;
@@ -807,6 +808,11 @@ impl Graph {
         self.contract_degree_2_nodes();
         let mut g = self.largest_connected_component();
         self.data = g.data;
+        println!(
+            "{}\tContracted to {} nodes",
+            Local::now(),
+            self.get_num_nodes()
+        );
     }
 
     fn get_path(&self, start: usize, end: usize) -> Vec<usize> {
