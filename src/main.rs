@@ -30,9 +30,15 @@ use graph::{
 };
 
 fn main() {
-    let p = noise::get_noise_points(18_000_000);
-    let mut g = delaunay::delaunay_points(&p);
-    prune_graph_spanner(&mut g, 10.0);
-    g.graph.info(); 
-    g.graph.hop_overview(1000, "hops_voronoi_spanner");
+    let p = noise::get_noise_points_scales_europe_shape(
+        18_000_000,
+        &[
+            16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0, 8192.0, 16384.0,
+        ],
+    );
+
+    let mut g = relative_neighborhood::relative_neighborhood_points(p);
+    g.graph.contract_and_llc();
+    g.graph.hop_overview(1000, "hops_rng_europe");
+    g.inertial_flowcutter("rng_europe");
 }

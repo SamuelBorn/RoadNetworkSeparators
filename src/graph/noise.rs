@@ -1,7 +1,7 @@
 use std::{iter, path::Path};
 
 use chrono::Local;
-use geo::Point;
+use geo::{BoundingRect, Contains, LineString, Point, Polygon};
 use noise::{NoiseFn, Perlin};
 use rand::{thread_rng, Rng};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -9,10 +9,11 @@ use rayon::prelude::*;
 
 use crate::{graph::relative_neighborhood::relative_neighborhood_points, library};
 
-const SCALES: [f64; 11] = [
+pub const NOISE_SCALES: [f64; 11] = [
     4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0,
 ];
 
+use super::example;
 use super::{
     delaunay::delaunay_points,
     example::example_c4,
@@ -55,7 +56,7 @@ fn should_place_point_pink_noise(p: &Point, perlin: &Perlin, scales: &[f64]) -> 
 }
 
 pub fn get_noise_points(n: usize) -> Vec<Point> {
-    get_noise_points_scales(n, &SCALES)
+    get_noise_points_scales(n, &NOISE_SCALES)
 }
 
 pub fn get_noise_points_scales(n: usize, scales: &[f64]) -> Vec<Point> {
@@ -75,8 +76,40 @@ pub fn get_noise_points_scales(n: usize, scales: &[f64]) -> Vec<Point> {
         .collect()
 }
 
+pub fn get_noise_points_scales_europe_shape(n: usize, scales: &[f64]) -> Vec<Point> {
+    let europe_polygon = Polygon::new(
+        LineString::from(
+            example::EUROPE_EXTERIOR
+                .par_iter()
+                .map(|&(x, y)| (-y / 1000., x / 1000.))
+                .collect::<Vec<_>>(),
+        ),
+        vec![],
+    );
+    let aabb = europe_polygon.bounding_rect().unwrap();
+
+    let perlin = Perlin::new(rand::thread_rng().gen());
+    iter::repeat(())
+        .par_bridge()
+        .filter_map(|()| {
+            let candidate = library::random_point_in_rect(aabb);
+
+            if !europe_polygon.contains(&candidate) {
+                return None;
+            }
+
+            if should_place_point(&candidate, &perlin, scales) {
+                Some(candidate)
+            } else {
+                None
+            }
+        })
+        .take_any(n)
+        .collect()
+}
+
 pub fn noise(n: usize) -> GeometricGraph {
-    noise_scales(n, &SCALES)
+    noise_scales(n, &NOISE_SCALES)
 }
 
 pub fn noise_scales(n: usize, scales: &[f64]) -> GeometricGraph {
