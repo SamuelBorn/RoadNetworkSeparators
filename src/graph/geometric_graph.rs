@@ -325,7 +325,9 @@ impl GeometricGraph {
                 let v_dist = u_dist + uv_weight;
                 if v_dist < distances[v] {
                     distances[v] = v_dist;
-                    pq.push_increase(v, Reverse(OrderedFloat(v_dist)));
+                    if v_dist < distance {
+                        pq.push_increase(v, Reverse(OrderedFloat(v_dist)));
+                    }
                 }
             }
         }
