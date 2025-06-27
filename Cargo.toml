@@ -30,3 +30,4 @@ dashmap = "6.1"
 noise = "0.9"
 quick-xml = "0.37"
 priority-queue = "2.5"
+indicatif = {version = "0.17.11", features = ["rayon"]}

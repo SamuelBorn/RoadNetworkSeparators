@@ -22,7 +22,7 @@ use std::path::Path;
 
 use graph::example::*;
 use graph::geometric_graph::GeometricGraph;
-use graph::voronoi::{prune_graph, prune_graph_parallel, prune_graph_spanner, pruned_delaunay};
+use graph::voronoi::{prune_graph, prune_graph_parallel, prune_graph_spanner, prune_graph_spanner_parallel_approx, pruned_delaunay};
 use graph::Graph;
 use graph::{
     cbrt_maximal, delaunay, gabriel_graph, grid, hierachical_delaunay, hierachical_disks, highway,
@@ -31,17 +31,15 @@ use graph::{
 
 fn main() {
     let p = noise::get_noise_points_scales_europe_shape(
-        18_000_000,
+        15_000_000,
         &[
             16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0, 8192.0, 16384.0,
         ],
     );
 
     let mut g = delaunay::length_restricted_delaunay(p, 0.035);
-    prune_graph_spanner(&mut g, 10.0);
-    g.graph.contract_and_llc();
-    g.graph.hop_overview(100, "hops_rng_europe");
-
-    g.visualize("europe_spanner");
+    prune_graph_spanner_parallel_approx(&mut g, 10.0);
+    g.contract_and_llc();
+    g.graph.hop_overview(100, "hops_approx_europe_shape_spanner");
 
 }

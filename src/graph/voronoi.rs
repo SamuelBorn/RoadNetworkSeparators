@@ -3,6 +3,8 @@ use geo::{
     Point, Polygon,
 };
 use hashbrown::{HashMap, HashSet};
+use indicatif::ProgressIterator;
+use itertools::Itertools;
 use petgraph::unionfind::UnionFind;
 use rand::{seq::SliceRandom, Rng};
 use rand_distr::{Distribution, Exp, Uniform};
@@ -224,7 +226,10 @@ pub fn prune_graph_spanner(g: &mut GeometricGraph, spanning_parameter: f64) {
 
     for (i, &(&(u, v), length)) in edges.iter().enumerate() {
         if i % 10000 == 0 {
-            println!("Pruning progress\t{:.2}%", i as f64 / edges.len() as f64 * 100.);
+            println!(
+                "Pruning progress\t{:.2}%",
+                i as f64 / edges.len() as f64 * 100.
+            );
         }
 
         if uf.union(u, v) || !h.dijkstra_less_than(u, v, spanning_parameter * length, &edge_lengths)
@@ -238,6 +243,45 @@ pub fn prune_graph_spanner(g: &mut GeometricGraph, spanning_parameter: f64) {
     g.positions = h.positions;
 }
 
+// spanning = spanning parameter, e.g. 4.0 how much longer the path in the spanner can be compared to the original path
+pub fn prune_graph_spanner_parallel_approx(g: &mut GeometricGraph, spanning: f64) {
+    let mut uf: UnionFind<usize> = UnionFind::new(g.graph.get_num_nodes() + 1);
+    let edge_lengths = g.get_edge_lengths();
+    let directed_edges = g.get_edge_lengths_unidirectional();
+    let mut edges = directed_edges.iter().collect::<Vec<_>>();
+    edges.par_sort_by(|(_, l1), (_, l2)| l2.partial_cmp(l1).unwrap());
+
+    let mut h = GeometricGraph::new(
+        Graph::with_node_count(g.graph.get_num_nodes()),
+        g.positions.clone(),
+    );
+
+    edges
+        .chunks(2 * rayon::current_num_threads())
+        .progress()
+        .for_each(|chunk| {
+            let add_edges = chunk
+                .into_par_iter()
+                .filter_map(|(&(u, v), &length)| {
+                    if !uf.equiv(u, v)
+                        || !h.dijkstra_less_than(u, v, spanning * length, &edge_lengths)
+                    {
+                        Some((u, v))
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
+
+            for (u, v) in add_edges {
+                h.graph.add_edge(u, v);
+                uf.union(u, v);
+            }
+        });
+
+    g.graph = h.graph;
+    g.positions = h.positions;
+}
 
 pub fn build_voronoi_road_network(
     poly: Polygon,

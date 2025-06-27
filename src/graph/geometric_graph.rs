@@ -140,6 +140,13 @@ impl GeometricGraph {
         GeometricGraph::new(g, geo_points)
     }
 
+    pub fn contract_and_llc(&mut self) {
+        self.graph.contract_degree_2_nodes();
+        let llc = self.largest_connected_component();
+        self.graph = llc.graph;
+        self.positions = llc.positions;
+    }
+
     pub fn from_edges_point(edges: &[(Point, Point)]) -> GeometricGraph {
         let edges = edges
             .par_iter()
