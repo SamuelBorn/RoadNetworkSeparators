@@ -11,35 +11,37 @@ pub mod separator;
 
 use chrono::Local;
 use geo::Point;
-use graph::delaunay::{delaunay_points, dynamic_length_restriced_delaunay};
-use graph::knn::knn;
-use graph::noise::noise;
-use graph::relative_neighborhood::relative_neighborhood;
-use rand::{thread_rng, Rng};
-use rayon::prelude::*;
-use std::fs;
-use std::path::Path;
-
 use graph::example::*;
 use graph::geometric_graph::GeometricGraph;
-use graph::voronoi::{prune_graph, prune_graph_parallel, prune_graph_spanner, prune_graph_spanner_parallel_approx, pruned_delaunay};
+use graph::voronoi::{
+    prune_graph, prune_graph_parallel, prune_graph_spanner, prune_graph_spanner_parallel_approx,
+    pruned_delaunay,
+};
 use graph::Graph;
 use graph::{
     cbrt_maximal, delaunay, gabriel_graph, grid, hierachical_delaunay, hierachical_disks, highway,
     knn, nested_grid, noise, relative_neighborhood, tree, voronoi,
 };
+use rand::{thread_rng, Rng};
+use rayon::prelude::*;
+use std::fs;
+use std::path::Path;
 
 fn main() {
+    let g = germany();
+    g.hop_overview(100, "hops_germany");
+
     let p = noise::get_noise_points_scales_europe_shape(
-        15_000_000,
+        5_000_000,
         &[
             16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0, 8192.0, 16384.0,
         ],
     );
 
-    let mut g = delaunay::length_restricted_delaunay(p, 0.035);
-    prune_graph_spanner_parallel_approx(&mut g, 10.0);
-    g.contract_and_llc();
-    g.graph.hop_overview(100, "hops_approx_europe_shape_spanner");
+    let g = delaunay::delaunay_points(&p);
+    g.graph.hop_overview(100, "hops_germany_full_delaunay");
 
+    let g = relative_neighborhood::relative_neighborhood_points(p);
+    g.graph
+        .hop_overview(100, "hops_germany_rng");
 }
