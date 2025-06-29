@@ -264,7 +264,8 @@ pub fn prune_graph_spanner_parallel_approx(g: &mut GeometricGraph, spanning: f64
                 .into_par_iter()
                 .filter_map(|(&(u, v), &length)| {
                     if !uf.equiv(u, v)
-                        || !h.dijkstra_less_than(u, v, spanning * length, &edge_lengths)
+                        || !h.astar_less_than(u, v, spanning * length, &edge_lengths)
+                        // || !h.dijkstra_less_than(u, v, spanning * length, &edge_lengths)
                     {
                         Some((u, v))
                     } else {

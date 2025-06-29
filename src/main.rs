@@ -11,6 +11,7 @@ pub mod separator;
 
 use chrono::Local;
 use geo::Point;
+use graph::delaunay::{dynamic_length_restriced_delaunay, length_restricted_delaunay};
 use graph::example::*;
 use graph::geometric_graph::GeometricGraph;
 use graph::voronoi::{
@@ -28,20 +29,10 @@ use std::fs;
 use std::path::Path;
 
 fn main() {
-    let g = germany();
-    g.hop_overview(100, "hops_germany");
-
-    let p = noise::get_noise_points_scales_europe_shape(
-        5_000_000,
-        &[
-            16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 2048.0, 4096.0, 8192.0, 16384.0,
-        ],
-    );
-
-    let g = delaunay::delaunay_points(&p);
-    g.graph.hop_overview(100, "hops_germany_full_delaunay");
-
-    let g = relative_neighborhood::relative_neighborhood_points(p);
-    g.graph
-        .hop_overview(100, "hops_germany_rng");
+    let p = noise::get_noise_points(100_000);
+    let mut g = dynamic_length_restriced_delaunay(p, 0.99);
+    let starttime = std::time::Instant::now();
+    prune_graph_spanner_parallel_approx(&mut g, 10.0);
+    dbg!("Pruned graph in {}ms", starttime.elapsed().as_millis());
+    g.visualize("tmp");
 }

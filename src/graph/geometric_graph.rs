@@ -335,6 +335,64 @@ impl GeometricGraph {
         false
     }
 
+        pub fn astar_less_than(
+        &self,
+        start: usize,
+        end: usize,
+        distance: f64,
+        edge_weights: &HashMap<(usize, usize), f64>,
+    ) -> bool {
+        // g_scores stores the cost of the cheapest known path from `start`.
+        // This is equivalent to `distances` in your Dijkstra version.
+        let mut g_scores = vec![f64::INFINITY; self.graph.get_num_nodes()];
+        g_scores[start] = 0.0;
+
+        let mut pq = PriorityQueue::<_, _, DefaultHashBuilder>::with_default_hasher();
+
+        // A* modification: The priority is the f-score (g-score + heuristic).
+        let heuristic = self.euclidean_distance(start, end);
+        let f_score = 0.0 + heuristic;
+        pq.push(start, Reverse(OrderedFloat(f_score)));
+
+        // The main loop pops the node with the lowest f-score.
+        while let Some((u, _)) = pq.pop() {
+            // We retrieve the g-score separately.
+            let u_g_score = g_scores[u];
+
+            // If the path cost to the current node is already too high, we can stop.
+            // Since the queue is ordered by f-score, any other path we find later
+            // will also be too long.
+            if u_g_score >= distance {
+                return false;
+            }
+
+            // If we've reached the end with a path cheaper than the limit, we're done.
+            if u == end {
+                return true;
+            }
+
+            for &v in self.graph.get_neighbors(u) {
+                let uv_weight = edge_weights.get(&(u, v)).unwrap();
+                let v_g_score_tentative = u_g_score + uv_weight;
+
+                if v_g_score_tentative < g_scores[v] {
+                    g_scores[v] = v_g_score_tentative;
+
+                    // This optimization is crucial: only explore paths that have not
+                    // yet exceeded the distance limit.
+                    if v_g_score_tentative < distance {
+                        let v_heuristic = self.euclidean_distance(v, end);
+                        let v_f_score = v_g_score_tentative + v_heuristic;
+                        pq.push_increase(v, Reverse(OrderedFloat(v_f_score)));
+                    }
+                }
+            }
+        }
+
+        // The destination was not reached within the distance limit.
+        false
+    }
+
     pub fn dijsktra_one_to_one(&self, start: usize, end: usize) -> f64 {
         let mut distances = vec![f64::INFINITY; self.graph.get_num_nodes()];
         distances[start] = 0.0;
