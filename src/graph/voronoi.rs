@@ -5,12 +5,12 @@ use geo::{
 use hashbrown::{HashMap, HashSet};
 use indicatif::ProgressIterator;
 use itertools::Itertools;
-use petgraph::unionfind::UnionFind;
+use petgraph::{algo::dijkstra, unionfind::UnionFind};
 use rand::{seq::SliceRandom, Rng};
 use rand_distr::{Distribution, Exp, Uniform};
 use rayon::{iter::Positions, prelude::*};
 use rstar::PointDistance;
-use std::{f64, path::Path, sync::Arc};
+use std::{cmp::Ordering, f64, path::Path, sync::Arc};
 use voronoice::{BoundingBox, Voronoi, VoronoiBuilder};
 
 use crate::bidirectional;
@@ -264,8 +264,8 @@ pub fn prune_graph_spanner_parallel_approx(g: &mut GeometricGraph, spanning: f64
                 .into_par_iter()
                 .filter_map(|(&(u, v), &length)| {
                     if !uf.equiv(u, v)
-                        || !h.astar_less_than(u, v, spanning * length, &edge_lengths)
-                        // || !h.dijkstra_less_than(u, v, spanning * length, &edge_lengths)
+                        // || !h.astar_less_than(u, v, spanning * length, &edge_lengths)
+                        || !h.dijkstra_less_than(u, v, spanning * length, &edge_lengths)
                     {
                         Some((u, v))
                     } else {
@@ -282,6 +282,62 @@ pub fn prune_graph_spanner_parallel_approx(g: &mut GeometricGraph, spanning: f64
 
     g.graph = h.graph;
     g.positions = h.positions;
+}
+
+
+pub fn prune_v3(geo_graph: &mut GeometricGraph, t: f64) {
+    let edge_weights = geo_graph.get_edge_lengths();
+    let num_nodes = geo_graph.graph.data.len();
+    let mut edges = Vec::new();
+
+    for u in 0..num_nodes {
+        for &v in &geo_graph.graph.data[u] {
+            if u < v {
+                // let length = geo_graph.positions[u].distance(&geo_graph.positions[v]);
+                let length = Euclidean::distance(
+                    &geo_graph.positions[u],
+                    &geo_graph.positions[v],
+                );
+                edges.push((u, v, length));
+            }
+        }
+    }
+
+    edges.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(Ordering::Equal));
+
+    let mut spanner_graph = GeometricGraph {
+        graph: Graph { data: vec![HashSet::new(); num_nodes]},
+        positions: geo_graph.positions.clone(),
+    };
+    let mut uf = UnionFind::new(num_nodes);
+
+    for (u, v, length) in edges {
+        let same_component = uf.find(u) == uf.find(v);
+        let mut add_edge = false;
+
+        if !same_component {
+            add_edge = true;
+        } else {
+            // let dist_h = dijkstra(&spanner_graph, &geo_graph.positions, u, v, t * length);
+            let connected_less_than = spanner_graph.dijkstra_less_than(u, v, t * length, &edge_weights);
+            if !connected_less_than {
+                add_edge = true;
+            }
+            // if dist_h > t * length {
+            //     add_edge = true;
+            // }
+        }
+
+        if add_edge {
+            spanner_graph.graph.data[u].insert(v);
+            spanner_graph.graph.data[v].insert(u);
+            if !same_component {
+                uf.union(u, v);
+            }
+        }
+    }
+
+    geo_graph.graph = spanner_graph.graph;
 }
 
 pub fn build_voronoi_road_network(

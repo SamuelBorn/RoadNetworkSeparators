@@ -1,6 +1,7 @@
 use crate::random_set::RandomSet;
 use chrono::Local;
 use hashbrown::{HashMap, HashSet};
+use indicatif::ParallelProgressIterator;
 use planar::planarize;
 use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;
@@ -570,6 +571,7 @@ impl Graph {
 
         let hist = (0..n)
             .into_par_iter()
+            .progress()
             .map(|_| {
                 library::histogram(
                     self.bfs(thread_rng().gen_range(0..self.get_num_nodes()))
