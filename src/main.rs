@@ -31,14 +31,8 @@ use std::fs;
 use std::path::Path;
 
 fn main() {
-    let p = noise::get_noise_points(4_800_000);
+    let p = noise::get_noise_points(4_800_00);
     let mut g = delaunay::delaunay_points(&p);
-    g.graph.hop_overview(96, "germany_delaunay");
-
-    let g = gabriel_graph_points(&p);
-    g.graph.hop_overview(96, "germany_gabriel");
-
-    let mut g = germany();
-    g.contract_and_llc();
-    g.hop_overview(96, "germany");
+    prune_graph_spanner_parallel_approx(&mut g, 20.);
+    g.graph.hop_overview(1000, "germany_voronoi");
 }

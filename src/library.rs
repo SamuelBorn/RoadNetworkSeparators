@@ -1,3 +1,4 @@
+use indicatif::ProgressStyle;
 use rand_distr::uniform::SampleUniform;
 use rand_distr::Normal;
 use std::fs::{self, File};
@@ -280,6 +281,13 @@ pub fn get_bin_edges(max: f64, num_bins: usize) -> Vec<f64> {
 pub fn add_vecs<T: std::ops::Add<Output = T> + Copy>(a: &[T], b: &[T]) -> Vec<T> {
     assert_eq!(a.len(), b.len(), "Vectors must be of the same length");
     a.iter().zip(b.iter()).map(|(&x, &y)| x + y).collect()
+}
+
+pub fn pb_style() -> ProgressStyle {
+    ProgressStyle::default_bar()
+        .template("[{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len} ({eta})")
+        .unwrap()
+        .progress_chars("##-")
 }
 
 #[cfg(test)]

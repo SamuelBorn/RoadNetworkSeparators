@@ -3,7 +3,7 @@ use geo::{
     Point, Polygon,
 };
 use hashbrown::{HashMap, HashSet};
-use indicatif::ProgressIterator;
+use indicatif::{ProgressIterator, ProgressStyle};
 use itertools::Itertools;
 use petgraph::{algo::dijkstra, unionfind::UnionFind};
 use rand::{seq::SliceRandom, Rng};
@@ -13,7 +13,7 @@ use rstar::PointDistance;
 use std::{cmp::Ordering, f64, path::Path, sync::Arc};
 use voronoice::{BoundingBox, Voronoi, VoronoiBuilder};
 
-use crate::bidirectional;
+use crate::{bidirectional, library};
 
 use super::{delaunay, geometric_graph::GeometricGraph, Graph};
 
@@ -257,8 +257,8 @@ pub fn prune_graph_spanner_parallel_approx(g: &mut GeometricGraph, spanning: f64
     );
 
     edges
-        .chunks(2 * rayon::current_num_threads())
-        .progress()
+        .chunks(4 * rayon::current_num_threads())
+        .progress_with_style(library::pb_style())
         .for_each(|chunk| {
             let add_edges = chunk
                 .into_par_iter()
@@ -284,7 +284,6 @@ pub fn prune_graph_spanner_parallel_approx(g: &mut GeometricGraph, spanning: f64
     g.positions = h.positions;
 }
 
-
 pub fn prune_v3(geo_graph: &mut GeometricGraph, t: f64) {
     let edge_weights = geo_graph.get_edge_lengths();
     let num_nodes = geo_graph.graph.data.len();
@@ -294,10 +293,7 @@ pub fn prune_v3(geo_graph: &mut GeometricGraph, t: f64) {
         for &v in &geo_graph.graph.data[u] {
             if u < v {
                 // let length = geo_graph.positions[u].distance(&geo_graph.positions[v]);
-                let length = Euclidean::distance(
-                    &geo_graph.positions[u],
-                    &geo_graph.positions[v],
-                );
+                let length = Euclidean::distance(&geo_graph.positions[u], &geo_graph.positions[v]);
                 edges.push((u, v, length));
             }
         }
@@ -306,7 +302,9 @@ pub fn prune_v3(geo_graph: &mut GeometricGraph, t: f64) {
     edges.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(Ordering::Equal));
 
     let mut spanner_graph = GeometricGraph {
-        graph: Graph { data: vec![HashSet::new(); num_nodes]},
+        graph: Graph {
+            data: vec![HashSet::new(); num_nodes],
+        },
         positions: geo_graph.positions.clone(),
     };
     let mut uf = UnionFind::new(num_nodes);
@@ -319,7 +317,8 @@ pub fn prune_v3(geo_graph: &mut GeometricGraph, t: f64) {
             add_edge = true;
         } else {
             // let dist_h = dijkstra(&spanner_graph, &geo_graph.positions, u, v, t * length);
-            let connected_less_than = spanner_graph.dijkstra_less_than(u, v, t * length, &edge_weights);
+            let connected_less_than =
+                spanner_graph.dijkstra_less_than(u, v, t * length, &edge_weights);
             if !connected_less_than {
                 add_edge = true;
             }
