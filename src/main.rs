@@ -31,7 +31,6 @@ use std::fs;
 use std::path::Path;
 
 fn main() {
-    let g = GeometricGraph::from_osm_xml("/algoDaten/graphs/osm/karlsruhe-090826.osm").unwrap();
+    let g = osm_karlsruhe();
     g.inertial_flowcutter("karlsruhe-osm");
-
 }

@@ -85,6 +85,10 @@ pub fn geometric_europe() -> GeometricGraph {
     GeometricGraph::from_file(Path::new("../Graphs/europe-connected-bidirectional")).unwrap()
 }
 
+pub fn osm_karlsruhe() -> GeometricGraph {
+    GeometricGraph::from_file(Path::new("../Graphs/karlsruhe-osm-connected-bidirectional")).unwrap()
+}
+
 pub fn ord_karlsruhe() -> Vec<usize> {
     library::read_to_usize_vec(Path::new("./output/ord/karlsruhe"))
 }
