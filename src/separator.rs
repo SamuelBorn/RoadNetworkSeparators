@@ -14,7 +14,7 @@ use tempfile::{NamedTempFile, TempDir};
 use chrono::format;
 use itertools::{Combinations, Itertools};
 
-use crate::cch::compute_separator_sizes_from_order;
+use crate::cch::{compute_separator_sizes_from_order, get_top_level_separator};
 use crate::graph::geometric_graph::GeometricGraph;
 use crate::graph::Graph;
 use crate::library::{optional_append_to_file, read_text_vec, read_to_usize_vec};
@@ -340,6 +340,10 @@ impl GeometricGraph {
         let g_path = Path::new("./output/graphs").join(name);
         self.save(&g_path);
         let ord = get_ord(&g_path, Some(name));
+
+        let top_level_sep = get_top_level_separator(&self.graph, &ord);
+        library::write_text_vec(&top_level_sep, Path::new("./output/karlsruhe_osm_top_level_sep.txt"));
+
         cch::compute_separator_sizes_from_order(
             &self.graph,
             &ord,
