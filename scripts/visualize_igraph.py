@@ -1,6 +1,5 @@
 #!/bin/python
 from pathlib import Path
-import struct
 import sys
 import igraph as ig
 import numpy as np
@@ -22,11 +21,21 @@ def visualize() -> None:
     g = ig.Graph(edges=edges)
     layout = ig.Layout(coordinaes)
 
+    colors = np.full(len(lat), "#000000")
+    sizes = np.full(len(lat), 0)
+    if len(sys.argv) == 3:
+        highlight = np.loadtxt(sys.argv[2], dtype=int)
+        for i in highlight:
+            colors[i] = "#009682"
+            sizes[i] = 32
+
+
     ig.plot(
         g,
         target=f"./output/{base_dir.name}.png",
         layout=layout,
-        vertex_size=0,
+        vertex_color=colors,
+        vertex_size=sizes,
         edge_width=0.5,
         bbox=(2048, 2048),  
     )
