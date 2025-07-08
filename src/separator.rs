@@ -341,15 +341,22 @@ impl GeometricGraph {
         self.save(&g_path);
         let ord = get_ord(&g_path, Some(name));
 
-        let top_level_sep = get_top_level_separator(&self.graph, &ord);
-        library::write_text_vec(&top_level_sep, Path::new("./output/karlsruhe_osm_top_level_sep.txt"));
-
         cch::compute_separator_sizes_from_order(
             &self.graph,
             &ord,
             &Path::new("./output/sep").join(name),
         )
     }
+
+    pub fn ifc_top_level_sep(&self, output: &Path) {
+        let g_path = Path::new("./output/graphs").join(output);
+        self.save(&g_path);
+        let ord = get_ord(&g_path, Some(output.to_str().unwrap()));
+
+        let top_level_sep = get_top_level_separator(&self.graph, &ord);
+        library::write_text_vec(&top_level_sep, output);
+    }
+
 }
 
 pub fn print_binned_statistic(mut data: Vec<(usize, usize)>, num_bins: usize) {
