@@ -31,6 +31,9 @@ use std::fs;
 use std::path::Path;
 
 fn main() {
-    let g = osm_karlsruhe();
-    g.inertial_flowcutter("karlsruhe-osm");
+    let g = grid::grid_degree_dist(1_000_000);
+    let g = g.largest_connected_component();
+    dbg!(g.graph.degree_distribution());
+    g.graph.info();
+    g.inertial_flowcutter("grid_dd");
 }

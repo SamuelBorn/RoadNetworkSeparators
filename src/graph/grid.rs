@@ -1,6 +1,7 @@
 use geo::Point;
 use hashbrown::{HashMap, HashSet};
 
+use rand::{seq::IteratorRandom, thread_rng};
 use std::io::Write;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
@@ -26,6 +27,55 @@ pub fn generate_grid(side_length: usize) -> Graph {
             if j > 0 {
                 g.add_edge(node, node - 1);
             }
+        }
+    }
+
+    g
+}
+
+pub fn grid_degree_dist(n: usize) -> GeometricGraph {
+    let side_length = (n as f64).sqrt() as usize;
+    let n = side_length * side_length;
+    let g = generate_grid(side_length);
+    let mut points = vec![Point::new(0.0, 0.0); side_length * side_length];
+    for i in 0..side_length {
+        for j in 0..side_length {
+            points[i * side_length + j] = Point::new((i as f64), (j as f64));
+        }
+    }
+    let mut g = GeometricGraph::new(g, points);
+
+    let mut actual = [0, 0, 0, 0, 0];
+    g.graph.data.iter().for_each(|l| actual[l.len()] += 1);
+    let target = [
+        0,
+        (0.08 * n as f64) as usize,
+        (0.55 * n as f64) as usize,
+        (0.15 * n as f64) as usize,
+        (0.22 * n as f64) as usize,
+    ];
+
+    let mut rng = &mut rand::thread_rng();
+
+    for i in [4, 3, 2] {
+        while actual[i] >= target[i] {
+            let u = (0..n).choose(&mut rng).unwrap();
+            let deg_u = g.graph.degree(u);
+            if deg_u != i {
+                continue;
+            }
+
+            let v = *g.graph.get_neighbors(u).iter().choose(rng).unwrap();
+            let deg_v = g.graph.degree(v);
+            if actual[deg_v] < target[deg_v] {
+                continue;
+            }
+
+            g.graph.remove_edge(u, v);
+            actual[deg_u] -= 1;
+            actual[deg_v] -= 1;
+            actual[deg_u - 1] += 1;
+            actual[deg_v - 1] += 1;
         }
     }
 

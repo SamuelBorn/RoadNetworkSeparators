@@ -234,6 +234,10 @@ impl Graph {
         self.data[i].insert(j);
     }
 
+    pub fn degree(&self, u: usize) -> usize {
+        self.data[u].len()
+    }
+
     pub fn invert(&mut self) {
         let mut new_data = vec![HashSet::new(); self.get_num_nodes()];
 
