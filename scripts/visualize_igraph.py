@@ -29,7 +29,6 @@ def visualize() -> None:
             colors[i] = "#009682"
             sizes[i] = 32
 
-
     ig.plot(
         g,
         target=f"./output/{base_dir.name}.png",
@@ -37,7 +36,8 @@ def visualize() -> None:
         vertex_color=colors,
         vertex_size=sizes,
         edge_width=0.5,
-        bbox=(2048, 2048),  
+        bbox=(4096, 4096),
+        # bbox=(2048, 2048),
     )
 
 
