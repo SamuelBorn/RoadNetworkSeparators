@@ -9,31 +9,15 @@ pub mod osm;
 pub mod random_set;
 pub mod separator;
 
-use chrono::Local;
-use geo::Point;
-use graph::delaunay::{dynamic_length_restriced_delaunay, length_restricted_delaunay};
-use graph::example::*;
-use graph::gabriel_graph::{gabriel_graph, gabriel_graph_points};
-use graph::geometric_graph::GeometricGraph;
-use graph::voronoi::{
-    prune_graph, prune_graph_parallel, prune_graph_spanner, prune_graph_spanner_parallel_approx,
-    prune_v3, pruned_delaunay,
-};
-use graph::Graph;
 use graph::{
-    cbrt_maximal, delaunay, gabriel_graph, grid, hierachical_delaunay, hierachical_disks, highway,
-    knn, nested_grid, noise, relative_neighborhood, tree, voronoi,
+    cbrt_maximal, delaunay, example::*, gabriel_graph, grid, hierachical_delaunay,
+    hierachical_disks, highway, knn, nested_grid, noise, relative_neighborhood, tree, voronoi,
 };
-use ordered_float::OrderedFloat;
-use rand::{thread_rng, Rng};
-use rayon::prelude::*;
-use std::fs;
+use graph::{geometric_graph::GeometricGraph, Graph};
 use std::path::Path;
 
 fn main() {
-    let g = grid::grid_degree_dist(1_000_000);
-    let g = g.largest_connected_component();
-    dbg!(g.graph.degree_distribution());
-    g.graph.info();
-    g.inertial_flowcutter("grid_dd");
+    let p = noise::get_noise_points(10_000_000);
+    let g = relative_neighborhood::relative_neighborhood_points(p);
+    g.inertial_flowcutter("noise");
 }
